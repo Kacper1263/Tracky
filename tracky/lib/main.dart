@@ -1,4 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:location/location.dart';
+import "package:latlong/latlong.dart";
+import 'package:tracky/CustomWidgets/OutlineText.dart';
+
+import 'Classes.dart';
 
 void main() {
   runApp(MyApp());
@@ -9,7 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Tracky',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -26,8 +34,7 @@ class MyApp extends StatelessWidget {
         // closer together (more dense) than on mobile platforms.
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
-      showPerformanceOverlay: true,
+      home: MyHomePage(title: 'Tracky'),
     );
   }
 }
@@ -51,68 +58,184 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  Timer timer;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+  var thisPlayer = new Player(
+    name: "You",
+    color: Colors.lightBlue[600],
+    location: LatLng(49.952403, 19.878666),
+  );
+
+  var otherPlayers = <Player>[
+    Player(
+      name: "Player 1",
+      color: Colors.green[600],
+      location: LatLng(49.952403, 19.868555),
+    ),
+  ];
+
+  MapController mapController;
+
+  //Location variables
+  Location location = new Location();
+  bool _serviceEnabled;
+  PermissionStatus _permissionGranted;
+  LocationData _locationData = null;
+
+  /// Run it only on start
+  Future<bool> getLocation() async {
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        _locationData = null;
+        return false;
+      }
+    }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        _locationData = null;
+        return false;
+      }
+    }
+
+    _locationData = await location.getLocation();
+    updatePlayerLocation();
+    return true;
+  }
+
+  @override
+  void initState() {
+    mapController = MapController();
+    timer = Timer.periodic(
+      Duration(seconds: 15),
+      (Timer t) {
+        // TODO: Send request to API with user location
+        updatePlayerLocation();
+        print(
+          "API call. Location: ${_locationData.latitude}, ${_locationData.longitude}",
+        );
+      },
+    );
+
+    getLocation().then((success) {
+      if (success) {
+        location.onLocationChanged.listen((LocationData currentLocation) {
+          _locationData = currentLocation;
+          updatePlayerLocation();
+        });
+        findMe();
+      }
     });
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  void updatePlayerLocation() {
+    setState(() {
+      thisPlayer.getMarker().point.latitude = _locationData.latitude;
+      thisPlayer.getMarker().point.longitude = _locationData.longitude;
+    });
+  }
+
+  void _refresh() {
+    setState(() {
+      updatePlayerLocation();
+      // TODO: Update other players location
+    });
+  }
+
+  void findMe() {
+    mapController.move(
+      LatLng(_locationData.latitude, _locationData.longitude),
+      mapController.zoom,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    List<Marker> markers = List<Marker>();
+    otherPlayers.forEach((p) => markers.add(p.getMarker()));
+    markers.add(thisPlayer.getMarker());
+
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
+        appBar: AppBar(
+          title: Text(widget.title),
+          centerTitle: true,
+          backgroundColor: Colors.grey[700],
+        ),
+        body: FlutterMap(
+          mapController: mapController,
+          options: MapOptions(
+            center: LatLng(49.952403, 19.878666),
+            zoom: 15.0,
+          ),
+          layers: [
+            TileLayerOptions(
+              urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              subdomains: ['a', 'b', 'c'],
+              tileProvider: NonCachingNetworkTileProvider(),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
+            MarkerLayerOptions(markers: markers)
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
+        floatingActionButton: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  thisPlayer.name = "You";
+                  thisPlayer.color = Colors.lightBlue[600];
+                });
+              },
+              tooltip: 'Revive me',
+              child: Icon(Icons.sentiment_satisfied),
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  thisPlayer.name = "You (dead)";
+                  thisPlayer.color = Colors.red;
+                });
+              },
+              tooltip: 'Kill me',
+              child: Icon(Icons.sentiment_very_dissatisfied),
+            ),
+            SizedBox(
+              height: 20,
+            ),
+            FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  getLocation();
+                  findMe();
+                });
+              },
+              tooltip: 'Find me',
+              child: Icon(Icons.gps_fixed),
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            FloatingActionButton(
+              onPressed: _refresh,
+              tooltip: 'Refresh',
+              child: Icon(Icons.refresh),
+            ),
+          ],
+        ));
   }
 }
