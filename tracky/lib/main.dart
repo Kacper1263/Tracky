@@ -77,7 +77,9 @@ class _MyHomePageState extends State<MyHomePage> {
     "playerName": "Bot3",
     "teamName": "Second team",
   };
+
   Timer timer;
+  bool connectionLost = false;
 
   var thisPlayer = new Player(
     name: "You",
@@ -162,14 +164,48 @@ class _MyHomePageState extends State<MyHomePage> {
             });
           });
           otherPlayers = playersToAdd.sublist(0);
+
+          if (connectionLost) {
+            connectionLost = false;
+            Fluttertoast.showToast(
+              msg: "Reconnected",
+              toastLength: Toast.LENGTH_LONG,
+              backgroundColor: Colors.lightGreen,
+              textColor: Colors.white,
+              gravity: ToastGravity.BOTTOM,
+              fontSize: 14,
+            );
+          }
         }).catchError((e) {
-          Fluttertoast.showToast(
+          if (e.toString().contains("TimeoutException")) {
+            connectionLost = true;
+            Fluttertoast.showToast(
+              msg: "Connection to server lost. Trying to reconnect",
+              toastLength: Toast.LENGTH_LONG,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+              gravity: ToastGravity.BOTTOM,
+              fontSize: 12,
+            );
+          } else if (e.toString().contains("Network is unreachable")) {
+            Fluttertoast.showToast(
+              msg: "No internet connection!",
+              toastLength: Toast.LENGTH_LONG,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+              gravity: ToastGravity.BOTTOM,
+              fontSize: 14,
+            );
+          } else {
+            Fluttertoast.showToast(
               msg: "Error: $e",
               toastLength: Toast.LENGTH_LONG,
               backgroundColor: Colors.red,
               textColor: Colors.white,
               gravity: ToastGravity.BOTTOM,
-              fontSize: 12);
+              fontSize: 12,
+            );
+          }
         });
 
         print(
