@@ -24,6 +24,7 @@ dependencies:
   flutter_map: ^0.10.1+1
   location: ^3.0.0
   screen: ^0.0.5
+  fluttertoast: ^7.0.4
   flutter:
     sdk: flutter
 
