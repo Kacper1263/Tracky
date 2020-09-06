@@ -1,14 +1,28 @@
 import 'dart:async';
-
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/io_client.dart';
+import 'package:http/http.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:location/location.dart';
 import "package:latlong/latlong.dart";
+import 'package:screen/screen.dart';
 import 'package:tracky/CustomWidgets/OutlineText.dart';
 
 import 'Classes.dart';
 
+// class MyHttpOverrides extends HttpOverrides {
+//   @override
+//   HttpClient createHttpClient(SecurityContext securityContext) {
+//     return new HttpClient()
+//       ..badCertificateCallback =
+//           (X509Certificate cert, String host, int port) => true;
+//   }
+// }
+
 void main() {
+  //HttpOverrides.global = new MyHttpOverrides(); // Fix cert errors
   runApp(MyApp());
 }
 
@@ -58,6 +72,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  Map data = {
+    "playerName": "Bot3",
+    "teamName": "Second team",
+  };
   Timer timer;
 
   var thisPlayer = new Player(
@@ -66,13 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
     location: LatLng(49.952403, 19.878666),
   );
 
-  var otherPlayers = <Player>[
-    Player(
-      name: "Player 1",
-      color: Colors.green[600],
-      location: LatLng(49.952403, 19.868555),
-    ),
-  ];
+  var otherPlayers = <Player>[];
 
   MapController mapController;
 
@@ -109,12 +121,50 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
+    Screen.keepOn(true);
+
     mapController = MapController();
     timer = Timer.periodic(
-      Duration(seconds: 15),
-      (Timer t) {
-        // TODO: Send request to API with user location
+      Duration(seconds: 5),
+      (Timer t) async {
         updatePlayerLocation();
+
+        post(
+          "http://192.168.1.50:5000/api/v1/room/1",
+          body: {
+            "teamName": data["teamName"],
+            "playerName": data["playerName"],
+            "latitude": _locationData.latitude.toString(),
+            "longitude": _locationData.longitude.toString()
+          },
+        ).timeout(Duration(seconds: 5)).then((res) {
+          var response = jsonDecode(res.body);
+          List<dynamic> teams = response["teams"];
+          List<Player> playersToAdd = new List<Player>();
+
+          teams.forEach((team) {
+            List<dynamic> players = team["players"];
+            players.forEach((player) {
+              if (player["name"] != data["playerName"])
+                playersToAdd.add(
+                  new Player(
+                    name: player["name"],
+                    color: team["name"] != data["teamName"]
+                        ? Colors.red
+                        : Colors.green,
+                    location: LatLng(
+                      double.parse(player["latitude"]),
+                      double.parse(player["longitude"]),
+                    ),
+                  ),
+                );
+            });
+          });
+          otherPlayers = playersToAdd.sublist(0);
+        }).catchError((e) {
+          if (e == TimeoutException) {}
+        });
+
         print(
           "API call. Location: ${_locationData.latitude}, ${_locationData.longitude}",
         );
@@ -137,6 +187,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void dispose() {
     timer?.cancel();
+    Screen.keepOn(false);
     super.dispose();
   }
 

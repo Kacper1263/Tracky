@@ -1,0 +1,32 @@
+{
+  "name": "tracky-server",
+  "version": "1.0.0",
+  "description": "Server for Tracky",
+  "main": "server.js",
+  "scripts": {
+    "test": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kacper1263/Tracky.git"
+  },
+  "keywords": [
+    "ASG",
+    "tracker",
+    "team"
+  ],
+  "author": "Kacper Marcinkiewicz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Kacper1263/Tracky/issues"
+  },
+  "homepage": "https://github.com/Kacper1263/Tracky#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "lowdb": "^1.0.0",
+    "path": "^0.12.7",
+    "readline-sync": "^1.4.10"
+  }
+}
