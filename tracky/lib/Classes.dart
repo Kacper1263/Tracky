@@ -37,3 +37,19 @@ class Player {
     );
   }
 }
+
+class ServerRoom {
+  int id;
+  String name;
+  String expiresAt;
+  List<ServerTeam> teams;
+
+  ServerRoom({
+    this.id,
+    this.name,
+    this.expiresAt,
+    this.teams,
+  });
+}
+
+class ServerTeam {}

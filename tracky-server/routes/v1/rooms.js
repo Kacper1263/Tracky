@@ -66,6 +66,7 @@ router.post("/create", (req, res) => {
 
     if(db.get("rooms").push({
         "id": lastRoomId + 1,
+        "name": req.body.roomName,
         "expiresAt": expires,
         "teams": req.body.teams
     }).write()){
