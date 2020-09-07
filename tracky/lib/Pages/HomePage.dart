@@ -19,33 +19,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     // Check server status
-    serverConnectionStatus = 0;
-    get(
-      "http://kacpermarcinkiewicz.com:5050/",
-    ).timeout(Duration(seconds: 10)).then((response) {
-      setState(() {
-        if (response.statusCode == 200) {
-          serverConnectionStatus = 1;
-          serverInLan = false;
-        }
-      });
-    }).catchError((e) {
-      get(
-        "http://192.168.1.50:5050/",
-      ).timeout(Duration(seconds: 10)).then((r) {
-        setState(() {
-          if (r.statusCode == 200) {
-            serverConnectionStatus = 1;
-            serverInLan = true;
-          } else
-            serverConnectionStatus = -1;
-        });
-      }).catchError((er) {
-        setState(() {
-          serverConnectionStatus = -1;
-        });
-      });
-    });
+    checkServerStatus();
 
     super.initState();
   }
@@ -128,6 +102,7 @@ class _HomePageState extends State<HomePage> {
                               backgroundColor: Colors.red,
                               textColor: Colors.white);
                         }
+                        checkServerStatus();
                       },
                 padding: EdgeInsets.all(12),
                 child: Text("Server list", style: TextStyle(fontSize: 17)),
@@ -139,5 +114,35 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  void checkServerStatus() {
+    serverConnectionStatus = 0;
+    get(
+      "http://kacpermarcinkiewicz.com:5050/",
+    ).timeout(Duration(seconds: 10)).then((response) {
+      setState(() {
+        if (response.statusCode == 200) {
+          serverConnectionStatus = 1;
+          serverInLan = false;
+        }
+      });
+    }).catchError((e) {
+      get(
+        "http://192.168.1.50:5050/",
+      ).timeout(Duration(seconds: 10)).then((r) {
+        setState(() {
+          if (r.statusCode == 200) {
+            serverConnectionStatus = 1;
+            serverInLan = true;
+          } else
+            serverConnectionStatus = -1;
+        });
+      }).catchError((er) {
+        setState(() {
+          serverConnectionStatus = -1;
+        });
+      });
+    });
   }
 }
