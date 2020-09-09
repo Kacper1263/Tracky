@@ -37,6 +37,23 @@ class _RoomsListState extends State<RoomsList> {
         title: Text("Tracky"),
         centerTitle: true,
         backgroundColor: Colors.grey[850],
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () {
+              setState(() {
+                rooms = null;
+                errorWhileLoading = false;
+              });
+              getRooms().then((value) {
+                setState(() {
+                  rooms = value;
+                });
+              });
+            },
+            tooltip: "Refresh connection",
+          )
+        ],
       ),
       body: Container(
         color: Colors.grey[900],

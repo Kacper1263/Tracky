@@ -33,6 +33,13 @@ class _HomePageState extends State<HomePage> {
         title: Text("Tracky"),
         centerTitle: true,
         backgroundColor: Colors.grey[850],
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () => checkServerStatus(),
+            tooltip: "Refresh connection",
+          )
+        ],
       ),
       body: Container(
         color: Colors.grey[900],
@@ -102,7 +109,6 @@ class _HomePageState extends State<HomePage> {
                               backgroundColor: Colors.red,
                               textColor: Colors.white);
                         }
-                        checkServerStatus();
                       },
                 padding: EdgeInsets.all(12),
                 child: Text("Server list", style: TextStyle(fontSize: 17)),
