@@ -211,74 +211,80 @@ class _GamePageState extends State<GamePage> {
     markers.add(thisPlayer.getMarker());
 
     try {
-      return Scaffold(
-          appBar: AppBar(
-            title: Text(widget.title),
-            centerTitle: true,
-            backgroundColor: Colors.grey[700],
-          ),
-          body: FlutterMap(
-            mapController: mapController,
-            options: MapOptions(
-              center: LatLng(49.952403, 19.878666),
-              zoom: 15.0,
-              maxZoom: 19.3,
+      return WillPopScope(
+        onWillPop: () {
+          // TODO leave API call
+          return Future.value(true);
+        },
+        child: Scaffold(
+            appBar: AppBar(
+              title: Text(widget.title),
+              centerTitle: true,
+              backgroundColor: Colors.grey[700],
             ),
-            layers: [
-              TileLayerOptions(
-                urlTemplate:
-                    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                subdomains: ['a', 'b', 'c'],
-                tileProvider: NonCachingNetworkTileProvider(),
-                maxZoom: 24.0,
+            body: FlutterMap(
+              mapController: mapController,
+              options: MapOptions(
+                center: LatLng(49.952403, 19.878666),
+                zoom: 15.0,
+                maxZoom: 19.3,
               ),
-              MarkerLayerOptions(markers: markers)
-            ],
-          ),
-          floatingActionButton: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              FloatingActionButton(
-                heroTag: "btn1",
-                onPressed: () {
-                  setState(() {
-                    thisPlayer.name = "You";
-                    thisPlayer.color = Colors.lightBlue[600];
-                  });
-                },
-                tooltip: 'Revive me',
-                child: Icon(Icons.sentiment_satisfied),
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              FloatingActionButton(
-                heroTag: "btn2",
-                onPressed: () {
-                  setState(() {
-                    thisPlayer.name = "You (dead)";
-                    thisPlayer.color = Colors.red;
-                  });
-                },
-                tooltip: 'Kill me',
-                child: Icon(Icons.sentiment_very_dissatisfied),
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              FloatingActionButton(
-                heroTag: "btn3",
-                onPressed: () {
-                  setState(() {
-                    getLocation();
-                    findMe();
-                  });
-                },
-                tooltip: 'Find me',
-                child: Icon(Icons.gps_fixed),
-              ),
-            ],
-          ));
+              layers: [
+                TileLayerOptions(
+                  urlTemplate:
+                      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  subdomains: ['a', 'b', 'c'],
+                  tileProvider: NonCachingNetworkTileProvider(),
+                  maxZoom: 24.0,
+                ),
+                MarkerLayerOptions(markers: markers)
+              ],
+            ),
+            floatingActionButton: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                FloatingActionButton(
+                  heroTag: "btn1",
+                  onPressed: () {
+                    setState(() {
+                      thisPlayer.name = "You";
+                      thisPlayer.color = Colors.lightBlue[600];
+                    });
+                  },
+                  tooltip: 'Revive me',
+                  child: Icon(Icons.sentiment_satisfied),
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                FloatingActionButton(
+                  heroTag: "btn2",
+                  onPressed: () {
+                    setState(() {
+                      thisPlayer.name = "You (dead)";
+                      thisPlayer.color = Colors.red;
+                    });
+                  },
+                  tooltip: 'Kill me',
+                  child: Icon(Icons.sentiment_very_dissatisfied),
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                FloatingActionButton(
+                  heroTag: "btn3",
+                  onPressed: () {
+                    setState(() {
+                      getLocation();
+                      findMe();
+                    });
+                  },
+                  tooltip: 'Find me',
+                  child: Icon(Icons.gps_fixed),
+                ),
+              ],
+            )),
+      );
     } catch (e) {
       Fluttertoast.showToast(
           msg: "Error: $e",
