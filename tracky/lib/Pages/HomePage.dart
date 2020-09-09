@@ -71,7 +71,8 @@ class _HomePageState extends State<HomePage> {
             ),
             SizedBox(height: 40),
             TextField(
-              keyboardType: TextInputType.visiblePassword,
+              keyboardType: TextInputType.text,
+              textCapitalization: TextCapitalization.sentences,
               style: TextStyle(color: Colors.white),
               controller: nicknameController,
               decoration: InputDecoration(
@@ -123,7 +124,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void checkServerStatus() {
-    serverConnectionStatus = 0;
+    setState(() => serverConnectionStatus = 0);
+
     get(
       "http://kacpermarcinkiewicz.com:5050/",
     ).timeout(Duration(seconds: 10)).then((response) {

@@ -29,6 +29,7 @@ class _GamePageState extends State<GamePage> {
   var thisPlayer = new Player(
     name: "You",
     color: Colors.lightBlue[600],
+    icon: "thisPlayer",
     location: LatLng(49.952403, 19.878666),
   );
 
@@ -73,6 +74,8 @@ class _GamePageState extends State<GamePage> {
 
     data = widget.arguments;
 
+    thisPlayer.color = HexColor(data["teamColor"]);
+
     mapController = MapController();
     timer = Timer.periodic(
       Duration(seconds: 5),
@@ -107,9 +110,10 @@ class _GamePageState extends State<GamePage> {
                 playersToAdd.add(
                   new Player(
                     name: player["name"],
-                    color: team["name"] != data["team"]
-                        ? Colors.red
-                        : Colors.green,
+                    color: HexColor(team["color"]),
+                    icon: team["name"] != data["team"] // Check is in my team
+                        ? "enemy"
+                        : "normal",
                     location: LatLng(
                       double.parse(player["latitude"]),
                       double.parse(player["longitude"]),
@@ -190,10 +194,14 @@ class _GamePageState extends State<GamePage> {
   }
 
   void updatePlayerLocation() {
-    setState(() {
-      thisPlayer.getMarker().point.latitude = _locationData.latitude;
-      thisPlayer.getMarker().point.longitude = _locationData.longitude;
-    });
+    if (mounted) {
+      setState(() {
+        thisPlayer.getMarker().point.latitude = _locationData.latitude;
+        thisPlayer.getMarker().point.longitude = _locationData.longitude;
+      });
+    } else {
+      timer?.cancel();
+    }
   }
 
   void findMe() {
@@ -201,6 +209,40 @@ class _GamePageState extends State<GamePage> {
       LatLng(_locationData.latitude, _locationData.longitude),
       mapController.zoom,
     );
+  }
+
+  void leaveGame() async {
+    String url;
+    if (data["serverInLan"])
+      url = "http://192.168.1.50:5050/api/v1/room/leave/${data["roomId"]}";
+    else
+      url =
+          "http://kacpermarcinkiewicz.com:5050/api/v1/room/leave/${data["roomId"]}";
+
+    try {
+      var response = await post(url, body: {
+        "playerName": data["nickname"],
+        "teamName": data["team"],
+      });
+
+      if (response.statusCode != 200) {
+        Fluttertoast.showToast(
+            msg: "Error while leaving room: ${response.body}",
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: Colors.red,
+            textColor: Colors.white);
+        return;
+      }
+
+      return;
+    } catch (e) {
+      Fluttertoast.showToast(
+          msg: "Error while leaving room: $e",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red,
+          textColor: Colors.white);
+      return;
+    }
   }
 
   @override
@@ -213,7 +255,7 @@ class _GamePageState extends State<GamePage> {
     try {
       return WillPopScope(
         onWillPop: () {
-          // TODO leave API call
+          leaveGame();
           return Future.value(true);
         },
         child: Scaffold(

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
+import 'package:tracky/Classes.dart';
 
 class RoomsList extends StatefulWidget {
   final Object arguments;
@@ -88,10 +89,21 @@ class _RoomsListState extends State<RoomsList> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
+                                Center(
+                                  child: Text(
+                                    double.parse(rooms[index]["expiresIn"]) >
+                                            170
+                                        ? "Never expires"
+                                        : "Expires in: ${rooms[index]["expiresIn"]}h",
+                                    style: TextStyle(
+                                        fontSize: 14, color: Colors.white),
+                                  ),
+                                ),
                                 SizedBox(height: 15),
                                 ListView.builder(
                                   shrinkWrap: true,
                                   itemCount: rooms[index]["teams"].length,
+                                  physics: NeverScrollableScrollPhysics(),
                                   itemBuilder: (ct, i) {
                                     return RaisedButton(
                                         onPressed: () async {
@@ -108,8 +120,10 @@ class _RoomsListState extends State<RoomsList> {
                                                 "nickname": data["nickname"],
                                                 "team": rooms[index]["teams"][i]
                                                     ["name"],
+                                                "teamColor": rooms[index]
+                                                    ["teams"][i]["color"],
                                                 "serverInLan":
-                                                    data["serverInLan"]
+                                                    data["serverInLan"],
                                               },
                                             );
                                           }
@@ -179,6 +193,13 @@ class _RoomsListState extends State<RoomsList> {
       url = "http://kacpermarcinkiewicz.com:5050/api/v1/room/join/$id";
 
     try {
+      Fluttertoast.showToast(
+        msg: "Joining team: $team. Please wait",
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: Colors.grey[700],
+        textColor: Colors.white,
+      );
+
       var response = await post(url, body: {
         "playerName": data["nickname"],
         "teamName": team,

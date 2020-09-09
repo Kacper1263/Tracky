@@ -38,10 +38,23 @@ router.get("/all", (req, res) => {
     // Check for expired rooms and players
     RemoveExpiredRoomsAndPlayers()
 
+    var roomsWithExpireTime = []
+
+    db.get("rooms").value().forEach(room => {
+        roomsWithExpireTime.push({
+            "id": room.id,
+            "expiresAt": room.expiresAt,
+            "name": room.name,
+            "showEnemyTeam": room.showEnemyTeam,
+            "expiresIn": ExpiresInHours(room.expiresAt),
+            "teams": room.teams
+        })
+    });
+
     res.status(200).send({
         success: "true",
         message: "OK",
-        rooms: db.get("rooms").value()
+        rooms: roomsWithExpireTime
     })
 })
 
@@ -68,13 +81,14 @@ router.post("/create", (req, res) => {
         "id": lastRoomId + 1,
         "name": req.body.roomName,
         "expiresAt": expires,
+        "showEnemyTeam": req.body.showEnemyTeam,
         "teams": req.body.teams
     }).write()){
         return res.status(200).send({
             success: "true",
             message: "Created room with id " + (lastRoomId + 1),
             newRoomId: lastRoomId + 1,
-            expiresIn: expiresIn + "h"
+            expiresIn: expiresIn
         })
     }
     else{
@@ -159,6 +173,7 @@ router.post('/join/:id', (req, res) => {
             db.get("rooms").get(roomId).get("teams").get(teamId).get("players").push({
                 "name": req.body.playerName,
                 "lastSeen": Date.now(),
+                "icon": req.body.icon,
                 "latitude": "0",
                 "longitude": "0"
             }).write()
@@ -226,7 +241,7 @@ router.post('/:id', (req, res) => {
 })
 
 // Remove player from team on room ID
-router.delete('/leave/:id', (req, res) => {
+router.post('/leave/:id', (req, res) => {
     db.read();
 
     const id = parseInt(req.params.id, 10);

@@ -7,11 +7,13 @@ import 'CustomWidgets/OutlineText.dart';
 class Player {
   String name;
   Color color;
+  String icon;
   LatLng location;
 
   Player({
     this.name,
     this.color,
+    this.icon,
     this.location,
   });
 
@@ -27,7 +29,7 @@ class Player {
               child: OutlineText(this.name),
             ),
             Icon(
-              Icons.radio_button_checked,
+              NamedIcons.getIconByName(this.icon),
               color: this.color,
               size: 35,
             ),
@@ -53,3 +55,24 @@ class ServerRoom {
 }
 
 class ServerTeam {}
+
+class NamedIcons {
+  static var icons = <String, IconData>{
+    "thisPlayer": Icons.arrow_drop_down_circle,
+    "normal": Icons.radio_button_checked,
+    "enemy": Icons.radio_button_unchecked,
+    "dead": Icons.sentiment_very_dissatisfied,
+  };
+
+  static IconData getIconByName(final String iconName) {
+    return icons[iconName];
+  }
+}
+
+class HexColor extends Color {
+  static int _getColorFromHex(String hexColor) {
+    return int.parse(hexColor, radix: 16);
+  }
+
+  HexColor(final String hexColor) : super(_getColorFromHex(hexColor));
+}
