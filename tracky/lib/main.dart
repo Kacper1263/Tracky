@@ -17,6 +17,7 @@ void main() {
   //HttpOverrides.global = new MyHttpOverrides(); // Fix cert errors
   runApp(MaterialApp(
     title: 'Tracky',
+    color: Colors.grey[850],
     theme: ThemeData(
         primarySwatch: Colors.blue,
         // This makes the visual density adapt to the platform that you run
