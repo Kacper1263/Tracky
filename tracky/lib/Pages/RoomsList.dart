@@ -75,77 +75,58 @@ class _RoomsListState extends State<RoomsList> {
                     itemBuilder: (BuildContext ctx, int index) {
                       return Card(
                         color: Colors.grey[700],
-                        child: ListTile(
-                          title: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              SizedBox(height: 15),
-                              Center(
-                                child: Text(
-                                  "ID ${rooms[index]["id"]}: ${rooms[index]["name"]}",
-                                  style: TextStyle(
-                                      fontSize: 20, color: Colors.white),
-                                ),
-                              ),
-                              SizedBox(height: 15),
-                              RaisedButton(
-                                  onPressed: () async {
-                                    bool joined = await joinRoom(
-                                        rooms[index]["id"],
-                                        rooms[index]["teams"][0]["name"]);
-
-                                    if (joined) {
-                                      Navigator.pushReplacementNamed(
-                                        context,
-                                        '/gamePage',
-                                        arguments: {
-                                          "roomId": rooms[index]["id"],
-                                          "nickname": data["nickname"],
-                                          "team": rooms[index]["teams"][0]
-                                              ["name"],
-                                          "serverInLan": data["serverInLan"]
-                                        },
-                                      );
-                                    }
-                                  },
-                                  padding: EdgeInsets.all(12),
-                                  child: Text(
-                                      "Join: ${rooms[index]["teams"][0]["name"]} (${(rooms[index]["teams"][0]["players"].length)})",
-                                      style: TextStyle(fontSize: 17)),
-                                  color: Colors.grey[800],
-                                  textColor: Colors.white,
-                                  disabledColor: Colors.grey[800],
-                                  disabledTextColor: Colors.grey[700]),
-                              RaisedButton(
-                                  onPressed: () async {
-                                    bool joined = await joinRoom(
-                                        rooms[index]["id"],
-                                        rooms[index]["teams"][1]["name"]);
-
-                                    if (joined) {
-                                      Navigator.pushReplacementNamed(
-                                        context,
-                                        '/gamePage',
-                                        arguments: {
-                                          "roomId": rooms[index]["id"],
-                                          "nickname": data["nickname"],
-                                          "team": rooms[index]["teams"][1]
-                                              ["name"],
-                                          "serverInLan": data["serverInLan"]
-                                        },
-                                      );
-                                    }
-                                  },
-                                  padding: EdgeInsets.all(12),
-                                  child: Text(
-                                      "Join: ${rooms[index]["teams"][1]["name"]} (${(rooms[index]["teams"][1]["players"].length)})",
-                                      style: TextStyle(fontSize: 17)),
-                                  color: Colors.grey[800],
-                                  textColor: Colors.white,
-                                  disabledColor: Colors.grey[800],
-                                  disabledTextColor: Colors.grey[700]),
-                            ],
+                        child: ExpansionTile(
+                          title: Center(
+                            child: Text(
+                              "ID ${rooms[index]["id"]}: ${rooms[index]["name"]} ",
+                              style:
+                                  TextStyle(fontSize: 20, color: Colors.white),
+                            ),
                           ),
+                          childrenPadding: EdgeInsets.fromLTRB(10, 0, 10, 10),
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                SizedBox(height: 15),
+                                ListView.builder(
+                                  shrinkWrap: true,
+                                  itemCount: rooms[index]["teams"].length,
+                                  itemBuilder: (ct, i) {
+                                    return RaisedButton(
+                                        onPressed: () async {
+                                          bool joined = await joinRoom(
+                                              rooms[index]["id"],
+                                              rooms[index]["teams"][i]["name"]);
+
+                                          if (joined) {
+                                            Navigator.pushReplacementNamed(
+                                              context,
+                                              '/gamePage',
+                                              arguments: {
+                                                "roomId": rooms[index]["id"],
+                                                "nickname": data["nickname"],
+                                                "team": rooms[index]["teams"][i]
+                                                    ["name"],
+                                                "serverInLan":
+                                                    data["serverInLan"]
+                                              },
+                                            );
+                                          }
+                                        },
+                                        padding: EdgeInsets.all(12),
+                                        child: Text(
+                                            "Join: ${rooms[index]["teams"][i]["name"]} (${(rooms[index]["teams"][i]["players"].length)})",
+                                            style: TextStyle(fontSize: 17)),
+                                        color: Colors.grey[800],
+                                        textColor: Colors.white,
+                                        disabledColor: Colors.grey[800],
+                                        disabledTextColor: Colors.grey[700]);
+                                  },
+                                )
+                              ],
+                            ),
+                          ],
                         ),
                       );
                     },
