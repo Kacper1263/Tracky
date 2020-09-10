@@ -38,6 +38,17 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.refresh),
             onPressed: () => checkServerStatus(),
             tooltip: "Refresh connection",
+          ),
+          IconButton(
+            icon: Icon(Icons.info),
+            onPressed: () => showAboutDialog(
+              context: context,
+              applicationIcon: FlutterLogo(),
+              applicationVersion: "0.8.0_alpha",
+              applicationLegalese:
+                  "Tracky - ASG team tracker. \Licence: MIT \nSource on github: Kacper1263/tracky",
+            ),
+            tooltip: "Refresh connection",
           )
         ],
       ),

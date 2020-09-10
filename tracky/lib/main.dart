@@ -19,15 +19,15 @@ void main() {
     title: 'Tracky',
     color: Colors.grey[850],
     theme: ThemeData(
-        primarySwatch: Colors.blue,
-        // This makes the visual density adapt to the platform that you run
-        // the app on. For desktop platforms, the controls will be smaller and
-        // closer together (more dense) than on mobile platforms.
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        textTheme: TextTheme(
-          bodyText1: TextStyle(color: Colors.white),
-          bodyText2: TextStyle(color: Colors.white),
-        )),
+      primarySwatch: Colors.blue,
+      // This makes the visual density adapt to the platform that you run
+      // the app on. For desktop platforms, the controls will be smaller and
+      // closer together (more dense) than on mobile platforms.
+      visualDensity: VisualDensity.adaptivePlatformDensity,
+      textTheme: TextTheme(
+        bodyText1: TextStyle(color: Colors.white),
+      ),
+    ),
     initialRoute: '/',
     // routes: {
     //   '/': (context) => HomePage(),
