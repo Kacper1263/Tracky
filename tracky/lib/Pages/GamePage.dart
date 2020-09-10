@@ -101,6 +101,8 @@ class _GamePageState extends State<GamePage> {
           List<dynamic> teams = response["teams"];
           List<Player> playersToAdd = new List<Player>();
 
+          if (teams == null) return;
+
           teams.forEach((team) {
             List<dynamic> players = team["players"];
             players.forEach((player) {
@@ -329,7 +331,7 @@ class _GamePageState extends State<GamePage> {
       );
     } catch (e) {
       Fluttertoast.showToast(
-          msg: "Error: $e",
+          msg: "View error: $e",
           toastLength: Toast.LENGTH_LONG,
           backgroundColor: Colors.red,
           textColor: Colors.white,

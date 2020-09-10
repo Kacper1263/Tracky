@@ -46,7 +46,7 @@ class _HomePageState extends State<HomePage> {
               applicationIcon: FlutterLogo(),
               applicationVersion: "0.8.0_alpha",
               applicationLegalese:
-                  "Tracky - ASG team tracker. \Licence: MIT \nSource on github: Kacper1263/tracky",
+                  "Tracky - ASG team tracker \nby Kacper Marcinkiewicz \n\nLicence: MIT \nSource on github: Kacper1263/tracky",
             ),
             tooltip: "Refresh connection",
           )
