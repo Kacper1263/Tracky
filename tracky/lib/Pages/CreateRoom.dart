@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http/http.dart';
 
 class CreateRoom extends StatefulWidget {
   final Object arguments;
@@ -10,11 +13,19 @@ class CreateRoom extends StatefulWidget {
 }
 
 class _CreateRoomState extends State<CreateRoom> {
-  TextEditingController serverNameController = new TextEditingController();
+  Map data;
+  TextEditingController roomNameController = new TextEditingController();
   List<TextEditingController> textControllers =
       new List<TextEditingController>();
   bool showEnemyTeam = false;
+  bool sending = false;
   List teams = [];
+
+  @override
+  void initState() {
+    data = widget.arguments;
+    super.initState();
+  }
 
   void addTeam() {
     teams.add({
@@ -22,6 +33,21 @@ class _CreateRoomState extends State<CreateRoom> {
       "color": "",
       "players": [],
     });
+  }
+
+  bool validateData() {
+    bool noProblems = true;
+
+    if (teams.length < 1) noProblems = false;
+
+    teams.forEach((team) {
+      if (team["name"].toString().isEmpty || team["color"].toString().isEmpty) {
+        noProblems = false;
+        return false;
+      }
+    });
+
+    return noProblems;
   }
 
   @override
@@ -38,13 +64,13 @@ class _CreateRoomState extends State<CreateRoom> {
         child: ListView(
           children: [
             SizedBox(height: 15),
-            Text("Server name ", style: TextStyle(color: Colors.white)),
+            Text("Room name ", style: TextStyle(color: Colors.white)),
             SizedBox(height: 5),
             TextField(
               keyboardType: TextInputType.text,
               textCapitalization: TextCapitalization.sentences,
               style: TextStyle(color: Colors.white),
-              controller: serverNameController,
+              controller: roomNameController,
               decoration: InputDecoration(
                 enabledBorder: OutlineInputBorder(
                     borderSide: BorderSide(color: Colors.grey[200])),
@@ -52,7 +78,7 @@ class _CreateRoomState extends State<CreateRoom> {
                     borderSide: BorderSide(color: Colors.grey[600])),
                 border: OutlineInputBorder(
                     borderSide: BorderSide(color: Colors.grey[200])),
-                hintText: 'Enter server name',
+                hintText: 'Enter room name',
                 hintStyle: TextStyle(color: Colors.grey[500]),
               ),
             ),
@@ -146,6 +172,7 @@ class _CreateRoomState extends State<CreateRoom> {
                         runSpacing: 10,
                         children: [
                           FloatingActionButton(
+                            heroTag: "1-$index",
                             onPressed: () {
                               setState(() {
                                 teams[index]["color"] =
@@ -165,6 +192,7 @@ class _CreateRoomState extends State<CreateRoom> {
                             ),
                           ),
                           FloatingActionButton(
+                            heroTag: "2-$index",
                             onPressed: () {
                               setState(() {
                                 teams[index]["color"] =
@@ -184,6 +212,7 @@ class _CreateRoomState extends State<CreateRoom> {
                             ),
                           ),
                           FloatingActionButton(
+                            heroTag: "3-$index",
                             onPressed: () {
                               setState(() {
                                 teams[index]["color"] =
@@ -203,6 +232,7 @@ class _CreateRoomState extends State<CreateRoom> {
                             ),
                           ),
                           FloatingActionButton(
+                            heroTag: "4-$index",
                             onPressed: () {
                               setState(() {
                                 teams[index]["color"] =
@@ -222,6 +252,7 @@ class _CreateRoomState extends State<CreateRoom> {
                             ),
                           ),
                           FloatingActionButton(
+                            heroTag: "5-$index",
                             onPressed: () {
                               setState(() {
                                 teams[index]["color"] =
@@ -241,6 +272,7 @@ class _CreateRoomState extends State<CreateRoom> {
                             ),
                           ),
                           FloatingActionButton(
+                            heroTag: "6-$index",
                             onPressed: () {
                               setState(() {
                                 teams[index]["color"] =
@@ -258,7 +290,27 @@ class _CreateRoomState extends State<CreateRoom> {
                                     )
                                   : BorderSide.none,
                             ),
-                          )
+                          ),
+                          FloatingActionButton(
+                            heroTag: "7-$index",
+                            onPressed: () {
+                              setState(() {
+                                teams[index]["color"] =
+                                    Colors.yellow.value.toRadixString(16);
+                              });
+                            },
+                            backgroundColor: Colors.yellow,
+                            shape: CircleBorder(
+                              side: teams[index]["color"] ==
+                                      Colors.yellow.value.toRadixString(16)
+                                  ? BorderSide(
+                                      color: Colors.red,
+                                      width: 3,
+                                      style: BorderStyle.solid,
+                                    )
+                                  : BorderSide.none,
+                            ),
+                          ),
                         ],
                       ),
                       SizedBox(height: 20),
@@ -282,16 +334,88 @@ class _CreateRoomState extends State<CreateRoom> {
               },
             ),
             SizedBox(height: 20),
-            RaisedButton(
-                onPressed: () {
-                  print(textControllers.length);
-                },
-                padding: EdgeInsets.all(12),
-                child: Text("Create room", style: TextStyle(fontSize: 20)),
-                color: Colors.lightGreen,
-                textColor: Colors.white,
-                disabledColor: Colors.grey[800],
-                disabledTextColor: Colors.grey[700])
+            sending
+                ? CircularProgressIndicator()
+                : RaisedButton(
+                    onPressed: () async {
+                      setState(() => sending = true);
+                      String url;
+                      if (data["serverInLan"])
+                        url = "http://192.168.1.50:5050/api/v1/room/create";
+                      else
+                        url =
+                            "http://kacpermarcinkiewicz.com:5050/api/v1/room/create";
+
+                      if (!validateData()) {
+                        Fluttertoast.showToast(
+                            msg:
+                                "One or more teams have empty name or unselected color or you don't create any team",
+                            toastLength: Toast.LENGTH_LONG,
+                            backgroundColor: Colors.red,
+                            textColor: Colors.white);
+                        setState(() => sending = false);
+                        return;
+                      } else {
+                        Fluttertoast.showToast(
+                          msg: "Creating room. Please wait",
+                          toastLength: Toast.LENGTH_LONG,
+                          backgroundColor: Colors.grey[700],
+                          textColor: Colors.white,
+                        );
+
+                        try {
+                          var response = await post(url, body: {
+                            "roomName": roomNameController.text,
+                            "showEnemyTeam": showEnemyTeam.toString(),
+                            "teams": json.encode(teams)
+                          }).timeout(Duration(seconds: 10));
+
+                          if (response.statusCode == 200) {
+                            Fluttertoast.showToast(
+                              msg: "Room created!",
+                              toastLength: Toast.LENGTH_LONG,
+                              backgroundColor: Colors.green,
+                              textColor: Colors.white,
+                            );
+                            Navigator.pop(context);
+                            Navigator.pushReplacementNamed(
+                              context,
+                              '/roomsList',
+                              arguments: {
+                                "serverInLan": data["serverInLan"],
+                                "nickname": data["nickname"]
+                              },
+                            );
+                            return;
+                          } else {
+                            Fluttertoast.showToast(
+                                msg:
+                                    "Error while creating room: ${response.body}",
+                                toastLength: Toast.LENGTH_LONG,
+                                backgroundColor: Colors.red,
+                                textColor: Colors.white);
+                            setState(() => sending = false);
+                            return;
+                          }
+                        } catch (e) {
+                          Fluttertoast.showToast(
+                              msg: "Error while creating room: $e",
+                              toastLength: Toast.LENGTH_LONG,
+                              backgroundColor: Colors.red,
+                              textColor: Colors.white);
+                          setState(() => sending = false);
+                          return;
+                        }
+                      }
+                    },
+                    padding: EdgeInsets.all(12),
+                    child: Text("Create room", style: TextStyle(fontSize: 20)),
+                    color: Colors.lightGreen,
+                    textColor: Colors.white,
+                    disabledColor: Colors.grey[800],
+                    disabledTextColor: Colors.grey[700],
+                  ),
+            SizedBox(height: 10)
           ],
         ),
       ),

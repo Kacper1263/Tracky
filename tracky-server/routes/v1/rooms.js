@@ -17,6 +17,7 @@ apiPort = cfg.apiPort
 //#region db settings
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync') 
+const { json } = require('body-parser')
 const adapter = new FileSync(`${databaseName}.json`)
 const db = low(adapter)
 //#endregion
@@ -82,7 +83,7 @@ router.post("/create", (req, res) => {
         "name": req.body.roomName,
         "expiresAt": expires,
         "showEnemyTeam": req.body.showEnemyTeam,
-        "teams": req.body.teams
+        "teams": JSON.parse(req.body.teams)
     }).write()){
         return res.status(200).send({
             success: "true",
