@@ -92,7 +92,8 @@ class _CreateRoomState extends State<CreateRoom> {
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
               itemBuilder: (context, index) {
-                textControllers.add(new TextEditingController());
+                if (textControllers.length < teams.length)
+                  textControllers.add(new TextEditingController());
                 return Card(
                   color: Colors.grey[700],
                   child: ExpansionTile(
@@ -137,7 +138,9 @@ class _CreateRoomState extends State<CreateRoom> {
             ),
             SizedBox(height: 20),
             RaisedButton(
-                onPressed: () {},
+                onPressed: () {
+                  print(textControllers.length);
+                },
                 padding: EdgeInsets.all(12),
                 child: Text("Create room", style: TextStyle(fontSize: 20)),
                 color: Colors.lightGreen,
