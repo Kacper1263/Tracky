@@ -97,6 +97,7 @@ class _CreateRoomState extends State<CreateRoom> {
                 return Card(
                   color: Colors.grey[700],
                   child: ExpansionTile(
+                    expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
                     onExpansionChanged: (value) {
                       setState(() {
                         textControllers[index].text = teams[index]["name"];
@@ -131,6 +132,150 @@ class _CreateRoomState extends State<CreateRoom> {
                           });
                         },
                       ),
+                      SizedBox(height: 15),
+                      Center(
+                        child: Text(
+                          "Select team color",
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                      ),
+                      SizedBox(height: 15),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 20,
+                        runSpacing: 10,
+                        children: [
+                          FloatingActionButton(
+                            onPressed: () {
+                              setState(() {
+                                teams[index]["color"] =
+                                    Colors.green.value.toRadixString(16);
+                              });
+                            },
+                            backgroundColor: Colors.green,
+                            shape: CircleBorder(
+                              side: teams[index]["color"] ==
+                                      Colors.green.value.toRadixString(16)
+                                  ? BorderSide(
+                                      color: Colors.yellow,
+                                      width: 3,
+                                      style: BorderStyle.solid,
+                                    )
+                                  : BorderSide.none,
+                            ),
+                          ),
+                          FloatingActionButton(
+                            onPressed: () {
+                              setState(() {
+                                teams[index]["color"] =
+                                    Colors.red.value.toRadixString(16);
+                              });
+                            },
+                            backgroundColor: Colors.red,
+                            shape: CircleBorder(
+                              side: teams[index]["color"] ==
+                                      Colors.red.value.toRadixString(16)
+                                  ? BorderSide(
+                                      color: Colors.yellow,
+                                      width: 3,
+                                      style: BorderStyle.solid,
+                                    )
+                                  : BorderSide.none,
+                            ),
+                          ),
+                          FloatingActionButton(
+                            onPressed: () {
+                              setState(() {
+                                teams[index]["color"] =
+                                    Colors.blue.value.toRadixString(16);
+                              });
+                            },
+                            backgroundColor: Colors.blue,
+                            shape: CircleBorder(
+                              side: teams[index]["color"] ==
+                                      Colors.blue.value.toRadixString(16)
+                                  ? BorderSide(
+                                      color: Colors.yellow,
+                                      width: 3,
+                                      style: BorderStyle.solid,
+                                    )
+                                  : BorderSide.none,
+                            ),
+                          ),
+                          FloatingActionButton(
+                            onPressed: () {
+                              setState(() {
+                                teams[index]["color"] =
+                                    Colors.purple.value.toRadixString(16);
+                              });
+                            },
+                            backgroundColor: Colors.purple,
+                            shape: CircleBorder(
+                              side: teams[index]["color"] ==
+                                      Colors.purple.value.toRadixString(16)
+                                  ? BorderSide(
+                                      color: Colors.yellow,
+                                      width: 3,
+                                      style: BorderStyle.solid,
+                                    )
+                                  : BorderSide.none,
+                            ),
+                          ),
+                          FloatingActionButton(
+                            onPressed: () {
+                              setState(() {
+                                teams[index]["color"] =
+                                    Colors.black.value.toRadixString(16);
+                              });
+                            },
+                            backgroundColor: Colors.black,
+                            shape: CircleBorder(
+                              side: teams[index]["color"] ==
+                                      Colors.black.value.toRadixString(16)
+                                  ? BorderSide(
+                                      color: Colors.yellow,
+                                      width: 3,
+                                      style: BorderStyle.solid,
+                                    )
+                                  : BorderSide.none,
+                            ),
+                          ),
+                          FloatingActionButton(
+                            onPressed: () {
+                              setState(() {
+                                teams[index]["color"] =
+                                    Colors.pink[300].value.toRadixString(16);
+                              });
+                            },
+                            backgroundColor: Colors.pink[300],
+                            shape: CircleBorder(
+                              side: teams[index]["color"] ==
+                                      Colors.pink[300].value.toRadixString(16)
+                                  ? BorderSide(
+                                      color: Colors.yellow,
+                                      width: 3,
+                                      style: BorderStyle.solid,
+                                    )
+                                  : BorderSide.none,
+                            ),
+                          )
+                        ],
+                      ),
+                      SizedBox(height: 20),
+                      RaisedButton(
+                          onPressed: () {
+                            setState(() {
+                              teams.removeAt(index);
+                              textControllers.removeAt(index);
+                            });
+                          },
+                          padding: EdgeInsets.all(12),
+                          child: Text("Delete this team",
+                              style: TextStyle(fontSize: 20)),
+                          color: Colors.red,
+                          textColor: Colors.white,
+                          disabledColor: Colors.grey[800],
+                          disabledTextColor: Colors.grey[700])
                     ],
                   ),
                 );
