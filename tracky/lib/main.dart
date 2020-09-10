@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tracky/Pages/CreateRoom.dart';
 import 'package:tracky/Pages/HomePage.dart';
 import 'package:tracky/Pages/RoomsList.dart';
 
@@ -41,6 +42,7 @@ void main() {
         '/roomsList': (context) => RoomsList(arguments: settings.arguments),
         '/gamePage': (context) =>
             GamePage(title: "Tracky", arguments: settings.arguments),
+        '/createRoom': (context) => CreateRoom(arguments: settings.arguments),
       };
       WidgetBuilder builder = routes[settings.name];
       return MaterialPageRoute(builder: (ctx) => builder(ctx));

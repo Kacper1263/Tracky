@@ -53,7 +53,19 @@ class _RoomsListState extends State<RoomsList> {
               });
             },
             tooltip: "Refresh connection",
-          )
+          ),
+          IconButton(
+              icon: Icon(Icons.add_circle),
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  '/createRoom',
+                  arguments: {
+                    "serverInLan": data["serverInLan"],
+                    "nickname": data["nickname"]
+                  },
+                );
+              }),
         ],
       ),
       body: Container(
