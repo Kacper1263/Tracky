@@ -125,6 +125,8 @@ class _GamePageState extends State<GamePage> {
         ).timeout(Duration(seconds: 15)).then((res) {
           var response = jsonDecode(res.body);
           List<dynamic> teams = response["teams"];
+          bool showEnemyTeam =
+              response["showEnemyTeam"] == "true" ? true : false;
           List<Player> playersToAdd = new List<Player>();
 
           if (teams == null) return;
@@ -134,7 +136,10 @@ class _GamePageState extends State<GamePage> {
             players.forEach((player) {
               if (player["name"] != data["nickname"] ||
                   (player["name"] == data["nickname"] &&
-                      team["name"] != data["team"]))
+                      team["name"] != data["team"])) if ((team["name"] !=
+                          data["team"] &&
+                      showEnemyTeam) ||
+                  team["name"] == data["team"]) {
                 playersToAdd.add(
                   new Player(
                     name: player["name"],
@@ -148,6 +153,7 @@ class _GamePageState extends State<GamePage> {
                     ),
                   ),
                 );
+              }
             });
           });
           otherPlayers = playersToAdd.sublist(0);

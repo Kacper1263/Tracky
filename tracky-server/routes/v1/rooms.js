@@ -256,7 +256,8 @@ router.post('/:id', (req, res) => {
         return res.status(200).send({
             success: 'true',
             message: 'Room found, updating location and returning players',
-            teams: db.get("rooms").get(roomId).get("teams").value()
+            teams: db.get("rooms").get(roomId).get("teams").value(),
+            showEnemyTeam: db.get("rooms").get(roomId).get("showEnemyTeam").value()
         });
     }
 
