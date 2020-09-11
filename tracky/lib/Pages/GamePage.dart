@@ -122,7 +122,7 @@ class _GamePageState extends State<GamePage> {
             "latitude": _locationData.latitude.toString(),
             "longitude": _locationData.longitude.toString()
           },
-        ).timeout(Duration(seconds: 5)).then((res) {
+        ).timeout(Duration(seconds: 15)).then((res) {
           var response = jsonDecode(res.body);
           List<dynamic> teams = response["teams"];
           List<Player> playersToAdd = new List<Player>();
