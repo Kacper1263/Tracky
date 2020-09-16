@@ -159,15 +159,16 @@ class _RoomsListState extends State<RoomsList> {
                                   ),
                                 )
                               : Container(),
-                          rooms[index]["id"]
+                          roomToSearch == null ||
+                                  roomToSearch.isEmpty ||
+                                  rooms[index]["id"]
                                       .toString()
                                       .toLowerCase()
                                       .contains(roomToSearch.toLowerCase()) ||
                                   rooms[index]["name"]
                                       .toString()
                                       .toLowerCase()
-                                      .contains(roomToSearch.toLowerCase()) ||
-                                  roomToSearch.isEmpty
+                                      .contains(roomToSearch.toLowerCase())
                               ? Card(
                                   color: Colors.grey[700],
                                   child: ExpansionTile(
