@@ -44,10 +44,22 @@ class _RoomsListState extends State<RoomsList> {
   List rooms;
   bool errorWhileLoading = false;
 
+  String roomToSearch = "";
+  TextEditingController roomToSearchController = new TextEditingController();
+
   @override
   void initState() {
     super.initState();
     data = widget.arguments;
+
+    // If page is getting text to paste in search bar, use this text
+    if (data["searchBarText"].toString().isNotEmpty) {
+      setState(() {
+        roomToSearch = data["searchBarText"];
+        roomToSearchController.text = data["searchBarText"];
+      });
+    }
+
     getRooms().then((value) {
       setState(() {
         rooms = value;
@@ -111,75 +123,140 @@ class _RoomsListState extends State<RoomsList> {
                   ))
                 : ListView.builder(
                     itemCount: rooms.length,
+                    shrinkWrap: false,
                     itemBuilder: (BuildContext ctx, int index) {
-                      return Card(
-                        color: Colors.grey[700],
-                        child: ExpansionTile(
-                          title: Center(
-                            child: Text(
-                              "ID ${rooms[index]["id"]}: ${rooms[index]["name"]} ",
-                              style:
-                                  TextStyle(fontSize: 20, color: Colors.white),
-                            ),
-                          ),
-                          childrenPadding: EdgeInsets.fromLTRB(10, 0, 10, 10),
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Center(
-                                  child: Text(
-                                    double.parse(rooms[index]["expiresIn"]) >
-                                            170
-                                        ? "Never expires"
-                                        : "Expires in: ${rooms[index]["expiresIn"]}h",
-                                    style: TextStyle(
-                                        fontSize: 14, color: Colors.white),
+                      return Column(
+                        children: [
+                          // If index == 0 add search bar to list
+                          index == 0
+                              ? Padding(
+                                  padding: const EdgeInsets.all(5.0),
+                                  child: TextField(
+                                    keyboardType: TextInputType.text,
+                                    controller: roomToSearchController,
+                                    textCapitalization:
+                                        TextCapitalization.sentences,
+                                    style: TextStyle(color: Colors.white),
+                                    decoration: InputDecoration(
+                                      enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              color: Colors.grey[200])),
+                                      focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              color: Colors.grey[600])),
+                                      border: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              color: Colors.grey[200])),
+                                      hintText: 'Search room',
+                                      hintStyle:
+                                          TextStyle(color: Colors.grey[500]),
+                                    ),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        roomToSearch = value;
+                                      });
+                                    },
                                   ),
-                                ),
-                                SizedBox(height: 15),
-                                ListView.builder(
-                                  shrinkWrap: true,
-                                  itemCount: rooms[index]["teams"].length,
-                                  physics: NeverScrollableScrollPhysics(),
-                                  itemBuilder: (ct, i) {
-                                    return RaisedButton(
-                                        onPressed: () async {
-                                          bool joined = await joinRoom(
-                                              rooms[index]["id"],
-                                              rooms[index]["teams"][i]["name"]);
-
-                                          if (joined) {
-                                            Navigator.pushReplacementNamed(
-                                              context,
-                                              '/gamePage',
-                                              arguments: {
-                                                "roomId": rooms[index]["id"],
-                                                "nickname": data["nickname"],
-                                                "team": rooms[index]["teams"][i]
-                                                    ["name"],
-                                                "teamColor": rooms[index]
-                                                    ["teams"][i]["color"],
-                                                "serverInLan":
-                                                    data["serverInLan"],
-                                              },
-                                            );
-                                          }
-                                        },
-                                        padding: EdgeInsets.all(12),
-                                        child: Text(
-                                            "Join: ${rooms[index]["teams"][i]["name"]} (${(rooms[index]["teams"][i]["players"].length)})",
-                                            style: TextStyle(fontSize: 17)),
-                                        color: Colors.grey[800],
-                                        textColor: Colors.white,
-                                        disabledColor: Colors.grey[800],
-                                        disabledTextColor: Colors.grey[700]);
-                                  },
                                 )
-                              ],
-                            ),
-                          ],
-                        ),
+                              : Container(),
+                          rooms[index]["id"]
+                                      .toString()
+                                      .toLowerCase()
+                                      .contains(roomToSearch.toLowerCase()) ||
+                                  rooms[index]["name"]
+                                      .toString()
+                                      .toLowerCase()
+                                      .contains(roomToSearch.toLowerCase()) ||
+                                  roomToSearch.isEmpty
+                              ? Card(
+                                  color: Colors.grey[700],
+                                  child: ExpansionTile(
+                                    title: Center(
+                                      child: Text(
+                                        "ID ${rooms[index]["id"]}: ${rooms[index]["name"]} ",
+                                        style: TextStyle(
+                                            fontSize: 20, color: Colors.white),
+                                      ),
+                                    ),
+                                    childrenPadding:
+                                        EdgeInsets.fromLTRB(10, 0, 10, 10),
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          Center(
+                                            child: Text(
+                                              double.parse(rooms[index]
+                                                          ["expiresIn"]) >
+                                                      170
+                                                  ? "Never expires"
+                                                  : "Expires in: ${rooms[index]["expiresIn"]}h",
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                          SizedBox(height: 15),
+                                          ListView.builder(
+                                            shrinkWrap: true,
+                                            itemCount:
+                                                rooms[index]["teams"].length,
+                                            physics:
+                                                NeverScrollableScrollPhysics(),
+                                            itemBuilder: (ct, i) {
+                                              return RaisedButton(
+                                                  onPressed: () async {
+                                                    bool joined =
+                                                        await joinRoom(
+                                                            rooms[index]["id"],
+                                                            rooms[index]
+                                                                    ["teams"][i]
+                                                                ["name"]);
+
+                                                    if (joined) {
+                                                      Navigator
+                                                          .pushReplacementNamed(
+                                                        context,
+                                                        '/gamePage',
+                                                        arguments: {
+                                                          "roomId": rooms[index]
+                                                              ["id"],
+                                                          "nickname":
+                                                              data["nickname"],
+                                                          "team": rooms[index]
+                                                                  ["teams"][i]
+                                                              ["name"],
+                                                          "teamColor":
+                                                              rooms[index]
+                                                                      ["teams"]
+                                                                  [i]["color"],
+                                                          "serverInLan": data[
+                                                              "serverInLan"],
+                                                        },
+                                                      );
+                                                    }
+                                                  },
+                                                  padding: EdgeInsets.all(12),
+                                                  child: Text(
+                                                      "Join: ${rooms[index]["teams"][i]["name"]} (${(rooms[index]["teams"][i]["players"].length)})",
+                                                      style: TextStyle(
+                                                          fontSize: 17)),
+                                                  color: Colors.grey[800],
+                                                  textColor: Colors.white,
+                                                  disabledColor:
+                                                      Colors.grey[800],
+                                                  disabledTextColor:
+                                                      Colors.grey[700]);
+                                            },
+                                          )
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : Container(),
+                        ],
                       );
                     },
                   ),
