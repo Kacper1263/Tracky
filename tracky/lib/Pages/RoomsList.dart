@@ -130,7 +130,8 @@ class _RoomsListState extends State<RoomsList> {
                           // If index == 0 add search bar to list
                           index == 0
                               ? Padding(
-                                  padding: const EdgeInsets.all(5.0),
+                                  padding:
+                                      const EdgeInsets.fromLTRB(5, 15, 5, 10),
                                   child: TextField(
                                     keyboardType: TextInputType.text,
                                     controller: roomToSearchController,
@@ -138,15 +139,20 @@ class _RoomsListState extends State<RoomsList> {
                                         TextCapitalization.sentences,
                                     style: TextStyle(color: Colors.white),
                                     decoration: InputDecoration(
+                                      contentPadding:
+                                          EdgeInsets.fromLTRB(25, 20, 25, 20),
                                       enabledBorder: OutlineInputBorder(
+                                          borderRadius: const BorderRadius.all(
+                                            const Radius.circular(100.0),
+                                          ),
                                           borderSide: BorderSide(
                                               color: Colors.grey[200])),
                                       focusedBorder: OutlineInputBorder(
+                                          borderRadius: const BorderRadius.all(
+                                            const Radius.circular(100.0),
+                                          ),
                                           borderSide: BorderSide(
                                               color: Colors.grey[600])),
-                                      border: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              color: Colors.grey[200])),
                                       hintText: 'Search room',
                                       hintStyle:
                                           TextStyle(color: Colors.grey[500]),
