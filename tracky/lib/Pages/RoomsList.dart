@@ -58,6 +58,9 @@ class _RoomsListState extends State<RoomsList> {
         roomToSearch = data["searchBarText"];
         roomToSearchController.text = data["searchBarText"];
       });
+    } else {
+      roomToSearch = "";
+      roomToSearchController.text = "";
     }
 
     getRooms().then((value) {
@@ -165,15 +168,18 @@ class _RoomsListState extends State<RoomsList> {
                                   ),
                                 )
                               : Container(),
+                          // If search box is not empty or text on room card includes text from search box show this room
                           roomToSearch == null ||
                                   roomToSearch.isEmpty ||
-                                  rooms[index]["id"]
-                                      .toString()
-                                      .toLowerCase()
-                                      .contains(roomToSearch.toLowerCase()) ||
-                                  rooms[index]["name"]
-                                      .toString()
-                                      .toLowerCase()
+                                  // Join room id with room name (add ID text and ":")
+                                  ("ID" +
+                                          rooms[index]["id"]
+                                              .toString()
+                                              .toLowerCase() +
+                                          ": " +
+                                          rooms[index]["name"]
+                                              .toString()
+                                              .toLowerCase())
                                       .contains(roomToSearch.toLowerCase())
                               ? Card(
                                   color: Colors.grey[700],

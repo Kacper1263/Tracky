@@ -397,6 +397,8 @@ class _CreateRoomState extends State<CreateRoom> {
                           }).timeout(Duration(seconds: 10));
 
                           if (response.statusCode == 200) {
+                            var json = jsonDecode(response.body);
+
                             Fluttertoast.showToast(
                               msg: "Room created!",
                               toastLength: Toast.LENGTH_LONG,
@@ -410,7 +412,9 @@ class _CreateRoomState extends State<CreateRoom> {
                               arguments: {
                                 "serverInLan": data["serverInLan"],
                                 "nickname": data["nickname"],
-                                "searchBarText": roomNameController.text
+                                "searchBarText": json["newRoomId"] +
+                                    " " +
+                                    roomNameController.text
                               },
                             );
                             return;
