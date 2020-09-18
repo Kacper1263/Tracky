@@ -172,14 +172,11 @@ class _RoomsListState extends State<RoomsList> {
                           roomToSearch == null ||
                                   roomToSearch.isEmpty ||
                                   // Join room id with room name (add ID text and ":")
-                                  ("ID" +
-                                          rooms[index]["id"]
-                                              .toString()
-                                              .toLowerCase() +
+                                  ("ID " +
+                                          rooms[index]["id"].toString() +
                                           ": " +
-                                          rooms[index]["name"]
-                                              .toString()
-                                              .toLowerCase())
+                                          rooms[index]["name"].toString())
+                                      .toLowerCase()
                                       .contains(roomToSearch.toLowerCase())
                               ? Card(
                                   color: Colors.grey[700],

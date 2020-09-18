@@ -412,8 +412,9 @@ class _CreateRoomState extends State<CreateRoom> {
                               arguments: {
                                 "serverInLan": data["serverInLan"],
                                 "nickname": data["nickname"],
-                                "searchBarText": json["newRoomId"] +
-                                    " " +
+                                "searchBarText": "ID " +
+                                    json["newRoomId"].toString() +
+                                    ": " +
                                     roomNameController.text
                               },
                             );
