@@ -229,7 +229,11 @@ class _RoomsListState extends State<RoomsList> {
                                                               .refresh_outlined,
                                                           color: Colors.white,
                                                         ),
-                                                        onPressed: () {})
+                                                        onPressed: () {
+                                                          refreshRoomTime(
+                                                              rooms[index]
+                                                                  ["id"]);
+                                                        })
                                               ],
                                             ),
                                           ),
@@ -369,6 +373,51 @@ class _RoomsListState extends State<RoomsList> {
     } catch (e) {
       Fluttertoast.showToast(
           msg: "Error while joining team: $e",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red,
+          textColor: Colors.white);
+      return false;
+    }
+  }
+
+  Future<bool> refreshRoomTime(int id) async {
+    String url;
+    if (data["serverInLan"])
+      url = "http://192.168.1.50:5050/api/v1/room/refresh/$id";
+    else
+      url = "http://kacpermarcinkiewicz.com:5050/api/v1/room/refresh/$id";
+
+    Fluttertoast.showToast(
+      msg: "Refreshing room time. Please wait",
+      toastLength: Toast.LENGTH_LONG,
+      backgroundColor: Colors.grey[700],
+      textColor: Colors.white,
+    );
+
+    try {
+      var response = await post(url).timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        Fluttertoast.showToast(
+          msg: "Room expiry time refreshed!",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+
+          // TODO refresh time on screen
+        );
+        return true;
+      } else {
+        Fluttertoast.showToast(
+            msg: "Error while refreshing room time: ${response.body}",
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: Colors.red,
+            textColor: Colors.white);
+        return false;
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+          msg: "Error while refreshing room time: $e",
           toastLength: Toast.LENGTH_LONG,
           backgroundColor: Colors.red,
           textColor: Colors.white);
