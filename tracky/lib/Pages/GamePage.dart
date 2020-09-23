@@ -319,34 +319,34 @@ class _GamePageState extends State<GamePage> {
             floatingActionButton: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                FloatingActionButton(
-                  heroTag: "btn1",
-                  onPressed: () {
-                    setState(() {
-                      thisPlayer.name = "You";
-                      thisPlayer.color = Colors.lightBlue[600];
-                    });
-                  },
-                  tooltip: 'Revive me',
-                  child: Icon(Icons.sentiment_satisfied),
-                ),
-                SizedBox(
-                  height: 10,
-                ),
-                FloatingActionButton(
-                  heroTag: "btn2",
-                  onPressed: () {
-                    setState(() {
-                      thisPlayer.name = "You (dead)";
-                      thisPlayer.color = Colors.red;
-                    });
-                  },
-                  tooltip: 'Kill me',
-                  child: Icon(Icons.sentiment_very_dissatisfied),
-                ),
-                SizedBox(
-                  height: 20,
-                ),
+                // FloatingActionButton(
+                //   heroTag: "btn1",
+                //   onPressed: () {
+                //     setState(() {
+                //       thisPlayer.name = "You";
+                //       thisPlayer.color = Colors.lightBlue[600];
+                //     });
+                //   },
+                //   tooltip: 'Revive me',
+                //   child: Icon(Icons.sentiment_satisfied),
+                // ),
+                // SizedBox(
+                //   height: 10,
+                // ),
+                // FloatingActionButton(
+                //   heroTag: "btn2",
+                //   onPressed: () {
+                //     setState(() {
+                //       thisPlayer.name = "You (dead)";
+                //       thisPlayer.color = Colors.red;
+                //     });
+                //   },
+                //   tooltip: 'Kill me',
+                //   child: Icon(Icons.sentiment_very_dissatisfied),
+                // ),
+                // SizedBox(
+                //   height: 20,
+                // ),
                 FloatingActionButton(
                   heroTag: "btn3",
                   onPressed: () {
