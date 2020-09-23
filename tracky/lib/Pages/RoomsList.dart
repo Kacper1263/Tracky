@@ -225,14 +225,18 @@ class _RoomsListState extends State<RoomsList> {
                                                         tooltip:
                                                             "Refresh the expiry time",
                                                         icon: Icon(
-                                                          Icons
-                                                              .refresh_outlined,
+                                                          Icons.refresh,
                                                           color: Colors.white,
                                                         ),
                                                         onPressed: () {
                                                           refreshRoomTime(
                                                               rooms[index]
                                                                   ["id"]);
+                                                          setState(() {
+                                                            rooms[index][
+                                                                    "expiresIn"] =
+                                                                "48";
+                                                          });
                                                         })
                                               ],
                                             ),
@@ -403,8 +407,6 @@ class _RoomsListState extends State<RoomsList> {
           toastLength: Toast.LENGTH_LONG,
           backgroundColor: Colors.green,
           textColor: Colors.white,
-
-          // TODO refresh time on screen
         );
         return true;
       } else {
