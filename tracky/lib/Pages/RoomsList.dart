@@ -316,7 +316,7 @@ class _RoomsListState extends State<RoomsList> {
       url = "http://kacpermarcinkiewicz.com:5050/api/v1/room/all";
 
     try {
-      var response = await get(url);
+      var response = await get(url).timeout(Duration(seconds: 20));
 
       var json = jsonDecode(response.body);
 

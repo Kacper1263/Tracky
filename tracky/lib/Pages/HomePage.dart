@@ -70,11 +70,12 @@ class _HomePageState extends State<HomePage> {
             onPressed: () => showAboutDialog(
               context: context,
               applicationIcon: FlutterLogo(),
+              applicationName: "Tracky",
               applicationVersion: "0.8.0_alpha",
               applicationLegalese:
                   "Tracky - ASG team tracker \nby Kacper Marcinkiewicz \n\nLicence: MIT \nSource on github: Kacper1263/tracky",
             ),
-            tooltip: "Refresh connection",
+            tooltip: "About app",
           )
         ],
       ),
