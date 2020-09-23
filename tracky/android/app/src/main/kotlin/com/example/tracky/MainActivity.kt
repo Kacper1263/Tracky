@@ -1,4 +1,4 @@
-package com.example.tracky
+package com.kacpermarcinkiewicz.tracky
 
 import io.flutter.embedding.android.FlutterActivity
 

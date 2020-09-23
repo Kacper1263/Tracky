@@ -33,7 +33,7 @@ import 'Pages/GamePage.dart';
 
 void main() {
   runApp(MaterialApp(
-    title: 'Tracky',
+    title: 'Tracky - ASG team tracker',
     color: Colors.grey[850],
     theme: ThemeData(
       primarySwatch: Colors.blue,
