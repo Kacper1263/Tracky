@@ -196,15 +196,41 @@ class _RoomsListState extends State<RoomsList> {
                                             CrossAxisAlignment.stretch,
                                         children: [
                                           Center(
-                                            child: Text(
-                                              double.parse(rooms[index]
-                                                          ["expiresIn"]) >
-                                                      170
-                                                  ? "Never expires"
-                                                  : "Expires in: ${rooms[index]["expiresIn"]}h",
-                                              style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.white),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  double.parse(rooms[index]
+                                                              ["expiresIn"]) >
+                                                          170
+                                                      ? "Never expires"
+                                                      : "Expires in: ${rooms[index]["expiresIn"]}h",
+                                                  style: TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.white),
+                                                ),
+                                                double.parse(rooms[index]
+                                                                ["expiresIn"]) >
+                                                            170 ||
+                                                        double.parse(rooms[
+                                                                    index][
+                                                                "expiresIn"]) ==
+                                                            48
+                                                    ? Container()
+                                                    : IconButton(
+                                                        padding:
+                                                            EdgeInsets.all(0),
+                                                        iconSize: 26,
+                                                        tooltip:
+                                                            "Refresh the expiry time",
+                                                        icon: Icon(
+                                                          Icons
+                                                              .refresh_outlined,
+                                                          color: Colors.white,
+                                                        ),
+                                                        onPressed: () {})
+                                              ],
                                             ),
                                           ),
                                           SizedBox(height: 15),

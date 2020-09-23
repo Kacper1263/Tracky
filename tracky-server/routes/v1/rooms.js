@@ -155,6 +155,48 @@ router.get('/:id', (req, res) => {
     }
 })
 
+// Refresh room expiry time
+router.post('/refresh/:id', (req, res) => {
+    db.read()
+
+    const id = parseInt(req.params.id, 10);
+    
+    var list = db.get("rooms").value();
+    var roomId = list.findIndex(room => room.id === id);
+
+    if(roomId != -1){
+        var room = db.get("rooms").get(roomId).value();
+
+        // When to expire
+        var expires = Date.now();
+        expires = expires + (86400000 * 2)// add 48h in ms
+        
+        if(db.get("rooms").get(roomId).set("expiresAt", expires).write()){
+            var expiresIn = ExpiresInHours(expires)
+    
+            return res.status(200).send({
+                success: 'true',
+                message: 'Room expiry time refreshed',
+                expiresIn: expiresIn,
+                roomId: room.id,
+                teams: room.teams
+            });
+        }
+        else{
+            return res.status(500).send({
+                success: 'false',
+                message: 'Internal error while updating expiry time',
+            });
+        }
+    }
+    else{
+        return res.status(404).send({
+            success: 'false',
+            message: 'Room not found. Wrong ID',
+        });
+    }
+})
+
 // Remove room
 router.delete('/:id', (req, res) => {
     const id = parseInt(req.params.id, 10);
