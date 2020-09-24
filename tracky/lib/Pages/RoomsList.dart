@@ -96,17 +96,19 @@ class _RoomsListState extends State<RoomsList> {
             tooltip: "Refresh connection",
           ),
           IconButton(
-              icon: Icon(Icons.add_circle),
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  '/createRoom',
-                  arguments: {
-                    "serverInLan": data["serverInLan"],
-                    "nickname": data["nickname"]
-                  },
-                );
-              }),
+            icon: Icon(Icons.add_circle),
+            onPressed: () {
+              Navigator.pushNamed(
+                context,
+                '/createRoom',
+                arguments: {
+                  "serverInLan": data["serverInLan"],
+                  "nickname": data["nickname"]
+                },
+              );
+            },
+            tooltip: "Add room",
+          ),
         ],
       ),
       body: Container(
