@@ -56,10 +56,18 @@ class _HomePageState extends State<HomePage> {
             titleText: "IMPORTANT NOTE!",
             descriptionText:
                 '''WARNING: This is alpha version of this app, it may contain bugs etc.
-    
-Data are send via HTTP protocol (NO VIA HTTPS!). Someone can listen to them in public networks!
 
-By clicking agree and using this app you agree to privacy policy.
+You can scroll this page, if it does not fit on the screen.
+
+    
+Data are sent via HTTP protocol (NOT VIA HTTPS!). Someone can access them on public networks!
+
+We require you to provide us with certain personally identifiable information, including but not limited to user location, user nickname. This data will be deleted from our server when the player leaves the room or will be inactive for 5 minutes (time is only checked when someone refreshes the list of rooms or will try to join the room).
+
+
+For now app is not working in background but we will add this in future. Our roadmap is available on GitHub ( https://github.com/users/Kacper1263/projects/1 )  
+
+By clicking agree and using this app you agree to privacy policy available on Google Play Store (on our app page).
               ''',
             okBtnText: "Ok, I agree!", onOkBtn: () {
           Navigator.pop(context);
