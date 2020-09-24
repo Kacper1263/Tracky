@@ -28,6 +28,8 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
 
+import '../Dialogs.dart';
+
 class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
@@ -48,6 +50,20 @@ class _HomePageState extends State<HomePage> {
     checkServerStatus();
 
     super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => Dialogs.infoDialog(
+            context,
+            titleText: "IMPORTANT NOTE!",
+            descriptionText:
+                '''WARNING: This is alpha version of this app, it may contain bugs etc.
+    
+Data are send via HTTP protocol (NO VIA HTTPS!). Someone can listen to them in public networks!
+
+By clicking agree and using this app you agree to privacy policy.
+              ''',
+            okBtnText: "Ok, I agree!", onOkBtn: () {
+          Navigator.pop(context);
+        }));
   }
 
   @override
