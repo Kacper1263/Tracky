@@ -93,4 +93,36 @@ class Dialogs {
           );
         });
   }
+
+  static infoDialog(context,
+      {titleText, descriptionText, onOkBtn, String okBtnText}) {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: Colors.grey[800],
+            title: Center(
+                child: Text(titleText, style: TextStyle(color: Colors.white))),
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: <Widget>[
+                  Text(descriptionText, style: TextStyle(color: Colors.white)),
+                  SizedBox(height: 20),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                child: Text(
+                  okBtnText,
+                  style: TextStyle(color: Colors.white),
+                ),
+                color: Colors.lightGreen,
+                onPressed: onOkBtn,
+              )
+            ],
+          );
+        });
+  }
 }
