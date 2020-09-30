@@ -1,3 +1,4 @@
 tracky-server/node_modules
 tracky/pubspec.lock
 tracky-server/rooms.json
+tracky-server/rooms-logs.json

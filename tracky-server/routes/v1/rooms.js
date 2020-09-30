@@ -46,7 +46,9 @@ const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync') 
 const { json } = require('body-parser')
 const adapter = new FileSync(`${databaseName}.json`)
+const logsAdapter = new FileSync(`${databaseName}-logs.json`)
 const db = low(adapter)
+const logsDb = low(logsAdapter)
 //#endregion
 
 // *****************************
@@ -54,6 +56,7 @@ const db = low(adapter)
 // *****************************
 
 db.defaults({ rooms: [] }).write() //default variables for database
+logsDb.defaults({ logs: [] }).write() //default variables for database
 
 
 // *****************************
@@ -222,6 +225,7 @@ router.delete('/:id', (req, res) => {
 // Join player to team on room ID
 router.post('/join/:id', (req, res) => {
     db.read();
+    logsDb.read()
 
     // Check for expired rooms and players
     RemoveExpiredRoomsAndPlayers()
@@ -246,6 +250,15 @@ router.post('/join/:id', (req, res) => {
                 "icon": req.body.icon,
                 "latitude": "0",
                 "longitude": "0"
+            }).write()
+
+            // log successful join action
+            logsDb.get("logs").push({
+                "nickName": req.body.playerName,
+                "time": new Date().toLocaleString("pl"),
+                "action": "joined",
+                "room": roomId,
+                "team": req.body.teamName
             }).write()
 
             return res.status(200).send({
@@ -314,6 +327,7 @@ router.post('/:id', (req, res) => {
 // Remove player from team on room ID
 router.post('/leave/:id', (req, res) => {
     db.read();
+    logsDb.read();
 
     const id = parseInt(req.params.id, 10);
     
@@ -334,6 +348,15 @@ router.post('/leave/:id', (req, res) => {
 
         if(isInTeam){
             RemovePlayerFromTeam(roomId, teamId, playerToRemove);
+
+            // log successful leave action
+            logsDb.get("logs").push({
+                "nickName": req.body.playerName,
+                "time": new Date().toLocaleString("pl"),
+                "action": "leaved",
+                "room": roomId,
+                "team": req.body.teamName
+            }).write()
 
             return res.status(200).send({
                 success: 'true',
