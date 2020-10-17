@@ -33,10 +33,12 @@ try {
     require('path')
     require('lowdb')
     require('readline-sync')
+    require('https');
 } catch (e) {
     return console.log(`\n   You don't have required packages! \n\n   Use "npm i" to install them! \n\n`)
 }
 
+var https = require('https');
 const express = require('express')
 const bodyParser = require('body-parser')
 const fs = require('fs')
@@ -46,6 +48,9 @@ const readline = require('readline-sync')
 // var adminPassword = randomFromZeroToNine() + randomFromZeroToNine() + randomFromZeroToNine() + randomFromZeroToNine() //Generate 4 random numbers
 var databaseName = "rooms"
 var apiPort = 5000;
+var httpsEnabled = false;
+var privateKey  = ""
+var certificate = ""
 //#endregion
 
 //#region Get data from config
@@ -55,6 +60,9 @@ try {
     //adminPassword = cfg.adminPassword
     databaseName = cfg.databaseName
     apiPort = cfg.apiPort
+    httpsEnabled = cfg.httpsEnabled
+    privateKey = fs.readFileSync(cfg.httpsPrivateKey, 'utf8');
+    certificate = fs.readFileSync(cfg.httpsCertificate, 'utf8');
 } catch (e) {
     //Create config if not exist
     if (!fs.existsSync("./config.json")) {
@@ -62,6 +70,9 @@ try {
             //adminPassword: adminPassword,
             databaseName: databaseName,
             apiPort: apiPort,
+            httpsEnabled: httpsEnabled,
+            httpsPrivateKey: privateKey,
+            httpsCertificate: certificate,
         }
         data = JSON.stringify(data, null, 2)
         fs.writeFileSync("./config.json", data)
@@ -106,7 +117,15 @@ app.use(function (req, res) {
     res.status(404).send({ success: 'false', code: 404, message: "Page not found! Bad API route!" });
 });
 
-
-app.listen(process.env.PORT || apiPort, () => {
-    console.log(`API running on port ${process.env.PORT || apiPort}`)
-});
+if(!httpsEnabled){
+    app.listen(process.env.PORT || apiPort, () => {
+        console.log(`API running on port ${process.env.PORT || apiPort}`)
+    });
+}
+else{
+    var credentials = {key: privateKey, cert: certificate};
+    var httpsServer = https.createServer(credentials, app);
+    httpsServer.listen(process.env.PORT || apiPort, () => {
+        console.log(`API running on port ${process.env.PORT || apiPort} with HTTPS support`)
+    });
+}
