@@ -59,8 +59,6 @@ class _HomePageState extends State<HomePage> {
 
 You can scroll this page, if it does not fit on the screen.
 
-    
-Data are sent via HTTP protocol (NOT VIA HTTPS!). Someone can access them on public networks!
 
 We require you to provide us with certain personally identifiable information, including but not limited to user location, user nickname. This data will be deleted from our server when the player leaves the room or will be inactive for 5 minutes (time is only checked when someone refreshes the list of rooms or will try to join the room).
 
@@ -198,6 +196,16 @@ By clicking agree and using this app you agree to privacy policy available on Go
         }
       });
     }).catchError((e) {
+      print(e);
+      if (e.toString().contains("WRONG_VERSION_NUMBER")) {
+        Fluttertoast.showToast(
+            msg:
+                "Cannot connect to the server. Probably the SSL certificate has expired. Please contact us at slowcast.dev@gmail.com.",
+            toastLength: Toast.LENGTH_LONG,
+            fontSize: 16,
+            backgroundColor: Colors.red,
+            textColor: Colors.white);
+      }
       get(
         "http://192.168.1.50:5050/",
       ).timeout(Duration(seconds: 10)).then((r) {

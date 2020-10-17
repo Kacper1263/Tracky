@@ -24,6 +24,8 @@ SOFTWARE.
 
 */
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:tracky/Pages/CreateRoom.dart';
 import 'package:tracky/Pages/HomePage.dart';
@@ -31,7 +33,20 @@ import 'package:tracky/Pages/RoomsList.dart';
 
 import 'Pages/GamePage.dart';
 
+// Fix for badCertificate error
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
+
 void main() {
+  // Fix for badCertificate error
+  HttpOverrides.global = new MyHttpOverrides();
+
   runApp(MaterialApp(
     title: 'Tracky - ASG team tracker',
     color: Colors.grey[850],
