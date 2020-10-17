@@ -93,7 +93,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
               context: context,
               applicationIcon: FlutterLogo(),
               applicationName: "Tracky",
-              applicationVersion: "0.4.0_alpha",
+              applicationVersion: "0.5.0_alpha",
               applicationLegalese:
                   "Tracky - ASG team tracker \nby Kacper Marcinkiewicz \n\nLicence: MIT \nSource on github: Kacper1263/tracky",
             ),

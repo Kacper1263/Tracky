@@ -1,4 +1,4 @@
 storePassword=<pass>
 keyPassword=<pass>
 keyAlias=key
-storeFile=key.jks
+storeFile=key.jks <-- put key in "app" folder
