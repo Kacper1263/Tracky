@@ -189,7 +189,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
     setState(() => serverConnectionStatus = 0);
 
     get(
-      "http://kacpermarcinkiewicz.com:5050/",
+      "https://kacpermarcinkiewicz.com:5050/",
     ).timeout(Duration(seconds: 10)).then((response) {
       setState(() {
         if (response.statusCode == 200) {

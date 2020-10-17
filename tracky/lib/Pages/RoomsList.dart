@@ -315,7 +315,7 @@ class _RoomsListState extends State<RoomsList> {
     if (data["serverInLan"])
       url = "http://192.168.1.50:5050/api/v1/room/all";
     else
-      url = "http://kacpermarcinkiewicz.com:5050/api/v1/room/all";
+      url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/all";
 
     try {
       var response = await get(url).timeout(Duration(seconds: 20));
@@ -351,7 +351,7 @@ class _RoomsListState extends State<RoomsList> {
     if (data["serverInLan"])
       url = "http://192.168.1.50:5050/api/v1/room/join/$id";
     else
-      url = "http://kacpermarcinkiewicz.com:5050/api/v1/room/join/$id";
+      url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/join/$id";
 
     try {
       Fluttertoast.showToast(
@@ -391,7 +391,7 @@ class _RoomsListState extends State<RoomsList> {
     if (data["serverInLan"])
       url = "http://192.168.1.50:5050/api/v1/room/refresh/$id";
     else
-      url = "http://kacpermarcinkiewicz.com:5050/api/v1/room/refresh/$id";
+      url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/refresh/$id";
 
     Fluttertoast.showToast(
       msg: "Refreshing room time. Please wait",

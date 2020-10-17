@@ -370,7 +370,7 @@ class _CreateRoomState extends State<CreateRoom> {
                         url = "http://192.168.1.50:5050/api/v1/room/create";
                       else
                         url =
-                            "http://kacpermarcinkiewicz.com:5050/api/v1/room/create";
+                            "https://kacpermarcinkiewicz.com:5050/api/v1/room/create";
 
                       if (!validateData()) {
                         Fluttertoast.showToast(

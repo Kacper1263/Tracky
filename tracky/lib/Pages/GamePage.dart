@@ -113,7 +113,7 @@ class _GamePageState extends State<GamePage> {
           url = "http://192.168.1.50:5050/api/v1/room/${data["roomId"]}";
         else
           url =
-              "http://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomId"]}";
+              "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomId"]}";
         post(
           url,
           body: {
@@ -251,7 +251,7 @@ class _GamePageState extends State<GamePage> {
       url = "http://192.168.1.50:5050/api/v1/room/leave/${data["roomId"]}";
     else
       url =
-          "http://kacpermarcinkiewicz.com:5050/api/v1/room/leave/${data["roomId"]}";
+          "https://kacpermarcinkiewicz.com:5050/api/v1/room/leave/${data["roomId"]}";
 
     try {
       var response = await post(url, body: {
