@@ -61,8 +61,10 @@ try {
     databaseName = cfg.databaseName
     apiPort = cfg.apiPort
     httpsEnabled = cfg.httpsEnabled
-    privateKey = fs.readFileSync(cfg.httpsPrivateKey, 'utf8');
-    certificate = fs.readFileSync(cfg.httpsCertificate, 'utf8');
+    if(httpsEnabled){
+        privateKey = fs.readFileSync(cfg.httpsPrivateKey, 'utf8');
+        certificate = fs.readFileSync(cfg.httpsCertificate, 'utf8');
+    }    
 } catch (e) {
     //Create config if not exist
     if (!fs.existsSync("./config.json")) {
