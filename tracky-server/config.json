@@ -1,7 +1,7 @@
 {
   "databaseName": "rooms",
   "apiPort": 5050,
-  "httpsEnabled": true,
+  "httpsEnabled": false,
   "httpsPrivateKey": "sslcert/privkey.pem",
   "httpsCertificate": "sslcert/cert.pem"
 }

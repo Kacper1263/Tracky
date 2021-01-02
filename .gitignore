@@ -1,5 +1,7 @@
 tracky-server/node_modules
 tracky/pubspec.lock
+tracky-server/config.json
 tracky-server/rooms.json
 tracky-server/rooms-logs.json
+tracky-server/info.json
 tracky-server/sslcert/*.pem

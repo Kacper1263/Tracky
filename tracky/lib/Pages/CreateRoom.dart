@@ -28,6 +28,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
+import 'package:tracky/Dialogs.dart';
 
 class CreateRoom extends StatefulWidget {
   final Object arguments;
@@ -41,8 +42,7 @@ class CreateRoom extends StatefulWidget {
 class _CreateRoomState extends State<CreateRoom> {
   Map data;
   TextEditingController roomNameController = new TextEditingController();
-  List<TextEditingController> textControllers =
-      new List<TextEditingController>();
+  List<TextEditingController> textControllers = new List<TextEditingController>();
   bool showEnemyTeam = false;
   bool sending = false;
   List teams = [];
@@ -50,6 +50,19 @@ class _CreateRoomState extends State<CreateRoom> {
   @override
   void initState() {
     data = widget.arguments;
+    if (data["editRoom"] == true) {
+      roomNameController.text = data["roomName"];
+      showEnemyTeam = data["showEnemyTeam"] == "true";
+      List<dynamic> _teams = data["teams"];
+      for (int i = 0; i < _teams.length; i++) {
+        teams.add({
+          "name": _teams[i]["name"],
+          "color": _teams[i]["color"],
+          "players": [],
+        });
+      }
+    }
+
     super.initState();
   }
 
@@ -98,12 +111,9 @@ class _CreateRoomState extends State<CreateRoom> {
               style: TextStyle(color: Colors.white),
               controller: roomNameController,
               decoration: InputDecoration(
-                enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey[200])),
-                focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey[600])),
-                border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey[200])),
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
+                border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
                 hintText: 'Enter room name',
                 hintStyle: TextStyle(color: Colors.grey[500]),
               ),
@@ -126,8 +136,7 @@ class _CreateRoomState extends State<CreateRoom> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Teams: ",
-                    style: TextStyle(color: Colors.white, fontSize: 20)),
+                Text("Teams: ", style: TextStyle(color: Colors.white, fontSize: 20)),
                 IconButton(
                     icon: Icon(Icons.add_circle, color: Colors.white),
                     onPressed: () {
@@ -144,8 +153,7 @@ class _CreateRoomState extends State<CreateRoom> {
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
               itemBuilder: (context, index) {
-                if (textControllers.length < teams.length)
-                  textControllers.add(new TextEditingController());
+                if (textControllers.length < teams.length) textControllers.add(new TextEditingController());
                 return Card(
                   color: Colors.grey[700],
                   child: ExpansionTile(
@@ -169,12 +177,9 @@ class _CreateRoomState extends State<CreateRoom> {
                         controller: textControllers[index],
                         style: TextStyle(color: Colors.white),
                         decoration: InputDecoration(
-                          enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey[200])),
-                          focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey[600])),
-                          border: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey[200])),
+                          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
+                          border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
                           hintText: 'Enter team name',
                           hintStyle: TextStyle(color: Colors.grey[500]),
                         ),
@@ -201,14 +206,12 @@ class _CreateRoomState extends State<CreateRoom> {
                             heroTag: "1-$index",
                             onPressed: () {
                               setState(() {
-                                teams[index]["color"] =
-                                    Colors.green.value.toRadixString(16);
+                                teams[index]["color"] = Colors.green.value.toRadixString(16);
                               });
                             },
                             backgroundColor: Colors.green,
                             shape: CircleBorder(
-                              side: teams[index]["color"] ==
-                                      Colors.green.value.toRadixString(16)
+                              side: teams[index]["color"] == Colors.green.value.toRadixString(16)
                                   ? BorderSide(
                                       color: Colors.yellow,
                                       width: 3,
@@ -221,14 +224,12 @@ class _CreateRoomState extends State<CreateRoom> {
                             heroTag: "2-$index",
                             onPressed: () {
                               setState(() {
-                                teams[index]["color"] =
-                                    Colors.red.value.toRadixString(16);
+                                teams[index]["color"] = Colors.red.value.toRadixString(16);
                               });
                             },
                             backgroundColor: Colors.red,
                             shape: CircleBorder(
-                              side: teams[index]["color"] ==
-                                      Colors.red.value.toRadixString(16)
+                              side: teams[index]["color"] == Colors.red.value.toRadixString(16)
                                   ? BorderSide(
                                       color: Colors.yellow,
                                       width: 3,
@@ -241,14 +242,12 @@ class _CreateRoomState extends State<CreateRoom> {
                             heroTag: "3-$index",
                             onPressed: () {
                               setState(() {
-                                teams[index]["color"] =
-                                    Colors.blue.value.toRadixString(16);
+                                teams[index]["color"] = Colors.blue.value.toRadixString(16);
                               });
                             },
                             backgroundColor: Colors.blue,
                             shape: CircleBorder(
-                              side: teams[index]["color"] ==
-                                      Colors.blue.value.toRadixString(16)
+                              side: teams[index]["color"] == Colors.blue.value.toRadixString(16)
                                   ? BorderSide(
                                       color: Colors.yellow,
                                       width: 3,
@@ -261,14 +260,12 @@ class _CreateRoomState extends State<CreateRoom> {
                             heroTag: "4-$index",
                             onPressed: () {
                               setState(() {
-                                teams[index]["color"] =
-                                    Colors.purple.value.toRadixString(16);
+                                teams[index]["color"] = Colors.purple.value.toRadixString(16);
                               });
                             },
                             backgroundColor: Colors.purple,
                             shape: CircleBorder(
-                              side: teams[index]["color"] ==
-                                      Colors.purple.value.toRadixString(16)
+                              side: teams[index]["color"] == Colors.purple.value.toRadixString(16)
                                   ? BorderSide(
                                       color: Colors.yellow,
                                       width: 3,
@@ -281,14 +278,12 @@ class _CreateRoomState extends State<CreateRoom> {
                             heroTag: "5-$index",
                             onPressed: () {
                               setState(() {
-                                teams[index]["color"] =
-                                    Colors.black.value.toRadixString(16);
+                                teams[index]["color"] = Colors.black.value.toRadixString(16);
                               });
                             },
                             backgroundColor: Colors.black,
                             shape: CircleBorder(
-                              side: teams[index]["color"] ==
-                                      Colors.black.value.toRadixString(16)
+                              side: teams[index]["color"] == Colors.black.value.toRadixString(16)
                                   ? BorderSide(
                                       color: Colors.yellow,
                                       width: 3,
@@ -301,14 +296,12 @@ class _CreateRoomState extends State<CreateRoom> {
                             heroTag: "6-$index",
                             onPressed: () {
                               setState(() {
-                                teams[index]["color"] =
-                                    Colors.pink[300].value.toRadixString(16);
+                                teams[index]["color"] = Colors.pink[300].value.toRadixString(16);
                               });
                             },
                             backgroundColor: Colors.pink[300],
                             shape: CircleBorder(
-                              side: teams[index]["color"] ==
-                                      Colors.pink[300].value.toRadixString(16)
+                              side: teams[index]["color"] == Colors.pink[300].value.toRadixString(16)
                                   ? BorderSide(
                                       color: Colors.yellow,
                                       width: 3,
@@ -321,14 +314,12 @@ class _CreateRoomState extends State<CreateRoom> {
                             heroTag: "7-$index",
                             onPressed: () {
                               setState(() {
-                                teams[index]["color"] =
-                                    Colors.yellow.value.toRadixString(16);
+                                teams[index]["color"] = Colors.yellow.value.toRadixString(16);
                               });
                             },
                             backgroundColor: Colors.yellow,
                             shape: CircleBorder(
-                              side: teams[index]["color"] ==
-                                      Colors.yellow.value.toRadixString(16)
+                              side: teams[index]["color"] == Colors.yellow.value.toRadixString(16)
                                   ? BorderSide(
                                       color: Colors.red,
                                       width: 3,
@@ -348,8 +339,7 @@ class _CreateRoomState extends State<CreateRoom> {
                             });
                           },
                           padding: EdgeInsets.all(12),
-                          child: Text("Delete this team",
-                              style: TextStyle(fontSize: 20)),
+                          child: Text("Delete this team", style: TextStyle(fontSize: 20)),
                           color: Colors.red,
                           textColor: Colors.white,
                           disabledColor: Colors.grey[800],
@@ -367,15 +357,17 @@ class _CreateRoomState extends State<CreateRoom> {
                       setState(() => sending = true);
                       String url;
                       if (data["serverInLan"])
-                        url = "http://192.168.1.50:5050/api/v1/room/create";
+                        url = data["editRoom"] == true
+                            ? "http://192.168.1.50:5050/api/v1/room/update"
+                            : "http://192.168.1.50:5050/api/v1/room/create";
                       else
-                        url =
-                            "https://kacpermarcinkiewicz.com:5050/api/v1/room/create";
+                        url = data["editRoom"] == true
+                            ? "https://kacpermarcinkiewicz.com:5050/api/v1/room/update"
+                            : "https://kacpermarcinkiewicz.com:5050/api/v1/room/create";
 
                       if (!validateData()) {
                         Fluttertoast.showToast(
-                            msg:
-                                "One or more teams have empty name or unselected color or you don't create any team",
+                            msg: "One or more teams have empty name or unselected color or you don't create any team",
                             toastLength: Toast.LENGTH_LONG,
                             backgroundColor: Colors.red,
                             textColor: Colors.white);
@@ -383,24 +375,36 @@ class _CreateRoomState extends State<CreateRoom> {
                         return;
                       } else {
                         Fluttertoast.showToast(
-                          msg: "Creating room. Please wait",
+                          msg: data["editRoom"] == true ? "Updating room. Please wait" : "Creating room. Please wait",
                           toastLength: Toast.LENGTH_LONG,
                           backgroundColor: Colors.grey[700],
                           textColor: Colors.white,
                         );
 
                         try {
-                          var response = await post(url, body: {
-                            "roomName": roomNameController.text,
-                            "showEnemyTeam": showEnemyTeam.toString(),
-                            "teams": json.encode(teams)
-                          }).timeout(Duration(seconds: 10));
+                          Response response;
+                          if (data["editRoom"] == true) {
+                            response = await patch(url, body: {
+                              "roomID": data["roomID"].toString(),
+                              "roomName": roomNameController.text,
+                              "showEnemyTeam": showEnemyTeam.toString(),
+                              "teams": json.encode(teams),
+                              "hardwareID": data["hardwareID"]
+                            }).timeout(Duration(seconds: 10));
+                          } else {
+                            response = await post(url, body: {
+                              "roomName": roomNameController.text,
+                              "showEnemyTeam": showEnemyTeam.toString(),
+                              "ownerHardwareID": data["hardwareID"],
+                              "teams": json.encode(teams)
+                            }).timeout(Duration(seconds: 10));
+                          }
 
                           if (response.statusCode == 200) {
                             var json = jsonDecode(response.body);
 
                             Fluttertoast.showToast(
-                              msg: "Room created!",
+                              msg: data["editRoom"] == true ? "Room updated!" : "Room created!",
                               toastLength: Toast.LENGTH_LONG,
                               backgroundColor: Colors.green,
                               textColor: Colors.white,
@@ -412,8 +416,9 @@ class _CreateRoomState extends State<CreateRoom> {
                               arguments: {
                                 "serverInLan": data["serverInLan"],
                                 "nickname": data["nickname"],
+                                "hardwareID": data["hardwareID"],
                                 "searchBarText": "ID " +
-                                    json["newRoomId"].toString() +
+                                    (data["editRoom"] == true ? data["roomID"].toString() : json["newRoomId"].toString()) +
                                     ": " +
                                     roomNameController.text
                               },
@@ -421,8 +426,9 @@ class _CreateRoomState extends State<CreateRoom> {
                             return;
                           } else {
                             Fluttertoast.showToast(
-                                msg:
-                                    "Error while creating room: ${response.body}",
+                                msg: data["editRoom"] == true
+                                    ? "Error while updating room: ${jsonDecode(response.body)["message"]}"
+                                    : "Error while creating room: ${jsonDecode(response.body)["message"]}",
                                 toastLength: Toast.LENGTH_LONG,
                                 backgroundColor: Colors.red,
                                 textColor: Colors.white);
@@ -431,7 +437,7 @@ class _CreateRoomState extends State<CreateRoom> {
                           }
                         } catch (e) {
                           Fluttertoast.showToast(
-                              msg: "Error while creating room: $e",
+                              msg: data["editRoom"] == true ? "Error while updating room: $e" : "Error while creating room: $e",
                               toastLength: Toast.LENGTH_LONG,
                               backgroundColor: Colors.red,
                               textColor: Colors.white);
@@ -441,12 +447,85 @@ class _CreateRoomState extends State<CreateRoom> {
                       }
                     },
                     padding: EdgeInsets.all(12),
-                    child: Text("Create room", style: TextStyle(fontSize: 20)),
+                    child: Text(data["editRoom"] == true ? "Update room" : "Create room", style: TextStyle(fontSize: 20)),
                     color: Colors.lightGreen,
                     textColor: Colors.white,
                     disabledColor: Colors.grey[800],
                     disabledTextColor: Colors.grey[700],
                   ),
+            SizedBox(height: 10),
+            data["editRoom"] == true
+                ? RaisedButton(
+                    onPressed: () {
+                      Dialogs.confirmDialog(
+                        context,
+                        titleText: "Delete room",
+                        descriptionText: "Do you want to delete this room? This action cannot be undone!",
+                        onSend: () async {
+                          try {
+                            Navigator.pop(context);
+                            Fluttertoast.showToast(
+                              msg: "Deleting room. Please wait",
+                              toastLength: Toast.LENGTH_SHORT,
+                              backgroundColor: Colors.grey[700],
+                              textColor: Colors.white,
+                            );
+                            String url;
+                            if (data["serverInLan"])
+                              url = "http://192.168.1.50:5050/api/v1/room/${data["roomID"]}?hardwareID=${data["hardwareID"]}";
+                            else
+                              url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomID"]}?hardwareID=${data["hardwareID"]}";
+
+                            var response = await delete(url);
+
+                            if (response.statusCode == 200) {
+                              Fluttertoast.showToast(
+                                msg: "Room deleted!",
+                                toastLength: Toast.LENGTH_LONG,
+                                backgroundColor: Colors.green,
+                                textColor: Colors.white,
+                              );
+                            } else {
+                              Fluttertoast.showToast(
+                                msg: "Error while deleting room: ${jsonDecode(response.body)["message"]}",
+                                toastLength: Toast.LENGTH_LONG,
+                                backgroundColor: Colors.red,
+                                textColor: Colors.white,
+                              );
+                            }
+                          } catch (e) {
+                            Fluttertoast.showToast(
+                              msg: "Error while deleting room: $e",
+                              toastLength: Toast.LENGTH_LONG,
+                              backgroundColor: Colors.red,
+                              textColor: Colors.white,
+                            );
+                          }
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/roomsList',
+                            arguments: {
+                              "serverInLan": data["serverInLan"],
+                              "nickname": data["nickname"],
+                              "hardwareID": data["hardwareID"],
+                              "searchBarText": ""
+                            },
+                          );
+                        },
+                        onCancel: () {
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                    padding: EdgeInsets.all(12),
+                    child: Text("Delete room", style: TextStyle(fontSize: 20)),
+                    color: Colors.red,
+                    textColor: Colors.white,
+                    disabledColor: Colors.grey[800],
+                    disabledTextColor: Colors.grey[700],
+                  )
+                : Container(),
             SizedBox(height: 10)
           ],
         ),

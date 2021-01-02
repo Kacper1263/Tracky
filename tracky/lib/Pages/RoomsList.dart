@@ -26,6 +26,7 @@ SOFTWARE.
 
 import 'dart:convert';
 
+import 'package:device_info/device_info.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
@@ -101,10 +102,7 @@ class _RoomsListState extends State<RoomsList> {
               Navigator.pushNamed(
                 context,
                 '/createRoom',
-                arguments: {
-                  "serverInLan": data["serverInLan"],
-                  "nickname": data["nickname"]
-                },
+                arguments: {"serverInLan": data["serverInLan"], "nickname": data["nickname"], "hardwareID": data["hardwareID"]},
               );
             },
             tooltip: "Add room",
@@ -135,32 +133,26 @@ class _RoomsListState extends State<RoomsList> {
                           // If index == 0 add search bar to list
                           index == 0
                               ? Padding(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(5, 15, 5, 10),
+                                  padding: const EdgeInsets.fromLTRB(5, 15, 5, 10),
                                   child: TextField(
                                     keyboardType: TextInputType.text,
                                     controller: roomToSearchController,
-                                    textCapitalization:
-                                        TextCapitalization.sentences,
+                                    textCapitalization: TextCapitalization.sentences,
                                     style: TextStyle(color: Colors.white),
                                     decoration: InputDecoration(
-                                      contentPadding:
-                                          EdgeInsets.fromLTRB(25, 20, 25, 20),
+                                      contentPadding: EdgeInsets.fromLTRB(25, 20, 25, 20),
                                       enabledBorder: OutlineInputBorder(
                                           borderRadius: const BorderRadius.all(
                                             const Radius.circular(100.0),
                                           ),
-                                          borderSide: BorderSide(
-                                              color: Colors.grey[200])),
+                                          borderSide: BorderSide(color: Colors.grey[200])),
                                       focusedBorder: OutlineInputBorder(
                                           borderRadius: const BorderRadius.all(
                                             const Radius.circular(100.0),
                                           ),
-                                          borderSide: BorderSide(
-                                              color: Colors.grey[600])),
+                                          borderSide: BorderSide(color: Colors.grey[600])),
                                       hintText: 'Search room',
-                                      hintStyle:
-                                          TextStyle(color: Colors.grey[500]),
+                                      hintStyle: TextStyle(color: Colors.grey[500]),
                                     ),
                                     onChanged: (value) {
                                       setState(() {
@@ -174,10 +166,7 @@ class _RoomsListState extends State<RoomsList> {
                           roomToSearch == null ||
                                   roomToSearch.isEmpty ||
                                   // Join room id with room name (add ID text and ":")
-                                  ("ID " +
-                                          rooms[index]["id"].toString() +
-                                          ": " +
-                                          rooms[index]["name"].toString())
+                                  ("ID " + rooms[index]["id"].toString() + ": " + rooms[index]["name"].toString())
                                       .toLowerCase()
                                       .contains(roomToSearch.toLowerCase())
                               ? Card(
@@ -185,100 +174,110 @@ class _RoomsListState extends State<RoomsList> {
                                   child: ExpansionTile(
                                     title: Center(
                                       child: Text(
-                                        "ID ${rooms[index]["id"]}: ${rooms[index]["name"]} ",
-                                        style: TextStyle(
-                                            fontSize: 20, color: Colors.white),
+                                        "ID ${rooms[index]["id"]}: ${rooms[index]["name"]}",
+                                        style: TextStyle(fontSize: 20, color: Colors.white),
                                       ),
                                     ),
-                                    childrenPadding:
-                                        EdgeInsets.fromLTRB(10, 0, 10, 10),
+                                    childrenPadding: EdgeInsets.fromLTRB(10, 0, 10, 10),
                                     children: [
                                       Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
+                                        crossAxisAlignment: CrossAxisAlignment.stretch,
                                         children: [
                                           Center(
                                             child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
+                                              mainAxisAlignment: MainAxisAlignment.center,
                                               children: [
                                                 Text(
-                                                  double.parse(rooms[index]
-                                                              ["expiresIn"]) >
-                                                          170
+                                                  double.parse(rooms[index]["expiresIn"]) > 170
                                                       ? "Never expires"
                                                       : "Expires in: ${rooms[index]["expiresIn"]}h",
-                                                  style: TextStyle(
-                                                      fontSize: 14,
-                                                      color: Colors.white),
+                                                  style: TextStyle(fontSize: 14, color: Colors.white),
                                                 ),
-                                                double.parse(rooms[index]
-                                                                ["expiresIn"]) >
-                                                            170 ||
-                                                        double.parse(rooms[
-                                                                    index][
-                                                                "expiresIn"]) ==
-                                                            48
+                                                double.parse(rooms[index]["expiresIn"]) > 170 ||
+                                                        double.parse(rooms[index]["expiresIn"]) == 48
                                                     ? Container()
                                                     : IconButton(
-                                                        padding:
-                                                            EdgeInsets.all(0),
+                                                        padding: EdgeInsets.all(0),
                                                         iconSize: 26,
-                                                        tooltip:
-                                                            "Refresh the expiry time",
+                                                        tooltip: "Refresh the expiry time",
                                                         icon: Icon(
                                                           Icons.refresh,
                                                           color: Colors.white,
                                                         ),
                                                         onPressed: () {
-                                                          refreshRoomTime(
-                                                              rooms[index]
-                                                                  ["id"]);
+                                                          refreshRoomTime(rooms[index]["id"]);
                                                           setState(() {
-                                                            rooms[index][
-                                                                    "expiresIn"] =
-                                                                "48";
+                                                            rooms[index]["expiresIn"] = "48";
                                                           });
                                                         })
                                               ],
                                             ),
                                           ),
                                           SizedBox(height: 15),
+                                          rooms[index]["isOwner"] == "true"
+                                              ? Row(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Expanded(
+                                                      child: RaisedButton(
+                                                        padding: EdgeInsets.all(12),
+                                                        child: Text("Edit room", style: TextStyle(fontSize: 17)),
+                                                        color: Colors.grey[850],
+                                                        textColor: Colors.white,
+                                                        disabledColor: Colors.grey[800],
+                                                        disabledTextColor: Colors.grey[700],
+                                                        onPressed: () {
+                                                          Navigator.pushNamed(
+                                                            context,
+                                                            "/createRoom",
+                                                            arguments: {
+                                                              "serverInLan": data["serverInLan"],
+                                                              "nickname": data["nickname"],
+                                                              "hardwareID": data["hardwareID"],
+                                                              "editRoom": true,
+                                                              "roomID": rooms[index]["id"],
+                                                              "roomName": rooms[index]["name"],
+                                                              "showEnemyTeam": rooms[index]["showEnemyTeam"],
+                                                              "teams": rooms[index]["teams"]
+                                                            },
+                                                          );
+                                                        },
+                                                      ),
+                                                    ),
+                                                    SizedBox(width: 5),
+                                                    Expanded(
+                                                      child: RaisedButton(
+                                                        padding: EdgeInsets.all(12),
+                                                        child: Text("Edit map (soon)", style: TextStyle(fontSize: 17)),
+                                                        color: Colors.grey[850],
+                                                        textColor: Colors.white,
+                                                        disabledColor: Colors.grey[800],
+                                                        disabledTextColor: Colors.grey[700],
+                                                        onPressed: null,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                )
+                                              : Container(),
                                           ListView.builder(
                                             shrinkWrap: true,
-                                            itemCount:
-                                                rooms[index]["teams"].length,
-                                            physics:
-                                                NeverScrollableScrollPhysics(),
+                                            itemCount: rooms[index]["teams"].length,
+                                            physics: NeverScrollableScrollPhysics(),
                                             itemBuilder: (ct, i) {
                                               return RaisedButton(
                                                   onPressed: () async {
-                                                    bool joined =
-                                                        await joinRoom(
-                                                            rooms[index]["id"],
-                                                            rooms[index]
-                                                                    ["teams"][i]
-                                                                ["name"]);
+                                                    bool joined = await joinRoom(rooms[index]["id"], rooms[index]["teams"][i]["name"]);
 
                                                     if (joined) {
-                                                      Navigator
-                                                          .pushReplacementNamed(
+                                                      Navigator.pushReplacementNamed(
                                                         context,
                                                         '/gamePage',
                                                         arguments: {
-                                                          "roomId": rooms[index]
-                                                              ["id"],
-                                                          "nickname":
-                                                              data["nickname"],
-                                                          "team": rooms[index]
-                                                                  ["teams"][i]
-                                                              ["name"],
-                                                          "teamColor":
-                                                              rooms[index]
-                                                                      ["teams"]
-                                                                  [i]["color"],
-                                                          "serverInLan": data[
-                                                              "serverInLan"],
+                                                          "roomId": rooms[index]["id"],
+                                                          "nickname": data["nickname"],
+                                                          "team": rooms[index]["teams"][i]["name"],
+                                                          "teamColor": rooms[index]["teams"][i]["color"],
+                                                          "serverInLan": data["serverInLan"],
                                                         },
                                                       );
                                                     }
@@ -286,14 +285,11 @@ class _RoomsListState extends State<RoomsList> {
                                                   padding: EdgeInsets.all(12),
                                                   child: Text(
                                                       "Join: ${rooms[index]["teams"][i]["name"]} (${(rooms[index]["teams"][i]["players"].length)})",
-                                                      style: TextStyle(
-                                                          fontSize: 17)),
+                                                      style: TextStyle(fontSize: 17)),
                                                   color: Colors.grey[800],
                                                   textColor: Colors.white,
-                                                  disabledColor:
-                                                      Colors.grey[800],
-                                                  disabledTextColor:
-                                                      Colors.grey[700]);
+                                                  disabledColor: Colors.grey[800],
+                                                  disabledTextColor: Colors.grey[700]);
                                             },
                                           )
                                         ],
@@ -312,10 +308,12 @@ class _RoomsListState extends State<RoomsList> {
 
   Future<List> getRooms() async {
     String url;
+    AndroidDeviceInfo androidInfo = await DeviceInfoPlugin().androidInfo;
+    String hardwareID = androidInfo.androidId;
     if (data["serverInLan"])
-      url = "http://192.168.1.50:5050/api/v1/room/all";
+      url = "http://192.168.1.50:5050/api/v1/room/all?hardwareID=$hardwareID";
     else
-      url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/all";
+      url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/all$hardwareID";
 
     try {
       var response = await get(url).timeout(Duration(seconds: 20));
@@ -338,10 +336,7 @@ class _RoomsListState extends State<RoomsList> {
     } catch (e) {
       errorWhileLoading = true;
       Fluttertoast.showToast(
-          msg: "Error while loading rooms: $e",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white);
+          msg: "Error while loading rooms: $e", toastLength: Toast.LENGTH_LONG, backgroundColor: Colors.red, textColor: Colors.white);
       return null;
     }
   }
@@ -378,10 +373,7 @@ class _RoomsListState extends State<RoomsList> {
       }
     } catch (e) {
       Fluttertoast.showToast(
-          msg: "Error while joining team: $e",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white);
+          msg: "Error while joining team: $e", toastLength: Toast.LENGTH_LONG, backgroundColor: Colors.red, textColor: Colors.white);
       return false;
     }
   }

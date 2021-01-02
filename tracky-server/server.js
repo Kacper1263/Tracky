@@ -92,13 +92,16 @@ if(!databaseName || !apiPort) return console.log("You must set databaseName and 
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
 const adapter = new FileSync(`${databaseName}.json`)
+const infoAdapter = new FileSync(`info.json`)
 const db = low(adapter)
+const infoDb = low(infoAdapter)
 
 // *****************************
 // *   API starts from there   *
 // *****************************
 
 db.defaults({ rooms: [] }).write() //default variables for database
+infoDb.defaults({ title: "", message: ""}).write() //default variables for database
 
 // Set up the express app
 const app = express();
@@ -109,6 +112,10 @@ app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 var routes_v1 = require('./routes/v1/index')
 app.get("/",function (req, res) {
     res.status(200).send(`<h1>This is an API of Tracky - ASG team tracker </h1>`);
+});
+app.get("/ping",function (req, res) {
+    infoDb.read()
+    res.status(200).send({ success: 'true', title: infoDb.get("title").value(), message: infoDb.get("message").value()});
 });
 app.use("/api/v1/room", routes_v1.rooms)
 

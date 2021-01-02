@@ -65,6 +65,7 @@ logsDb.defaults({ logs: [] }).write() //default variables for database
 
 router.get("/all", (req, res) => {
     db.read()
+    var clientHardwareID = req.query.hardwareID
 
     // Check for expired rooms and players
     RemoveExpiredRoomsAndPlayers()
@@ -77,6 +78,7 @@ router.get("/all", (req, res) => {
             "expiresAt": room.expiresAt,
             "name": room.name,
             "showEnemyTeam": room.showEnemyTeam,
+            "isOwner": (room.ownerHardwareID == clientHardwareID && clientHardwareID != undefined).toString(),
             "expiresIn": ExpiresInHours(room.expiresAt),
             "teams": room.teams
         })
@@ -113,8 +115,19 @@ router.post("/create", (req, res) => {
         "name": req.body.roomName,
         "expiresAt": expires,
         "showEnemyTeam": req.body.showEnemyTeam,
+        "ownerHardwareID": req.body.ownerHardwareID,
         "teams": JSON.parse(req.body.teams)
     }).write()){
+        // log successful room create action
+        logsDb.get("logs").push({
+            "action": "create room",
+            "time": new Date().toLocaleString("pl"),
+            "roomID": lastRoomId + 1,
+            "roomName": req.body.roomName,
+            "ownerHardwareID": req.body.ownerHardwareID,
+            "teams": JSON.parse(req.body.teams)
+        }).write()
+
         return res.status(200).send({
             success: "true",
             message: "Created room with id " + (lastRoomId + 1),
@@ -128,6 +141,50 @@ router.post("/create", (req, res) => {
             message: "Error while creating room"
         })
     }
+})
+
+// Update room
+router.patch("/update", (req, res) => {
+    db.read();
+
+    // Check for expired rooms and players
+    RemoveExpiredRoomsAndPlayers()
+
+    const id = parseInt(req.body.roomID, 10);
+    
+    var list = db.get("rooms").value();
+    var roomId = list.findIndex(room => room.id === id);
+
+    // Verify hardwareID
+    var ownerHardwareID = db.get("rooms").get(roomId).get("ownerHardwareID").value()
+    if(ownerHardwareID == req.body.hardwareID){
+        if(db.get("rooms").get(roomId).set("name", req.body.roomName).set("showEnemyTeam", req.body.showEnemyTeam).set("teams", JSON.parse(req.body.teams)).write()){
+            // log successful room update action
+            logsDb.get("logs").push({
+                "action": "update room",
+                "time": new Date().toLocaleString("pl"),
+                "roomName": req.body.roomName,
+                "ownerHardwareID": req.body.hardwareID,
+                "teams": JSON.parse(req.body.teams)
+            }).write()
+            
+            return res.status(200).send({
+                success: "true",
+                message: "Updated room with id "+ req.body.roomID
+            })
+        }
+        else{
+            return res.status(500).send({
+                success: "false",
+                message: "Error while updating room"
+            })
+        }
+    }else{
+        return res.status(403).send({
+            success: "false",
+            message: "Your hardware ID is not equals to room owner hardware ID! Operation unauthorized."
+        })
+    }    
 })
 
 // Get room data
@@ -177,6 +234,13 @@ router.post('/refresh/:id', (req, res) => {
         if(db.get("rooms").get(roomId).set("expiresAt", expires).write()){
             var expiresIn = ExpiresInHours(expires)
     
+            // log successful room expiry time update action
+            logsDb.get("logs").push({
+               "action": "update expiry time",
+               "time": new Date().toLocaleString("pl"),
+               "roomName": room.name,
+            }).write()
+
             return res.status(200).send({
                 success: 'true',
                 message: 'Room expiry time refreshed',
@@ -202,19 +266,46 @@ router.post('/refresh/:id', (req, res) => {
 
 // Remove room
 router.delete('/:id', (req, res) => {
+    db.read()
     const id = parseInt(req.params.id, 10);
 
-    if(RemoveRoom(id)){
-        return res.status(200).send({
-            success: 'true',
-            message: 'Room found and deleted'
-        });
-    }
-    else{
+    // Verify hardware ID
+    var list = db.get("rooms").value();
+    var roomId = list.findIndex(room => room.id === id);
+    if(roomId == -1){
         return res.status(404).send({
             success: 'false',
             message: 'Room not found'
         });
+    }
+    var ownerHardwareID = db.get("rooms").get(roomId).get("ownerHardwareID").value()
+    if(ownerHardwareID == req.query.hardwareID){
+        if(RemoveRoom(id)){
+            // log successful room delete action
+            logsDb.get("logs").push({
+                "action": "delete room",
+                "time": new Date().toLocaleString("pl"),
+                "roomID": id,
+                "ownerHardwareID": req.query.hardwareID,
+            }).write()
+
+            return res.status(200).send({
+                success: 'true',
+                message: 'Room found and deleted'
+            });
+        }
+        else{
+            return res.status(404).send({
+                success: 'false',
+                message: 'Room not found'
+            });
+        }
+    }
+    else{
+        return res.status(403).send({
+            success: "false",
+            message: "Your hardware ID is not equals to room owner hardware ID! Operation unauthorized."
+        })
     }
 })
 
@@ -254,9 +345,9 @@ router.post('/join/:id', (req, res) => {
 
             // log successful join action
             logsDb.get("logs").push({
-                "nickName": req.body.playerName,
-                "time": new Date().toLocaleString("pl"),
                 "action": "joined",
+                "time": new Date().toLocaleString("pl"),
+                "nickName": req.body.playerName,
                 "room": roomId,
                 "team": req.body.teamName
             }).write()
@@ -351,9 +442,9 @@ router.post('/leave/:id', (req, res) => {
 
             // log successful leave action
             logsDb.get("logs").push({
-                "nickName": req.body.playerName,
-                "time": new Date().toLocaleString("pl"),
                 "action": "leaved",
+                "time": new Date().toLocaleString("pl"),
+                "nickName": req.body.playerName,
                 "room": roomId,
                 "team": req.body.teamName
             }).write()

@@ -24,6 +24,9 @@ SOFTWARE.
 
 */
 
+import 'dart:convert';
+
+import 'package:device_info/device_info.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
@@ -44,6 +47,10 @@ class _HomePageState extends State<HomePage> {
   int serverConnectionStatus = 0;
   bool serverInLan = false;
 
+  // Info from server
+  String infoTitle = "";
+  String infoMessage = "";
+
   @override
   void initState() {
     // Check server status
@@ -51,11 +58,9 @@ class _HomePageState extends State<HomePage> {
 
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => Dialogs.infoDialog(
-            context,
+    WidgetsBinding.instance.addPostFrameCallback((_) => Dialogs.infoDialog(context,
             titleText: "IMPORTANT NOTE!",
-            descriptionText:
-                '''WARNING: This is alpha version of this app, it may contain bugs etc.
+            descriptionText: '''WARNING: This is alpha version of this app, it may contain bugs etc.
 
 You can scroll this page, if it does not fit on the screen.
 
@@ -91,9 +96,17 @@ By clicking agree and using this app you agree to privacy policy available on Go
             icon: Icon(Icons.info),
             onPressed: () => showAboutDialog(
               context: context,
-              applicationIcon: FlutterLogo(),
+              applicationIcon: GestureDetector(
+                onLongPress: () {
+                  print("TODO: Developer mode :)");
+                },
+                child: Image.asset(
+                  "images/logo.png",
+                  scale: 3,
+                ),
+              ),
               applicationName: "Tracky",
-              applicationVersion: "0.5.0_alpha",
+              applicationVersion: "0.5.5_alpha",
               applicationLegalese:
                   "Tracky - ASG team tracker \nby Kacper Marcinkiewicz \n\nLicence: MIT \nSource on github: Kacper1263/tracky",
             ),
@@ -136,47 +149,63 @@ By clicking agree and using this app you agree to privacy policy available on Go
               style: TextStyle(color: Colors.white),
               controller: nicknameController,
               decoration: InputDecoration(
-                enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey[200])),
-                focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey[600])),
-                border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey[200])),
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
+                border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
                 hintText: 'Enter your nickname',
                 hintStyle: TextStyle(color: Colors.grey[500]),
               ),
             ),
             SizedBox(height: 12),
             RaisedButton(
-                onPressed: serverConnectionStatus != 1
-                    ? null
-                    : () {
-                        if (nicknameController.text.isNotEmpty &&
-                            nicknameController.text.length > 2) {
+              onPressed: serverConnectionStatus != 1
+                  ? null
+                  : () {
+                      if (nicknameController.text.isNotEmpty && nicknameController.text.length > 2) {
+                        DeviceInfoPlugin deviceInfoPlugin = DeviceInfoPlugin();
+                        deviceInfoPlugin.androidInfo.then((androidInfo) {
+                          String hardwareID = androidInfo.androidId;
                           Navigator.pushNamed(
                             context,
                             '/roomsList',
                             arguments: {
                               "serverInLan": serverInLan,
-                              "nickname": nicknameController.text
+                              "nickname": nicknameController.text,
+                              "hardwareID": hardwareID,
                             },
                           );
-                        } else {
-                          Fluttertoast.showToast(
-                              msg:
-                                  "Nickname must contains more than 2 characters",
-                              toastLength: Toast.LENGTH_LONG,
-                              fontSize: 16,
-                              backgroundColor: Colors.red,
-                              textColor: Colors.white);
-                        }
-                      },
-                padding: EdgeInsets.all(12),
-                child: Text("Server list", style: TextStyle(fontSize: 17)),
-                color: Colors.grey[800],
-                textColor: Colors.white,
-                disabledColor: Colors.grey[800],
-                disabledTextColor: Colors.grey[700])
+                        });
+                      } else {
+                        Fluttertoast.showToast(
+                            msg: "Nickname must contains more than 2 characters",
+                            toastLength: Toast.LENGTH_LONG,
+                            fontSize: 16,
+                            backgroundColor: Colors.red,
+                            textColor: Colors.white);
+                      }
+                    },
+              padding: EdgeInsets.all(12),
+              child: Text("Server list", style: TextStyle(fontSize: 17)),
+              color: Colors.grey[800],
+              textColor: Colors.white,
+              disabledColor: Colors.grey[800],
+              disabledTextColor: Colors.grey[700],
+            ),
+            SizedBox(height: 85),
+            infoTitle.isNotEmpty || infoMessage.isNotEmpty
+                ? Container(
+                    color: Colors.grey[700],
+                    padding: EdgeInsets.all(15),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(infoTitle, style: TextStyle(color: Colors.white, fontSize: 25)),
+                        SizedBox(height: 15),
+                        Text(infoMessage, style: TextStyle(color: Colors.white)),
+                      ],
+                    ),
+                  )
+                : Container()
           ],
         ),
       ),
@@ -184,35 +213,46 @@ By clicking agree and using this app you agree to privacy policy available on Go
   }
 
   void checkServerStatus() {
-    setState(() => serverConnectionStatus = 0);
+    setState(() {
+      serverConnectionStatus = 0;
+      infoTitle = "";
+      infoMessage = "";
+    });
 
     get(
-      "https://kacpermarcinkiewicz.com:5050/",
+      "https://kacpermarcinkiewicz.com:5050/ping",
     ).timeout(Duration(seconds: 10)).then((response) {
       setState(() {
         if (response.statusCode == 200) {
           serverConnectionStatus = 1;
           serverInLan = false;
+
+          var json = jsonDecode(response.body);
+          infoTitle = json["title"];
+          infoMessage = json["message"];
         }
       });
     }).catchError((e) {
       print(e);
       if (e.toString().contains("WRONG_VERSION_NUMBER")) {
         Fluttertoast.showToast(
-            msg:
-                "Cannot connect to the server. Probably the SSL certificate has expired. Please contact us at slowcast.dev@gmail.com.",
+            msg: "Cannot connect to the server. Probably the SSL certificate has expired. Please contact us at slowcast.dev@gmail.com.",
             toastLength: Toast.LENGTH_LONG,
             fontSize: 16,
             backgroundColor: Colors.red,
             textColor: Colors.white);
       }
       get(
-        "http://192.168.1.50:5050/",
+        "http://192.168.1.50:5050/ping",
       ).timeout(Duration(seconds: 10)).then((r) {
         setState(() {
           if (r.statusCode == 200) {
             serverConnectionStatus = 1;
             serverInLan = true;
+
+            var json = jsonDecode(r.body);
+            infoTitle = json["title"];
+            infoMessage = json["message"];
           } else
             serverConnectionStatus = -1;
         });
