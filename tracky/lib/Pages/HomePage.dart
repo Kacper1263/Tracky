@@ -99,8 +99,16 @@ By clicking agree and using this app you agree to privacy policy available on Go
             onPressed: () => showAboutDialog(
               context: context,
               applicationIcon: GestureDetector(
-                onLongPress: () {
-                  print("TODO: Developer mode :)");
+                onLongPress: () async {
+                  AndroidDeviceInfo androidInfo = await DeviceInfoPlugin().androidInfo;
+                  String hardwareID = androidInfo.androidId;
+                  Dialogs.infoDialog(
+                    context,
+                    titleText: "Developer window",
+                    descriptionText: "Your hardware ID: $hardwareID",
+                    okBtnText: "Close",
+                    onOkBtn: () => Navigator.pop(context),
+                  );
                 },
                 child: Image.asset(
                   "images/logo.png",

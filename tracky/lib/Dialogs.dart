@@ -2,21 +2,14 @@ import 'package:flutter/material.dart';
 
 class Dialogs {
   static oneInputDialog(TextEditingController textCtrl, context,
-      {titleText,
-      descriptionText,
-      hintText,
-      onCancel,
-      onSend,
-      sendText: "Send",
-      cancelText: "Cancel"}) {
+      {titleText, descriptionText, hintText, onCancel, onSend, sendText: "Send", cancelText: "Cancel"}) {
     return showDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
           return AlertDialog(
             backgroundColor: Colors.grey[800],
-            title: Center(
-                child: Text(titleText, style: TextStyle(color: Colors.white))),
+            title: Center(child: Text(titleText, style: TextStyle(color: Colors.white))),
             content: SingleChildScrollView(
               child: ListBody(
                 children: <Widget>[
@@ -27,12 +20,9 @@ class Dialogs {
                     style: TextStyle(color: Colors.white),
                     controller: textCtrl,
                     decoration: InputDecoration(
-                      enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey[200])),
-                      focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey[600])),
-                      border: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey[200])),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
+                      border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
                       hintText: hintText,
                       hintStyle: TextStyle(color: Colors.grey[500]),
                     ),
@@ -58,16 +48,14 @@ class Dialogs {
         });
   }
 
-  static confirmDialog(context,
-      {titleText, descriptionText, onCancel, onSend}) {
+  static confirmDialog(context, {titleText, descriptionText, onCancel, onSend}) {
     return showDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
           return AlertDialog(
             backgroundColor: Colors.grey[800],
-            title: Center(
-                child: Text(titleText, style: TextStyle(color: Colors.white))),
+            title: Center(child: Text(titleText, style: TextStyle(color: Colors.white))),
             content: SingleChildScrollView(
               child: ListBody(
                 children: <Widget>[
@@ -94,20 +82,18 @@ class Dialogs {
         });
   }
 
-  static infoDialog(context,
-      {titleText, descriptionText, onOkBtn, String okBtnText}) {
+  static infoDialog(context, {titleText, descriptionText, onOkBtn, String okBtnText}) {
     return showDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
           return AlertDialog(
             backgroundColor: Colors.grey[800],
-            title: Center(
-                child: Text(titleText, style: TextStyle(color: Colors.white))),
+            title: Center(child: Text(titleText, style: TextStyle(color: Colors.white))),
             content: SingleChildScrollView(
               child: ListBody(
                 children: <Widget>[
-                  Text(descriptionText, style: TextStyle(color: Colors.white)),
+                  SelectableText(descriptionText, style: TextStyle(color: Colors.white)),
                   SizedBox(height: 20),
                 ],
               ),
