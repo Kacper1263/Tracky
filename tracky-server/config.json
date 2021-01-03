@@ -1,6 +1,7 @@
 {
   "databaseName": "rooms",
   "apiPort": 5050,
+  "minRequiredAppVersion": "0.5.5",
   "httpsEnabled": false,
   "httpsPrivateKey": "sslcert/privkey.pem",
   "httpsCertificate": "sslcert/cert.pem"

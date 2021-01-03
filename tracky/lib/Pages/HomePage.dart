@@ -30,6 +30,7 @@ import 'package:device_info/device_info.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
+import 'package:tracky/StaticVariables.dart';
 
 import '../Dialogs.dart';
 
@@ -50,6 +51,7 @@ class _HomePageState extends State<HomePage> {
   // Info from server
   String infoTitle = "";
   String infoMessage = "";
+  String serverMinRequiredAppVersion = "0.0.0";
 
   @override
   void initState() {
@@ -106,7 +108,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
                 ),
               ),
               applicationName: "Tracky",
-              applicationVersion: "0.5.5-patch1_alpha",
+              applicationVersion: "${StaticVariables.version.appVersionCode}-patch1_alpha",
               applicationLegalese:
                   "Tracky - ASG team tracker \nby Kacper Marcinkiewicz \n\nLicence: MIT \nSource on github: Kacper1263/tracky",
             ),
@@ -158,7 +160,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
             ),
             SizedBox(height: 12),
             RaisedButton(
-              onPressed: serverConnectionStatus != 1
+              onPressed: serverConnectionStatus != 1 || !StaticVariables.version.isCompatible(serverMinRequiredAppVersion)
                   ? null
                   : () {
                       if (nicknameController.text.isNotEmpty && nicknameController.text.length > 2) {
@@ -191,6 +193,23 @@ By clicking agree and using this app you agree to privacy policy available on Go
               disabledColor: Colors.grey[800],
               disabledTextColor: Colors.grey[700],
             ),
+            SizedBox(height: 15),
+            StaticVariables.version.isCompatible(serverMinRequiredAppVersion)
+                ? Container()
+                : Container(
+                    padding: EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(7),
+                      ),
+                      color: Colors.red,
+                    ),
+                    child: Text(
+                      "Your app version is not compatible with this server! Your app version is '${StaticVariables.version.appVersionCode}' but server requires '$serverMinRequiredAppVersion' or higher",
+                      style: TextStyle(color: Colors.white),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
             SizedBox(height: 85),
             infoTitle.isNotEmpty || infoMessage.isNotEmpty
                 ? Container(
@@ -217,6 +236,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
       serverConnectionStatus = 0;
       infoTitle = "";
       infoMessage = "";
+      serverMinRequiredAppVersion = "0.0.0";
     });
 
     get(
@@ -230,6 +250,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
           var json = jsonDecode(response.body);
           infoTitle = json["title"];
           infoMessage = json["message"];
+          serverMinRequiredAppVersion = json["minRequiredAppVersion"];
         }
       });
     }).catchError((e) {
@@ -253,6 +274,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
             var json = jsonDecode(r.body);
             infoTitle = json["title"];
             infoMessage = json["message"];
+            serverMinRequiredAppVersion = json["minRequiredAppVersion"];
           } else
             serverConnectionStatus = -1;
         });

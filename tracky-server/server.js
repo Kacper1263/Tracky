@@ -48,6 +48,7 @@ const readline = require('readline-sync')
 // var adminPassword = randomFromZeroToNine() + randomFromZeroToNine() + randomFromZeroToNine() + randomFromZeroToNine() //Generate 4 random numbers
 var databaseName = "rooms"
 var apiPort = 5000;
+var minRequiredAppVersion = "0.0.0"
 var httpsEnabled = false;
 var privateKey  = ""
 var certificate = ""
@@ -60,6 +61,7 @@ try {
     //adminPassword = cfg.adminPassword
     databaseName = cfg.databaseName
     apiPort = cfg.apiPort
+    minRequiredAppVersion = cfg.minRequiredAppVersion
     httpsEnabled = cfg.httpsEnabled
     if(httpsEnabled){
         privateKey = fs.readFileSync(cfg.httpsPrivateKey, 'utf8');
@@ -72,6 +74,7 @@ try {
             //adminPassword: adminPassword,
             databaseName: databaseName,
             apiPort: apiPort,
+            minRequiredAppVersion: minRequiredAppVersion,
             httpsEnabled: httpsEnabled,
             httpsPrivateKey: privateKey,
             httpsCertificate: certificate,
@@ -117,7 +120,7 @@ app.get("/",function (req, res) {
 });
 app.get("/ping",function (req, res) {
     infoDb.read()
-    res.status(200).send({ success: 'true', title: infoDb.get("title").value(), message: infoDb.get("message").value()});
+    res.status(200).send({ success: 'true', title: infoDb.get("title").value(), message: infoDb.get("message").value(), "minRequiredAppVersion": minRequiredAppVersion});
 });
 app.use("/api/v1/room", routes_v1.rooms)
 
