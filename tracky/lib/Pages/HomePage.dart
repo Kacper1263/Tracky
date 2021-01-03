@@ -106,7 +106,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
                 ),
               ),
               applicationName: "Tracky",
-              applicationVersion: "0.5.5_alpha",
+              applicationVersion: "0.5.5-patch1_alpha",
               applicationLegalese:
                   "Tracky - ASG team tracker \nby Kacper Marcinkiewicz \n\nLicence: MIT \nSource on github: Kacper1263/tracky",
             ),

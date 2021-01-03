@@ -313,7 +313,7 @@ class _RoomsListState extends State<RoomsList> {
     if (data["serverInLan"])
       url = "http://192.168.1.50:5050/api/v1/room/all?hardwareID=$hardwareID";
     else
-      url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/all$hardwareID";
+      url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/all?hardwareID=$hardwareID";
 
     try {
       var response = await get(url).timeout(Duration(seconds: 20));
@@ -331,10 +331,10 @@ class _RoomsListState extends State<RoomsList> {
 
       List<dynamic> rooms = json["rooms"];
 
-      errorWhileLoading = false;
+      setState(() => errorWhileLoading = false);
       return rooms;
     } catch (e) {
-      errorWhileLoading = true;
+      setState(() => errorWhileLoading = true);
       Fluttertoast.showToast(
           msg: "Error while loading rooms: $e", toastLength: Toast.LENGTH_LONG, backgroundColor: Colors.red, textColor: Colors.white);
       return null;
