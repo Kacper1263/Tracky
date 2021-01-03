@@ -509,7 +509,7 @@ function RemoveExpiredRoomsAndPlayers(){
         // Look for expired players
         room.teams.forEach(team => {
             team.players.forEach(player => {
-                if((Date.now() - player.lastSeen) > 1000 * 60 * 5) playersToRemove.push({"player": player, "team": team, "room": room})
+                if((Date.now() - player.lastSeen) > 1000 * 60 * 35) playersToRemove.push({"player": player, "team": team, "room": room})
             })
         })
     });

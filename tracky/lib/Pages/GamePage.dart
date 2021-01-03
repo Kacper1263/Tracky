@@ -68,6 +68,7 @@ class _GamePageState extends State<GamePage> {
   bool _serviceEnabled;
   PermissionStatus _permissionGranted;
   LocationData _locationData = null;
+  StreamSubscription locationSubscription;
 
   /// Run it only on start
   Future<bool> getLocation() async {
@@ -112,8 +113,7 @@ class _GamePageState extends State<GamePage> {
         if (data["serverInLan"])
           url = "http://192.168.1.50:5050/api/v1/room/${data["roomId"]}";
         else
-          url =
-              "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomId"]}";
+          url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomId"]}";
         post(
           url,
           body: {
@@ -125,8 +125,7 @@ class _GamePageState extends State<GamePage> {
         ).timeout(Duration(seconds: 15)).then((res) {
           var response = jsonDecode(res.body);
           List<dynamic> teams = response["teams"];
-          bool showEnemyTeam =
-              response["showEnemyTeam"] == "true" ? true : false;
+          bool showEnemyTeam = response["showEnemyTeam"] == "true" ? true : false;
           List<Player> playersToAdd = new List<Player>();
 
           if (teams == null) return;
@@ -136,10 +135,7 @@ class _GamePageState extends State<GamePage> {
             players.forEach((player) {
               if (player["name"] != data["nickname"] ||
                   (player["name"] == data["nickname"] &&
-                      team["name"] != data["team"])) if ((team["name"] !=
-                          data["team"] &&
-                      showEnemyTeam) ||
-                  team["name"] == data["team"]) {
+                      team["name"] != data["team"])) if ((team["name"] != data["team"] && showEnemyTeam) || team["name"] == data["team"]) {
                 playersToAdd.add(
                   new Player(
                     name: player["name"],
@@ -209,7 +205,7 @@ class _GamePageState extends State<GamePage> {
 
     getLocation().then((success) {
       if (success) {
-        location.onLocationChanged.listen((LocationData currentLocation) {
+        locationSubscription = location.onLocationChanged.listen((LocationData currentLocation) {
           _locationData = currentLocation;
           updatePlayerLocation();
         });
@@ -250,8 +246,7 @@ class _GamePageState extends State<GamePage> {
     if (data["serverInLan"])
       url = "http://192.168.1.50:5050/api/v1/room/leave/${data["roomId"]}";
     else
-      url =
-          "https://kacpermarcinkiewicz.com:5050/api/v1/room/leave/${data["roomId"]}";
+      url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/leave/${data["roomId"]}";
 
     try {
       var response = await post(url, body: {
@@ -271,10 +266,7 @@ class _GamePageState extends State<GamePage> {
       return;
     } catch (e) {
       Fluttertoast.showToast(
-          msg: "Error while leaving room: $e",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white);
+          msg: "Error while leaving room: $e", toastLength: Toast.LENGTH_LONG, backgroundColor: Colors.red, textColor: Colors.white);
       return;
     }
   }
@@ -290,6 +282,7 @@ class _GamePageState extends State<GamePage> {
       return WillPopScope(
         onWillPop: () {
           leaveGame();
+          if (locationSubscription != null) locationSubscription.cancel();
           return Future.value(true);
         },
         child: Scaffold(
@@ -307,8 +300,7 @@ class _GamePageState extends State<GamePage> {
               ),
               layers: [
                 TileLayerOptions(
-                  urlTemplate:
-                      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                   subdomains: ['a', 'b', 'c'],
                   tileProvider: NonCachingNetworkTileProvider(),
                   maxZoom: 24.0,
