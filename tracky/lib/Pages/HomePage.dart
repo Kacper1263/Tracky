@@ -213,7 +213,12 @@ By clicking agree and using this app you agree to privacy policy available on Go
             SizedBox(height: 85),
             infoTitle.isNotEmpty || infoMessage.isNotEmpty
                 ? Container(
-                    color: Colors.grey[700],
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(7),
+                      ),
+                      color: Colors.grey[700],
+                    ),
                     padding: EdgeInsets.all(15),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
