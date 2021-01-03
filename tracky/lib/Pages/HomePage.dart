@@ -70,7 +70,7 @@ You can scroll this page, if it does not fit on the screen.
 We require you to provide us with certain personally identifiable information, including but not limited to user location, user nickname. This data will be deleted from our server when the player leaves the room or will be inactive for 5 minutes (time is only checked when someone refreshes the list of rooms or will try to join the room).
 
 
-For now app is not working in background but we will add this in future. Our roadmap is available on GitHub ( https://github.com/users/Kacper1263/projects/1 )  
+For now app is working in background but this solution is still tested by me and may not work on some devices (if You have problem, let me know). Our roadmap is available on GitHub ( https://github.com/users/Kacper1263/projects/1 )  
 
 By clicking agree and using this app you agree to privacy policy available on Google Play Store (on our app page).
               ''',
@@ -116,7 +116,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
                 ),
               ),
               applicationName: "Tracky",
-              applicationVersion: "${StaticVariables.version.appVersionCode}-patch1_alpha",
+              applicationVersion: "${StaticVariables.version.appVersionCode}_alpha",
               applicationLegalese:
                   "Tracky - ASG team tracker \nby Kacper Marcinkiewicz \n\nLicence: MIT \nSource on github: Kacper1263/tracky",
             ),
@@ -233,7 +233,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
                       children: [
                         Text(infoTitle, style: TextStyle(color: Colors.white, fontSize: 25)),
                         SizedBox(height: 15),
-                        Text(infoMessage, style: TextStyle(color: Colors.white)),
+                        Text(infoMessage, style: TextStyle(color: Colors.white), textAlign: TextAlign.justify),
                       ],
                     ),
                   )

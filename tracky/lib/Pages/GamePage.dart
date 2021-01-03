@@ -26,11 +26,11 @@ SOFTWARE.
 
 import 'dart:async';
 import 'dart:convert';
+import 'package:background_location/background_location.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:location/location.dart';
 import "package:latlong/latlong.dart";
 import 'package:screen/screen.dart';
 
@@ -56,7 +56,7 @@ class _GamePageState extends State<GamePage> {
     name: "You",
     color: Colors.lightBlue[600],
     icon: "thisPlayer",
-    location: LatLng(49.952403, 19.878666),
+    location: LatLng(0, 0),
   );
 
   var otherPlayers = <Player>[];
@@ -64,34 +64,133 @@ class _GamePageState extends State<GamePage> {
   MapController mapController;
 
   //Location variables
-  Location location = new Location();
-  bool _serviceEnabled;
-  PermissionStatus _permissionGranted;
-  LocationData _locationData = null;
-  StreamSubscription locationSubscription;
+  Location _locationData = null;
+  int lastUpdate = 0;
+  bool firstTimeZoomedBefore = false; // change this to true after first time finding GPS location
 
   /// Run it only on start
   Future<bool> getLocation() async {
-    _serviceEnabled = await location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
-      if (!_serviceEnabled) {
-        _locationData = null;
-        return false;
-      }
-    }
+    BackgroundLocation.getPermissions(
+      onGranted: () {
+        BackgroundLocation.setAndroidNotification(
+            title: "Tracky - ASG team tracker", message: "I am updating Your location in background. Tap me to resume app");
+        BackgroundLocation.startLocationService();
+        BackgroundLocation.getLocationUpdates((location) {
+          _locationData = location;
 
-    _permissionGranted = await location.hasPermission();
-    if (_permissionGranted == PermissionStatus.denied) {
-      _permissionGranted = await location.requestPermission();
-      if (_permissionGranted != PermissionStatus.granted) {
-        _locationData = null;
-        return false;
-      }
-    }
+          if ((DateTime.now().millisecondsSinceEpoch - lastUpdate) < 1000 * 5) return;
 
-    _locationData = await location.getLocation();
-    updatePlayerLocation();
+          lastUpdate = DateTime.now().millisecondsSinceEpoch;
+
+          updatePlayerLocation();
+
+          if (!firstTimeZoomedBefore) {
+            findMe();
+            firstTimeZoomedBefore = true;
+          }
+
+          String url;
+          if (data["serverInLan"])
+            url = "http://192.168.1.50:5050/api/v1/room/${data["roomId"]}";
+          else
+            url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomId"]}";
+          post(
+            url,
+            body: {
+              "teamName": data["team"],
+              "playerName": data["nickname"],
+              "latitude": _locationData != null ? _locationData.latitude.toString() : "0",
+              "longitude": _locationData != null ? _locationData.longitude.toString() : "0"
+            },
+          ).timeout(Duration(seconds: 15)).then((res) {
+            var response = jsonDecode(res.body);
+            List<dynamic> teams = response["teams"];
+            bool showEnemyTeam = response["showEnemyTeam"] == "true" ? true : false;
+            List<Player> playersToAdd = new List<Player>();
+
+            if (teams == null) return;
+
+            teams.forEach((team) {
+              List<dynamic> players = team["players"];
+              players.forEach((player) {
+                if (player["name"] != data["nickname"] ||
+                    (player["name"] == data["nickname"] && team["name"] != data["team"])) if ((team["name"] != data["team"] &&
+                        showEnemyTeam) ||
+                    team["name"] == data["team"]) {
+                  playersToAdd.add(
+                    new Player(
+                      name: player["name"],
+                      color: HexColor(team["color"]),
+                      icon: team["name"] != data["team"] // Check is in my team
+                          ? "enemy"
+                          : "normal",
+                      location: LatLng(
+                        double.parse(player["latitude"]),
+                        double.parse(player["longitude"]),
+                      ),
+                    ),
+                  );
+                }
+              });
+            });
+            otherPlayers = playersToAdd.sublist(0);
+
+            if (connectionLost) {
+              connectionLost = false;
+              Fluttertoast.showToast(
+                msg: "Reconnected",
+                toastLength: Toast.LENGTH_LONG,
+                backgroundColor: Colors.lightGreen,
+                textColor: Colors.white,
+                gravity: ToastGravity.BOTTOM,
+                fontSize: 14,
+              );
+            }
+          }).catchError((e) {
+            if (e.toString().contains("TimeoutException")) {
+              connectionLost = true;
+              Fluttertoast.showToast(
+                msg: "Connection to server lost. Trying to reconnect",
+                toastLength: Toast.LENGTH_LONG,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
+                gravity: ToastGravity.BOTTOM,
+                fontSize: 12,
+              );
+            } else if (e.toString().contains("Network is unreachable")) {
+              Fluttertoast.showToast(
+                msg: "No internet connection!",
+                toastLength: Toast.LENGTH_LONG,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
+                gravity: ToastGravity.BOTTOM,
+                fontSize: 14,
+              );
+            } else {
+              Fluttertoast.showToast(
+                msg: "Error: $e",
+                toastLength: Toast.LENGTH_LONG,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
+                gravity: ToastGravity.BOTTOM,
+                fontSize: 12,
+              );
+            }
+          });
+
+          try {
+            print(
+              "API call. Location: ${_locationData.latitude}, ${_locationData.longitude}",
+            );
+          } catch (e) {}
+        });
+      },
+      onDenied: () {
+        leaveGame();
+        Navigator.pop(context);
+      },
+    );
+
     return true;
   }
 
@@ -104,109 +203,11 @@ class _GamePageState extends State<GamePage> {
     thisPlayer.color = HexColor(data["teamColor"]);
 
     mapController = MapController();
-    timer = Timer.periodic(
-      Duration(seconds: 5),
-      (Timer t) async {
-        updatePlayerLocation();
-
-        String url;
-        if (data["serverInLan"])
-          url = "http://192.168.1.50:5050/api/v1/room/${data["roomId"]}";
-        else
-          url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomId"]}";
-        post(
-          url,
-          body: {
-            "teamName": data["team"],
-            "playerName": data["nickname"],
-            "latitude": _locationData.latitude.toString(),
-            "longitude": _locationData.longitude.toString()
-          },
-        ).timeout(Duration(seconds: 15)).then((res) {
-          var response = jsonDecode(res.body);
-          List<dynamic> teams = response["teams"];
-          bool showEnemyTeam = response["showEnemyTeam"] == "true" ? true : false;
-          List<Player> playersToAdd = new List<Player>();
-
-          if (teams == null) return;
-
-          teams.forEach((team) {
-            List<dynamic> players = team["players"];
-            players.forEach((player) {
-              if (player["name"] != data["nickname"] ||
-                  (player["name"] == data["nickname"] &&
-                      team["name"] != data["team"])) if ((team["name"] != data["team"] && showEnemyTeam) || team["name"] == data["team"]) {
-                playersToAdd.add(
-                  new Player(
-                    name: player["name"],
-                    color: HexColor(team["color"]),
-                    icon: team["name"] != data["team"] // Check is in my team
-                        ? "enemy"
-                        : "normal",
-                    location: LatLng(
-                      double.parse(player["latitude"]),
-                      double.parse(player["longitude"]),
-                    ),
-                  ),
-                );
-              }
-            });
-          });
-          otherPlayers = playersToAdd.sublist(0);
-
-          if (connectionLost) {
-            connectionLost = false;
-            Fluttertoast.showToast(
-              msg: "Reconnected",
-              toastLength: Toast.LENGTH_LONG,
-              backgroundColor: Colors.lightGreen,
-              textColor: Colors.white,
-              gravity: ToastGravity.BOTTOM,
-              fontSize: 14,
-            );
-          }
-        }).catchError((e) {
-          if (e.toString().contains("TimeoutException")) {
-            connectionLost = true;
-            Fluttertoast.showToast(
-              msg: "Connection to server lost. Trying to reconnect",
-              toastLength: Toast.LENGTH_LONG,
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
-              gravity: ToastGravity.BOTTOM,
-              fontSize: 12,
-            );
-          } else if (e.toString().contains("Network is unreachable")) {
-            Fluttertoast.showToast(
-              msg: "No internet connection!",
-              toastLength: Toast.LENGTH_LONG,
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
-              gravity: ToastGravity.BOTTOM,
-              fontSize: 14,
-            );
-          } else {
-            Fluttertoast.showToast(
-              msg: "Error: $e",
-              toastLength: Toast.LENGTH_LONG,
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
-              gravity: ToastGravity.BOTTOM,
-              fontSize: 12,
-            );
-          }
-        });
-
-        print(
-          "API call. Location: ${_locationData.latitude}, ${_locationData.longitude}",
-        );
-      },
-    );
 
     getLocation().then((success) {
       if (success) {
-        locationSubscription = location.onLocationChanged.listen((LocationData currentLocation) {
-          _locationData = currentLocation;
+        BackgroundLocation.getLocationUpdates((location) {
+          _locationData = location;
           updatePlayerLocation();
         });
         findMe();
@@ -226,8 +227,10 @@ class _GamePageState extends State<GamePage> {
   void updatePlayerLocation() {
     if (mounted) {
       setState(() {
-        thisPlayer.getMarker().point.latitude = _locationData.latitude;
-        thisPlayer.getMarker().point.longitude = _locationData.longitude;
+        try {
+          thisPlayer.getMarker().point.latitude = _locationData.latitude;
+          thisPlayer.getMarker().point.longitude = _locationData.longitude;
+        } catch (e) {}
       });
     } else {
       timer?.cancel();
@@ -235,10 +238,12 @@ class _GamePageState extends State<GamePage> {
   }
 
   void findMe() {
-    mapController.move(
-      LatLng(_locationData.latitude, _locationData.longitude),
-      mapController.zoom,
-    );
+    try {
+      mapController.move(
+        LatLng(_locationData.latitude, _locationData.longitude),
+        mapController.zoom,
+      );
+    } catch (e) {}
   }
 
   void leaveGame() async {
@@ -282,7 +287,7 @@ class _GamePageState extends State<GamePage> {
       return WillPopScope(
         onWillPop: () {
           leaveGame();
-          if (locationSubscription != null) locationSubscription.cancel();
+          BackgroundLocation.stopLocationService();
           return Future.value(true);
         },
         child: Scaffold(
@@ -294,7 +299,7 @@ class _GamePageState extends State<GamePage> {
             body: FlutterMap(
               mapController: mapController,
               options: MapOptions(
-                center: LatLng(49.952403, 19.878666),
+                center: LatLng(0, 0),
                 zoom: 15.0,
                 maxZoom: 19.3,
               ),
@@ -302,7 +307,7 @@ class _GamePageState extends State<GamePage> {
                 TileLayerOptions(
                   urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                   subdomains: ['a', 'b', 'c'],
-                  tileProvider: NonCachingNetworkTileProvider(),
+                  tileProvider: NonCachingNetworkTileProvider(), // CachedNetworkTileProvider()
                   maxZoom: 24.0,
                 ),
                 MarkerLayerOptions(markers: markers)

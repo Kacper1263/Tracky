@@ -3,7 +3,7 @@ class StaticVariables {
 }
 
 class Version {
-  String appVersionCode = "0.5.5"; //? Only code e.g. "0.5.5" WITHOUT patch like "0.5.5-patch1"
+  String appVersionCode = "0.6.0"; //? Only code e.g. "0.5.5" WITHOUT patch like "0.5.5-patch1"
 
   int getMajorVersionCode() {
     return int.parse(appVersionCode.split('.')[0]);
@@ -18,6 +18,7 @@ class Version {
   }
 
   bool isCompatible(String versionRequiredByServer) {
+    if (versionRequiredByServer == null) return true;
     int serverRequiredMajor = int.parse(versionRequiredByServer.split('.')[0]);
     int serverRequiredMinor = int.parse(versionRequiredByServer.split('.')[1]);
     int serverRequiredPatch = int.parse(versionRequiredByServer.split('.')[2]);
