@@ -26,8 +26,8 @@ SOFTWARE.
 
 import 'dart:convert';
 
-import 'package:device_info/device_info.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_udid/flutter_udid.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
 import 'package:tracky/Classes.dart';
@@ -308,8 +308,7 @@ class _RoomsListState extends State<RoomsList> {
 
   Future<List> getRooms() async {
     String url;
-    AndroidDeviceInfo androidInfo = await DeviceInfoPlugin().androidInfo;
-    String hardwareID = androidInfo.androidId;
+    String hardwareID = await FlutterUdid.udid;
     if (data["serverInLan"])
       url = "http://192.168.1.50:5050/api/v1/room/all?hardwareID=$hardwareID";
     else

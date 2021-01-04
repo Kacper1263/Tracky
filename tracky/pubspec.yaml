@@ -25,7 +25,7 @@ dependencies:
   background_location: ^0.3.0
   screen: ^0.0.5
   fluttertoast: ^7.0.4
-  device_info: ^1.0.0
+  flutter_udid: ^1.0.1
   flutter:
     sdk: flutter
 

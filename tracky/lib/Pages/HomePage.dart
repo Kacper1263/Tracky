@@ -26,8 +26,8 @@ SOFTWARE.
 
 import 'dart:convert';
 
-import 'package:device_info/device_info.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_udid/flutter_udid.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
 import 'package:tracky/StaticVariables.dart';
@@ -100,8 +100,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
               context: context,
               applicationIcon: GestureDetector(
                 onLongPress: () async {
-                  AndroidDeviceInfo androidInfo = await DeviceInfoPlugin().androidInfo;
-                  String hardwareID = androidInfo.androidId;
+                  String hardwareID = await FlutterUdid.udid;
                   Dialogs.infoDialog(
                     context,
                     titleText: "Developer window",
@@ -172,9 +171,8 @@ By clicking agree and using this app you agree to privacy policy available on Go
                   ? null
                   : () {
                       if (nicknameController.text.isNotEmpty && nicknameController.text.length > 2) {
-                        DeviceInfoPlugin deviceInfoPlugin = DeviceInfoPlugin();
-                        deviceInfoPlugin.androidInfo.then((androidInfo) {
-                          String hardwareID = androidInfo.androidId;
+                        FlutterUdid.udid.then((udid) {
+                          String hardwareID = udid;
                           Navigator.pushNamed(
                             context,
                             '/roomsList',
