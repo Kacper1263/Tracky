@@ -40,6 +40,16 @@ class Player {
   }
 }
 
+class NamedPolygon {
+  String name;
+  Polygon polygon;
+
+  NamedPolygon({
+    this.name,
+    this.polygon,
+  });
+}
+
 class ServerRoom {
   int id;
   String name;

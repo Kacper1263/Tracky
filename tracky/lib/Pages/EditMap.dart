@@ -28,6 +28,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:background_location/background_location.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geodesy/geodesy.dart';
 import 'package:http/http.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -37,21 +38,18 @@ import 'package:tracky/Dialogs.dart';
 
 import '../Classes.dart';
 
-class GamePage extends StatefulWidget {
-  GamePage({Key key, this.title, this.arguments}) : super(key: key);
+class EditMap extends StatefulWidget {
+  EditMap({Key key, this.title, this.arguments}) : super(key: key);
 
   final String title;
   final Object arguments;
 
   @override
-  _GamePageState createState() => _GamePageState();
+  _EditMapState createState() => _EditMapState();
 }
 
-class _GamePageState extends State<GamePage> {
+class _EditMapState extends State<EditMap> {
   Map data;
-
-  Timer timer;
-  bool connectionLost = false;
 
   var thisPlayer = new Player(
     name: "You",
@@ -60,14 +58,16 @@ class _GamePageState extends State<GamePage> {
     location: LatLng(0, 0),
   );
 
-  var otherPlayers = <Player>[];
+  List<Marker> tempMarkers = List<Marker>();
+  List<NamedPolygon> polygons = List<NamedPolygon>();
 
   MapController mapController;
 
   //Location variables
+  bool addingNewPolygon = false;
+  NamedPolygon newPolygon;
   Location _locationData = null;
-  int lastUpdate = 0;
-  bool firstTimeZoomedBefore = false; // change this to true after first time finding GPS location
+  bool firstTimeZoomedBefore = false;
 
   /// Run it only on start
   Future<bool> getLocation() async {
@@ -84,19 +84,17 @@ class _GamePageState extends State<GamePage> {
           Navigator.pop(context);
           BackgroundLocation.getPermissions(
             onGranted: () {
-              startGame();
+              startEditor();
             },
             onDenied: () {
-              leaveGame();
               Navigator.pop(context);
             },
           );
         },
       );
     } else if (permissionStatus.toString() == "PermissionStatus.granted") {
-      startGame();
+      startEditor();
     } else {
-      leaveGame();
       Navigator.pop(context);
     }
 
@@ -104,19 +102,13 @@ class _GamePageState extends State<GamePage> {
   }
 
   // Call when permissions are granted
-  void startGame() {
+  void startEditor() {
     BackgroundLocation.setAndroidNotification(
-        title: "Tracky - ASG team tracker", message: "I am updating Your location. Tap me to resume the app");
+        title: "Tracky - ASG team tracker",
+        message: "I am updating Your location in map editor (I am not sending it to the server). Tap me to resume the app");
     BackgroundLocation.startLocationService();
     BackgroundLocation.getLocationUpdates((location) {
       _locationData = location;
-
-      if ((DateTime.now().millisecondsSinceEpoch - lastUpdate) < 1000 * 5) {
-        print("Not yet");
-        return;
-      }
-
-      lastUpdate = DateTime.now().millisecondsSinceEpoch;
 
       updatePlayerLocation();
 
@@ -124,94 +116,6 @@ class _GamePageState extends State<GamePage> {
         findMe();
         firstTimeZoomedBefore = true;
       }
-
-      String url;
-      if (data["serverInLan"])
-        url = "http://192.168.1.50:5050/api/v1/room/${data["roomId"]}";
-      else
-        url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomId"]}";
-      post(
-        url,
-        body: {
-          "teamName": data["team"],
-          "playerName": data["nickname"],
-          "latitude": _locationData != null ? _locationData.latitude.toString() : "0",
-          "longitude": _locationData != null ? _locationData.longitude.toString() : "0"
-        },
-      ).timeout(Duration(seconds: 15)).then((res) {
-        var response = jsonDecode(res.body);
-        List<dynamic> teams = response["teams"];
-        bool showEnemyTeam = response["showEnemyTeam"] == "true" ? true : false;
-        List<Player> playersToAdd = new List<Player>();
-
-        if (teams == null) return;
-
-        teams.forEach((team) {
-          List<dynamic> players = team["players"];
-          players.forEach((player) {
-            if (player["name"] != data["nickname"] ||
-                (player["name"] == data["nickname"] &&
-                    team["name"] != data["team"])) if ((team["name"] != data["team"] && showEnemyTeam) || team["name"] == data["team"]) {
-              playersToAdd.add(
-                new Player(
-                  name: player["name"],
-                  color: HexColor(team["color"]),
-                  icon: team["name"] != data["team"] // Check is in my team
-                      ? "enemy"
-                      : "normal",
-                  location: LatLng(
-                    double.parse(player["latitude"]),
-                    double.parse(player["longitude"]),
-                  ),
-                ),
-              );
-            }
-          });
-        });
-        otherPlayers = playersToAdd.sublist(0);
-
-        if (connectionLost) {
-          connectionLost = false;
-          Fluttertoast.showToast(
-            msg: "Reconnected",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.lightGreen,
-            textColor: Colors.white,
-            gravity: ToastGravity.BOTTOM,
-            fontSize: 14,
-          );
-        }
-      }).catchError((e) {
-        if (e.toString().contains("TimeoutException")) {
-          connectionLost = true;
-          Fluttertoast.showToast(
-            msg: "Connection to server lost. Trying to reconnect",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            gravity: ToastGravity.BOTTOM,
-            fontSize: 12,
-          );
-        } else if (e.toString().contains("Network is unreachable")) {
-          Fluttertoast.showToast(
-            msg: "No internet connection!",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            gravity: ToastGravity.BOTTOM,
-            fontSize: 14,
-          );
-        } else {
-          Fluttertoast.showToast(
-            msg: "Error: $e",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            gravity: ToastGravity.BOTTOM,
-            fontSize: 12,
-          );
-        }
-      });
 
       try {
         print(
@@ -229,8 +133,6 @@ class _GamePageState extends State<GamePage> {
 
     data = widget.arguments;
 
-    thisPlayer.color = HexColor(data["teamColor"]);
-
     mapController = MapController();
 
     getLocation();
@@ -240,7 +142,6 @@ class _GamePageState extends State<GamePage> {
 
   @override
   void dispose() {
-    timer?.cancel();
     Screen.keepOn(false);
     super.dispose();
   }
@@ -255,8 +156,6 @@ class _GamePageState extends State<GamePage> {
           print(e);
         }
       });
-    } else {
-      timer?.cancel();
     }
   }
 
@@ -271,47 +170,17 @@ class _GamePageState extends State<GamePage> {
     }
   }
 
-  void leaveGame() async {
-    String url;
-    if (data["serverInLan"])
-      url = "http://192.168.1.50:5050/api/v1/room/leave/${data["roomId"]}";
-    else
-      url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/leave/${data["roomId"]}";
-
-    try {
-      var response = await post(url, body: {
-        "playerName": data["nickname"],
-        "teamName": data["team"],
-      });
-
-      if (response.statusCode != 200) {
-        Fluttertoast.showToast(
-            msg: "Error while leaving room: ${response.body}",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white);
-        return;
-      }
-
-      return;
-    } catch (e) {
-      Fluttertoast.showToast(
-          msg: "Error while leaving room: $e", toastLength: Toast.LENGTH_LONG, backgroundColor: Colors.red, textColor: Colors.white);
-      return;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     data = widget.arguments;
     List<Marker> markers = List<Marker>();
-    otherPlayers.forEach((p) => markers.add(p.getMarker()));
+    tempMarkers.forEach((p) => markers.add(p));
     markers.add(thisPlayer.getMarker());
 
     try {
       return WillPopScope(
         onWillPop: () {
-          leaveGame();
+          // TODO: Save data to API
           BackgroundLocation.stopLocationService();
           return Future.value(true);
         },
@@ -327,6 +196,41 @@ class _GamePageState extends State<GamePage> {
                 center: LatLng(0, 0),
                 zoom: 15.0,
                 maxZoom: 19.3,
+                onTap: (tapLocation) {
+                  if (addingNewPolygon) {
+                    setState(() {
+                      tempMarkers.add(
+                        Marker(
+                          width: 150.0,
+                          height: 80.0,
+                          point: tapLocation,
+                          builder: (ctx) => Container(
+                            child: Icon(
+                              Icons.location_pin,
+                              color: Colors.red, // TODO: Polygon color
+                              size: 35,
+                            ),
+                          ),
+                        ),
+                      );
+                    });
+                  } else {
+                    Geodesy geodesy = Geodesy();
+                    for (NamedPolygon poly in polygons) {
+                      if (geodesy.isGeoPointInPolygon(tapLocation, poly.polygon.points)) {
+                        Fluttertoast.showToast(
+                          msg: "Tapped on polygon. TODO: Edit polygon info", // TODO: Edit polygon info
+                          toastLength: Toast.LENGTH_LONG,
+                          backgroundColor: Colors.grey,
+                          textColor: Colors.white,
+                          gravity: ToastGravity.BOTTOM,
+                          fontSize: 12,
+                        );
+                        break; // Break to not show overlapping polygons
+                      }
+                    }
+                  }
+                },
               ),
               layers: [
                 TileLayerOptions(
@@ -335,40 +239,13 @@ class _GamePageState extends State<GamePage> {
                   tileProvider: NonCachingNetworkTileProvider(), // CachedNetworkTileProvider()
                   maxZoom: 24.0,
                 ),
-                MarkerLayerOptions(markers: markers)
+                MarkerLayerOptions(markers: markers),
+                PolygonLayerOptions(polygonCulling: true, polygons: polygons.map((element) => element.polygon).toList()),
               ],
             ),
             floatingActionButton: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                // FloatingActionButton(
-                //   heroTag: "btn1",
-                //   onPressed: () {
-                //     setState(() {
-                //       thisPlayer.name = "You";
-                //       thisPlayer.color = Colors.lightBlue[600];
-                //     });
-                //   },
-                //   tooltip: 'Revive me',
-                //   child: Icon(Icons.sentiment_satisfied),
-                // ),
-                // SizedBox(
-                //   height: 10,
-                // ),
-                // FloatingActionButton(
-                //   heroTag: "btn2",
-                //   onPressed: () {
-                //     setState(() {
-                //       thisPlayer.name = "You (dead)";
-                //       thisPlayer.color = Colors.red;
-                //     });
-                //   },
-                //   tooltip: 'Kill me',
-                //   child: Icon(Icons.sentiment_very_dissatisfied),
-                // ),
-                // SizedBox(
-                //   height: 20,
-                // ),
                 FloatingActionButton(
                   heroTag: "btn3",
                   onPressed: () {
@@ -378,6 +255,36 @@ class _GamePageState extends State<GamePage> {
                   },
                   tooltip: 'Find me',
                   child: Icon(Icons.gps_fixed),
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                FloatingActionButton(
+                  heroTag: "btn4",
+                  onPressed: () {
+                    setState(() {
+                      addingNewPolygon = !addingNewPolygon;
+                    });
+                    if (addingNewPolygon) {
+                      // TODO: Popup with settings of the new polygon
+                    } else {
+                      // TODO: Save new polygon to list
+                      if (tempMarkers.length <= 0) return;
+                      List<LatLng> pointsOfPolygon = tempMarkers.map((e) => e.point).toList();
+                      tempMarkers.clear();
+                      polygons.add(
+                        NamedPolygon(
+                          name: "Poly",
+                          polygon: Polygon(
+                            color: Colors.red.withOpacity(0.5), // TODO: Polygon color
+                            points: pointsOfPolygon,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  tooltip: addingNewPolygon ? "Save polygon" : 'New polygon',
+                  child: Icon(addingNewPolygon ? Icons.save : Icons.add),
                 ),
               ],
             )),

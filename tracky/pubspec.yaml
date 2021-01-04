@@ -26,6 +26,7 @@ dependencies:
   screen: ^0.0.5
   fluttertoast: ^7.0.4
   flutter_udid: ^1.0.1
+  geodesy: ^0.3.2
   flutter:
     sdk: flutter
 

@@ -248,12 +248,21 @@ class _RoomsListState extends State<RoomsList> {
                                                     Expanded(
                                                       child: RaisedButton(
                                                         padding: EdgeInsets.all(12),
-                                                        child: Text("Edit map (soon)", style: TextStyle(fontSize: 17)),
+                                                        child: Text("Edit map", style: TextStyle(fontSize: 17)),
                                                         color: Colors.grey[850],
                                                         textColor: Colors.white,
                                                         disabledColor: Colors.grey[800],
                                                         disabledTextColor: Colors.grey[700],
-                                                        onPressed: null,
+                                                        onPressed: () {
+                                                          Navigator.pushNamed(
+                                                            context,
+                                                            "/editMap",
+                                                            arguments: {
+                                                              "hardwareID": data["hardwareID"],
+                                                              "roomID": rooms[index]["id"],
+                                                            },
+                                                          );
+                                                        },
                                                       ),
                                                     ),
                                                   ],
