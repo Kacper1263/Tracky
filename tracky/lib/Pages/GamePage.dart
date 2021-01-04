@@ -26,6 +26,7 @@ SOFTWARE.
 
 import 'dart:async';
 import 'dart:convert';
+import 'package:location/location.dart' as loc;
 import 'package:background_location/background_location.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
@@ -50,7 +51,6 @@ class GamePage extends StatefulWidget {
 class _GamePageState extends State<GamePage> {
   Map data;
 
-  Timer timer;
   bool connectionLost = false;
 
   var thisPlayer = new Player(
@@ -104,7 +104,24 @@ class _GamePageState extends State<GamePage> {
   }
 
   // Call when permissions are granted
-  void startGame() {
+  void startGame() async {
+    // Check is GPS enabled
+    loc.Location _location = loc.Location();
+    bool gpsEnabled = await _location.serviceEnabled();
+    if (!gpsEnabled) {
+      gpsEnabled = await _location.requestService();
+      if (!gpsEnabled) {
+        Fluttertoast.showToast(
+          msg: "Without GPS enabled your location will not be updated and you will not be connected to server!",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          gravity: ToastGravity.BOTTOM,
+          fontSize: 14,
+        );
+      }
+    }
+
     BackgroundLocation.setAndroidNotification(
         title: "Tracky - ASG team tracker", message: "I am updating Your location. Tap me to resume the app");
     BackgroundLocation.startLocationService();
@@ -240,7 +257,7 @@ class _GamePageState extends State<GamePage> {
 
   @override
   void dispose() {
-    timer?.cancel();
+    BackgroundLocation.stopLocationService(); // TODO: Checkl for errors
     Screen.keepOn(false);
     super.dispose();
   }
@@ -255,8 +272,6 @@ class _GamePageState extends State<GamePage> {
           print(e);
         }
       });
-    } else {
-      timer?.cancel();
     }
   }
 

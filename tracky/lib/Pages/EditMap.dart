@@ -26,6 +26,7 @@ SOFTWARE.
 
 import 'dart:async';
 import 'dart:convert';
+import 'package:location/location.dart' as loc;
 import 'package:background_location/background_location.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geodesy/geodesy.dart';
@@ -102,7 +103,24 @@ class _EditMapState extends State<EditMap> {
   }
 
   // Call when permissions are granted
-  void startEditor() {
+  void startEditor() async {
+// Check is GPS enabled
+    loc.Location _location = loc.Location();
+    bool gpsEnabled = await _location.serviceEnabled();
+    if (!gpsEnabled) {
+      gpsEnabled = await _location.requestService();
+      if (!gpsEnabled) {
+        Fluttertoast.showToast(
+          msg: "Without GPS enabled your location will not be updated and you will not be connected to server!",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          gravity: ToastGravity.BOTTOM,
+          fontSize: 14,
+        );
+      }
+    }
+
     BackgroundLocation.setAndroidNotification(
         title: "Tracky - ASG team tracker",
         message: "I am updating Your location in map editor (I am not sending it to the server). Tap me to resume the app");
