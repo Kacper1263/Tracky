@@ -101,10 +101,31 @@ By clicking agree and using this app you agree to privacy policy available on Go
               applicationIcon: GestureDetector(
                 onLongPress: () async {
                   String hardwareID = await FlutterUdid.udid;
-                  Dialogs.infoDialog(
+                  Dialogs.infoDialogWithWidgetBody(
                     context,
-                    titleText: "Developer window",
-                    descriptionText: "Your hardware ID: $hardwareID",
+                    titleText: "Developer options",
+                    descriptionWidgets: <Widget>[
+                      SelectableText("Your hardware ID: $hardwareID", style: TextStyle(color: Colors.white)),
+                      SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Text("Enable map editor (preview) ", style: TextStyle(color: Colors.white)),
+                          StatefulBuilder(
+                            builder: (context, StateSetter setState) {
+                              // Needed to change state of dialog
+                              return Switch(
+                                value: StaticVariables.mapEditorPreviewEnabled,
+                                onChanged: (val) {
+                                  setState(() {
+                                    StaticVariables.mapEditorPreviewEnabled = val;
+                                  });
+                                },
+                              );
+                            },
+                          )
+                        ],
+                      )
+                    ],
                     okBtnText: "Close",
                     onOkBtn: () => Navigator.pop(context),
                   );
