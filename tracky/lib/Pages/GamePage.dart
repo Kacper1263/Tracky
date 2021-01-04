@@ -33,6 +33,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import "package:latlong/latlong.dart";
 import 'package:screen/screen.dart';
+import 'package:tracky/Dialogs.dart';
 
 import '../Classes.dart';
 
@@ -70,128 +71,156 @@ class _GamePageState extends State<GamePage> {
 
   /// Run it only on start
   Future<bool> getLocation() async {
-    BackgroundLocation.getPermissions(
-      onGranted: () {
-        BackgroundLocation.setAndroidNotification(
-            title: "Tracky - ASG team tracker", message: "I am updating Your location in background. Tap me to resume app");
-        BackgroundLocation.startLocationService();
-        BackgroundLocation.getLocationUpdates((location) {
-          _locationData = location;
-
-          if ((DateTime.now().millisecondsSinceEpoch - lastUpdate) < 1000 * 5) return;
-
-          lastUpdate = DateTime.now().millisecondsSinceEpoch;
-
-          updatePlayerLocation();
-
-          if (!firstTimeZoomedBefore) {
-            findMe();
-            firstTimeZoomedBefore = true;
-          }
-
-          String url;
-          if (data["serverInLan"])
-            url = "http://192.168.1.50:5050/api/v1/room/${data["roomId"]}";
-          else
-            url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomId"]}";
-          post(
-            url,
-            body: {
-              "teamName": data["team"],
-              "playerName": data["nickname"],
-              "latitude": _locationData != null ? _locationData.latitude.toString() : "0",
-              "longitude": _locationData != null ? _locationData.longitude.toString() : "0"
+    var permissionStatus = await BackgroundLocation.checkPermissions();
+    print(permissionStatus);
+    if (permissionStatus.toString() == "PermissionStatus.undetermined" || permissionStatus.toString() == "PermissionStatus.denied") {
+      Dialogs.infoDialog(
+        context,
+        titleText: "Permissions, read carefully!",
+        descriptionText:
+            'Now you should see a window asking for location permissions. These permissions are needed to run the application. It is possible that you will be able to choose between "Allow only while using the app" and "Allow all the time", We RECOMMEND to choose "Allow all the time" because it will allow your location to be updated also when you lock the phone, go to the home screen or change the application to another. We will download your location ONLY if you are in a room on the server and the app is running in the background. When you close the app or leave the room, we will not use your location. If you want, you can choose to share your location only while using the app, but it can make your location update only when the screen is unlocked. While the application will be using your location, you will be informed about it by a notification on the bar. \n\nThis setting can be changed later in the system settings.',
+        okBtnText: "Ok",
+        onOkBtn: () {
+          Navigator.pop(context);
+          BackgroundLocation.getPermissions(
+            onGranted: () {
+              startGame();
             },
-          ).timeout(Duration(seconds: 15)).then((res) {
-            var response = jsonDecode(res.body);
-            List<dynamic> teams = response["teams"];
-            bool showEnemyTeam = response["showEnemyTeam"] == "true" ? true : false;
-            List<Player> playersToAdd = new List<Player>();
+            onDenied: () {
+              leaveGame();
+              Navigator.pop(context);
+            },
+          );
+        },
+      );
+    } else if (permissionStatus.toString() == "PermissionStatus.granted") {
+      startGame();
+    } else {
+      leaveGame();
+      Navigator.pop(context);
+    }
 
-            if (teams == null) return;
+    return true;
+  }
 
-            teams.forEach((team) {
-              List<dynamic> players = team["players"];
-              players.forEach((player) {
-                if (player["name"] != data["nickname"] ||
-                    (player["name"] == data["nickname"] && team["name"] != data["team"])) if ((team["name"] != data["team"] &&
-                        showEnemyTeam) ||
-                    team["name"] == data["team"]) {
-                  playersToAdd.add(
-                    new Player(
-                      name: player["name"],
-                      color: HexColor(team["color"]),
-                      icon: team["name"] != data["team"] // Check is in my team
-                          ? "enemy"
-                          : "normal",
-                      location: LatLng(
-                        double.parse(player["latitude"]),
-                        double.parse(player["longitude"]),
-                      ),
-                    ),
-                  );
-                }
-              });
-            });
-            otherPlayers = playersToAdd.sublist(0);
+  // Call when permissions are granted
+  void startGame() {
+    BackgroundLocation.setAndroidNotification(
+        title: "Tracky - ASG team tracker", message: "I am updating Your location. Tap me to resume app");
+    BackgroundLocation.startLocationService();
+    BackgroundLocation.getLocationUpdates((location) {
+      _locationData = location;
 
-            if (connectionLost) {
-              connectionLost = false;
-              Fluttertoast.showToast(
-                msg: "Reconnected",
-                toastLength: Toast.LENGTH_LONG,
-                backgroundColor: Colors.lightGreen,
-                textColor: Colors.white,
-                gravity: ToastGravity.BOTTOM,
-                fontSize: 14,
-              );
-            }
-          }).catchError((e) {
-            if (e.toString().contains("TimeoutException")) {
-              connectionLost = true;
-              Fluttertoast.showToast(
-                msg: "Connection to server lost. Trying to reconnect",
-                toastLength: Toast.LENGTH_LONG,
-                backgroundColor: Colors.red,
-                textColor: Colors.white,
-                gravity: ToastGravity.BOTTOM,
-                fontSize: 12,
-              );
-            } else if (e.toString().contains("Network is unreachable")) {
-              Fluttertoast.showToast(
-                msg: "No internet connection!",
-                toastLength: Toast.LENGTH_LONG,
-                backgroundColor: Colors.red,
-                textColor: Colors.white,
-                gravity: ToastGravity.BOTTOM,
-                fontSize: 14,
-              );
-            } else {
-              Fluttertoast.showToast(
-                msg: "Error: $e",
-                toastLength: Toast.LENGTH_LONG,
-                backgroundColor: Colors.red,
-                textColor: Colors.white,
-                gravity: ToastGravity.BOTTOM,
-                fontSize: 12,
+      if ((DateTime.now().millisecondsSinceEpoch - lastUpdate) < 1000 * 5) {
+        print("Not yet");
+        return;
+      }
+
+      lastUpdate = DateTime.now().millisecondsSinceEpoch;
+
+      updatePlayerLocation();
+
+      if (!firstTimeZoomedBefore && _locationData.latitude != 0) {
+        findMe();
+        firstTimeZoomedBefore = true;
+      }
+
+      String url;
+      if (data["serverInLan"])
+        url = "http://192.168.1.50:5050/api/v1/room/${data["roomId"]}";
+      else
+        url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomId"]}";
+      post(
+        url,
+        body: {
+          "teamName": data["team"],
+          "playerName": data["nickname"],
+          "latitude": _locationData != null ? _locationData.latitude.toString() : "0",
+          "longitude": _locationData != null ? _locationData.longitude.toString() : "0"
+        },
+      ).timeout(Duration(seconds: 15)).then((res) {
+        var response = jsonDecode(res.body);
+        List<dynamic> teams = response["teams"];
+        bool showEnemyTeam = response["showEnemyTeam"] == "true" ? true : false;
+        List<Player> playersToAdd = new List<Player>();
+
+        if (teams == null) return;
+
+        teams.forEach((team) {
+          List<dynamic> players = team["players"];
+          players.forEach((player) {
+            if (player["name"] != data["nickname"] ||
+                (player["name"] == data["nickname"] &&
+                    team["name"] != data["team"])) if ((team["name"] != data["team"] && showEnemyTeam) || team["name"] == data["team"]) {
+              playersToAdd.add(
+                new Player(
+                  name: player["name"],
+                  color: HexColor(team["color"]),
+                  icon: team["name"] != data["team"] // Check is in my team
+                      ? "enemy"
+                      : "normal",
+                  location: LatLng(
+                    double.parse(player["latitude"]),
+                    double.parse(player["longitude"]),
+                  ),
+                ),
               );
             }
           });
-
-          try {
-            print(
-              "API call. Location: ${_locationData.latitude}, ${_locationData.longitude}",
-            );
-          } catch (e) {}
         });
-      },
-      onDenied: () {
-        leaveGame();
-        Navigator.pop(context);
-      },
-    );
+        otherPlayers = playersToAdd.sublist(0);
 
-    return true;
+        if (connectionLost) {
+          connectionLost = false;
+          Fluttertoast.showToast(
+            msg: "Reconnected",
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: Colors.lightGreen,
+            textColor: Colors.white,
+            gravity: ToastGravity.BOTTOM,
+            fontSize: 14,
+          );
+        }
+      }).catchError((e) {
+        if (e.toString().contains("TimeoutException")) {
+          connectionLost = true;
+          Fluttertoast.showToast(
+            msg: "Connection to server lost. Trying to reconnect",
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            gravity: ToastGravity.BOTTOM,
+            fontSize: 12,
+          );
+        } else if (e.toString().contains("Network is unreachable")) {
+          Fluttertoast.showToast(
+            msg: "No internet connection!",
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            gravity: ToastGravity.BOTTOM,
+            fontSize: 14,
+          );
+        } else {
+          Fluttertoast.showToast(
+            msg: "Error: $e",
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            gravity: ToastGravity.BOTTOM,
+            fontSize: 12,
+          );
+        }
+      });
+
+      try {
+        print(
+          "API call. Location: ${_locationData.latitude}, ${_locationData.longitude}",
+        );
+      } catch (e) {
+        print(e);
+      }
+    });
   }
 
   @override
@@ -204,15 +233,7 @@ class _GamePageState extends State<GamePage> {
 
     mapController = MapController();
 
-    getLocation().then((success) {
-      if (success) {
-        BackgroundLocation.getLocationUpdates((location) {
-          _locationData = location;
-          updatePlayerLocation();
-        });
-        findMe();
-      }
-    });
+    getLocation();
 
     super.initState();
   }
@@ -230,7 +251,9 @@ class _GamePageState extends State<GamePage> {
         try {
           thisPlayer.getMarker().point.latitude = _locationData.latitude;
           thisPlayer.getMarker().point.longitude = _locationData.longitude;
-        } catch (e) {}
+        } catch (e) {
+          print(e);
+        }
       });
     } else {
       timer?.cancel();
@@ -243,7 +266,9 @@ class _GamePageState extends State<GamePage> {
         LatLng(_locationData.latitude, _locationData.longitude),
         mapController.zoom,
       );
-    } catch (e) {}
+    } catch (e) {
+      print(e);
+    }
   }
 
   void leaveGame() async {
@@ -348,7 +373,6 @@ class _GamePageState extends State<GamePage> {
                   heroTag: "btn3",
                   onPressed: () {
                     setState(() {
-                      getLocation();
                       findMe();
                     });
                   },
