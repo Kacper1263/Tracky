@@ -63,6 +63,7 @@ class _GamePageState extends State<GamePage> {
   var otherPlayers = <Player>[];
 
   MapController mapController;
+  Timer updateTimer;
 
   //Location variables
   Location _locationData = null;
@@ -87,6 +88,7 @@ class _GamePageState extends State<GamePage> {
               startGame();
             },
             onDenied: () {
+              updateTimer?.cancel();
               leaveGame();
               Navigator.pop(context);
             },
@@ -96,6 +98,7 @@ class _GamePageState extends State<GamePage> {
     } else if (permissionStatus.toString() == "PermissionStatus.granted") {
       startGame();
     } else {
+      updateTimer?.cancel();
       leaveGame();
       Navigator.pop(context);
     }
@@ -112,7 +115,7 @@ class _GamePageState extends State<GamePage> {
       gpsEnabled = await _location.requestService();
       if (!gpsEnabled) {
         Fluttertoast.showToast(
-          msg: "Without GPS enabled your location will not be updated and you will not be connected to server!",
+          msg: "Without GPS enabled your location will not be updated and you will be connected to server only every 20s!",
           toastLength: Toast.LENGTH_LONG,
           backgroundColor: Colors.red,
           textColor: Colors.white,
@@ -142,93 +145,7 @@ class _GamePageState extends State<GamePage> {
         firstTimeZoomedBefore = true;
       }
 
-      String url;
-      if (data["serverInLan"])
-        url = "http://192.168.1.50:5050/api/v1/room/${data["roomId"]}";
-      else
-        url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomId"]}";
-      post(
-        url,
-        body: {
-          "teamName": data["team"],
-          "playerName": data["nickname"],
-          "latitude": _locationData != null ? _locationData.latitude.toString() : "0",
-          "longitude": _locationData != null ? _locationData.longitude.toString() : "0"
-        },
-      ).timeout(Duration(seconds: 15)).then((res) {
-        var response = jsonDecode(res.body);
-        List<dynamic> teams = response["teams"];
-        bool showEnemyTeam = response["showEnemyTeam"] == "true" ? true : false;
-        List<Player> playersToAdd = new List<Player>();
-
-        if (teams == null) return;
-
-        teams.forEach((team) {
-          List<dynamic> players = team["players"];
-          players.forEach((player) {
-            if (player["name"] != data["nickname"] ||
-                (player["name"] == data["nickname"] &&
-                    team["name"] != data["team"])) if ((team["name"] != data["team"] && showEnemyTeam) || team["name"] == data["team"]) {
-              playersToAdd.add(
-                new Player(
-                  name: player["name"],
-                  color: HexColor(team["color"]),
-                  icon: team["name"] != data["team"] // Check is in my team
-                      ? "enemy"
-                      : "normal",
-                  location: LatLng(
-                    double.parse(player["latitude"]),
-                    double.parse(player["longitude"]),
-                  ),
-                ),
-              );
-            }
-          });
-        });
-        otherPlayers = playersToAdd.sublist(0);
-
-        if (connectionLost) {
-          connectionLost = false;
-          Fluttertoast.showToast(
-            msg: "Reconnected",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.lightGreen,
-            textColor: Colors.white,
-            gravity: ToastGravity.BOTTOM,
-            fontSize: 14,
-          );
-        }
-      }).catchError((e) {
-        if (e.toString().contains("TimeoutException")) {
-          connectionLost = true;
-          Fluttertoast.showToast(
-            msg: "Connection to server lost. Trying to reconnect",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            gravity: ToastGravity.BOTTOM,
-            fontSize: 12,
-          );
-        } else if (e.toString().contains("Network is unreachable")) {
-          Fluttertoast.showToast(
-            msg: "No internet connection!",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            gravity: ToastGravity.BOTTOM,
-            fontSize: 14,
-          );
-        } else {
-          Fluttertoast.showToast(
-            msg: "Error: $e",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            gravity: ToastGravity.BOTTOM,
-            fontSize: 12,
-          );
-        }
-      });
+      updateAndFetchDataFromServer();
 
       try {
         print(
@@ -237,6 +154,20 @@ class _GamePageState extends State<GamePage> {
       } catch (e) {
         print(e);
       }
+    });
+
+    // Keep alive system - This will fetch data from server and update lastSeen even if location was not changed in last 20s
+    updateTimer = Timer.periodic(Duration(seconds: 20), (timer) {
+      if ((DateTime.now().millisecondsSinceEpoch - lastUpdate) < 1000 * 15) {
+        // 15 because Timer.periodic is kinda random
+        print("Keep alive not needed");
+        return;
+      }
+
+      lastUpdate = DateTime.now().millisecondsSinceEpoch;
+      print("Keep alive was sent");
+
+      updateAndFetchDataFromServer();
     });
   }
 
@@ -257,9 +188,101 @@ class _GamePageState extends State<GamePage> {
 
   @override
   void dispose() {
-    BackgroundLocation.stopLocationService(); // TODO: Checkl for errors
+    updateTimer?.cancel();
+    BackgroundLocation.stopLocationService();
     Screen.keepOn(false);
     super.dispose();
+  }
+
+  void updateAndFetchDataFromServer() {
+    String url;
+    if (data["serverInLan"])
+      url = "http://192.168.1.50:5050/api/v1/room/${data["roomId"]}";
+    else
+      url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomId"]}";
+    post(
+      url,
+      body: {
+        "teamName": data["team"],
+        "playerName": data["nickname"],
+        "latitude": _locationData != null ? _locationData.latitude.toString() : "0",
+        "longitude": _locationData != null ? _locationData.longitude.toString() : "0"
+      },
+    ).timeout(Duration(seconds: 15)).then((res) {
+      var response = jsonDecode(res.body);
+      List<dynamic> teams = response["teams"];
+      bool showEnemyTeam = response["showEnemyTeam"] == "true" ? true : false;
+      List<Player> playersToAdd = new List<Player>();
+
+      if (teams == null) return;
+
+      teams.forEach((team) {
+        List<dynamic> players = team["players"];
+        players.forEach((player) {
+          if (player["name"] != data["nickname"] ||
+              (player["name"] == data["nickname"] &&
+                  team["name"] != data["team"])) if ((team["name"] != data["team"] && showEnemyTeam) || team["name"] == data["team"]) {
+            playersToAdd.add(
+              new Player(
+                name: player["name"],
+                color: HexColor(team["color"]),
+                icon: team["name"] != data["team"] // Check is in my team
+                    ? "enemy"
+                    : "normal",
+                location: LatLng(
+                  double.parse(player["latitude"]),
+                  double.parse(player["longitude"]),
+                ),
+              ),
+            );
+          }
+        });
+      });
+      otherPlayers = playersToAdd.sublist(0);
+      setState(() {}); // Update locations on screen
+
+      if (connectionLost) {
+        connectionLost = false;
+        Fluttertoast.showToast(
+          msg: "Reconnected",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.lightGreen,
+          textColor: Colors.white,
+          gravity: ToastGravity.BOTTOM,
+          fontSize: 14,
+        );
+      }
+    }).catchError((e) {
+      if (e.toString().contains("TimeoutException")) {
+        connectionLost = true;
+        Fluttertoast.showToast(
+          msg: "Connection to server lost. Trying to reconnect",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          gravity: ToastGravity.BOTTOM,
+          fontSize: 12,
+        );
+      } else if (e.toString().contains("Network is unreachable")) {
+        Fluttertoast.showToast(
+          msg: "No internet connection!",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          gravity: ToastGravity.BOTTOM,
+          fontSize: 14,
+        );
+      } else {
+        Fluttertoast.showToast(
+          msg: "Error: $e",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          gravity: ToastGravity.BOTTOM,
+          fontSize: 12,
+        );
+      }
+    });
   }
 
   void updatePlayerLocation() {
@@ -278,7 +301,7 @@ class _GamePageState extends State<GamePage> {
   void findMe() {
     try {
       mapController.move(
-        LatLng(_locationData.latitude, _locationData.longitude),
+        LatLng(_locationData != null ? _locationData.latitude : 0, _locationData != null ? _locationData.longitude : 0),
         mapController.zoom,
       );
     } catch (e) {
@@ -326,6 +349,7 @@ class _GamePageState extends State<GamePage> {
     try {
       return WillPopScope(
         onWillPop: () {
+          updateTimer?.cancel();
           leaveGame();
           BackgroundLocation.stopLocationService();
           return Future.value(true);

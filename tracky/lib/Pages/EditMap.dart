@@ -104,14 +104,14 @@ class _EditMapState extends State<EditMap> {
 
   // Call when permissions are granted
   void startEditor() async {
-// Check is GPS enabled
+    // Check is GPS enabled
     loc.Location _location = loc.Location();
     bool gpsEnabled = await _location.serviceEnabled();
     if (!gpsEnabled) {
       gpsEnabled = await _location.requestService();
       if (!gpsEnabled) {
         Fluttertoast.showToast(
-          msg: "Without GPS enabled your location will not be updated and you will not be connected to server!",
+          msg: "Without GPS enabled your location will not be updated!",
           toastLength: Toast.LENGTH_LONG,
           backgroundColor: Colors.red,
           textColor: Colors.white,
