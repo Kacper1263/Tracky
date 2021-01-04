@@ -170,6 +170,16 @@ By clicking agree and using this app you agree to privacy policy available on Go
               onPressed: serverConnectionStatus != 1 || !StaticVariables.version.isCompatible(serverMinRequiredAppVersion)
                   ? null
                   : () {
+                      if (nicknameController.text.length > 25) {
+                        Fluttertoast.showToast(
+                            msg: "Nickname must contains less than 25 characters",
+                            toastLength: Toast.LENGTH_LONG,
+                            fontSize: 16,
+                            backgroundColor: Colors.red,
+                            textColor: Colors.white);
+
+                        return;
+                      }
                       if (nicknameController.text.isNotEmpty && nicknameController.text.length > 2) {
                         FlutterUdid.udid.then((udid) {
                           String hardwareID = udid;
