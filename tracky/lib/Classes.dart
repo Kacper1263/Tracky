@@ -50,6 +50,16 @@ class NamedPolygon {
   });
 }
 
+class ClickableMapObject {
+  String name;
+  dynamic object;
+
+  ClickableMapObject({
+    this.name,
+    this.object,
+  });
+}
+
 class ServerRoom {
   int id;
   String name;

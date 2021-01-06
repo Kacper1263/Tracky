@@ -234,18 +234,80 @@ class _EditMapState extends State<EditMap> {
                     });
                   } else {
                     Geodesy geodesy = Geodesy();
+                    List<ClickableMapObject> itemsInThisPlace = new List<ClickableMapObject>();
                     for (NamedPolygon poly in polygons) {
                       if (geodesy.isGeoPointInPolygon(tapLocation, poly.polygon.points)) {
-                        Fluttertoast.showToast(
-                          msg: "Tapped on polygon. TODO: Edit polygon info", // TODO: Edit polygon info
-                          toastLength: Toast.LENGTH_LONG,
-                          backgroundColor: Colors.grey,
-                          textColor: Colors.white,
-                          gravity: ToastGravity.BOTTOM,
-                          fontSize: 12,
-                        );
-                        break; // Break to not show overlapping polygons
+                        itemsInThisPlace.add(ClickableMapObject(
+                          name: poly.name,
+                          object: poly,
+                        ));
+                        // Fluttertoast.showToast(
+                        //   msg: "Tapped on polygon. TODO: Edit polygon info", // TODO: Edit polygon info
+                        //   toastLength: Toast.LENGTH_LONG,
+                        //   backgroundColor: Colors.grey,
+                        //   textColor: Colors.white,
+                        //   gravity: ToastGravity.BOTTOM,
+                        //   fontSize: 12,
+                        // );
                       }
+                    }
+
+                    if (itemsInThisPlace.length <= 0) return;
+
+                    // Show dialog with option to select element to edit
+                    if (itemsInThisPlace.length > 1) {
+                      Dialogs.infoDialogWithWidgetBody(
+                        context,
+                        titleText: "Edit element",
+                        onOkBtn: () => Navigator.pop(context),
+                        okBtnText: "Cancel",
+                        descriptionWidgets: <Widget>[
+                          Text("Which element do you want to edit?", style: TextStyle(color: Colors.white), textAlign: TextAlign.center),
+                          SizedBox(height: 10),
+                          Container(
+                            child: ListView.builder(
+                              itemCount: itemsInThisPlace.length,
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              itemBuilder: (ct, i) {
+                                return Padding(
+                                  padding: EdgeInsets.fromLTRB(0, 5, 0, 5),
+                                  child: RaisedButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      Fluttertoast.showToast(
+                                        msg: "Edit: " + itemsInThisPlace[i].name + " - TODO", // TODO: Edit element
+                                        toastLength: Toast.LENGTH_LONG,
+                                        backgroundColor: Colors.grey,
+                                        textColor: Colors.white,
+                                        gravity: ToastGravity.BOTTOM,
+                                        fontSize: 12,
+                                      );
+                                    },
+                                    padding: EdgeInsets.all(12),
+                                    child: Text(itemsInThisPlace[i].name, style: TextStyle(fontSize: 17)),
+                                    color: Colors.grey[700],
+                                    textColor: Colors.white,
+                                    disabledColor: Colors.grey[800],
+                                    disabledTextColor: Colors.grey[700],
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                        ],
+                      );
+                    }
+                    // Only 1 element here
+                    else {
+                      Fluttertoast.showToast(
+                        msg: "Tapped on ${itemsInThisPlace[0].object.runtimeType}. ${itemsInThisPlace[0].name}", // TODO: Edit polygon info
+                        toastLength: Toast.LENGTH_LONG,
+                        backgroundColor: Colors.grey,
+                        textColor: Colors.white,
+                        gravity: ToastGravity.BOTTOM,
+                        fontSize: 12,
+                      );
                     }
                   }
                 },
@@ -292,7 +354,7 @@ class _EditMapState extends State<EditMap> {
                       tempMarkers.clear();
                       polygons.add(
                         NamedPolygon(
-                          name: "Poly",
+                          name: "Poly" + DateTime.now().toString(),
                           polygon: Polygon(
                             color: Colors.red.withOpacity(0.5), // TODO: Polygon color
                             points: pointsOfPolygon,

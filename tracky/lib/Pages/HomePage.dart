@@ -107,7 +107,8 @@ By clicking agree and using this app you agree to privacy policy available on Go
                     descriptionWidgets: <Widget>[
                       SelectableText("Your hardware ID: $hardwareID", style: TextStyle(color: Colors.white)),
                       SizedBox(height: 20),
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text("Enable map editor (preview) ", style: TextStyle(color: Colors.white)),
                           StatefulBuilder(

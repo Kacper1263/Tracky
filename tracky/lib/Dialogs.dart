@@ -120,11 +120,16 @@ class Dialogs {
       builder: (BuildContext context) {
         descriptionWidgets.add(SizedBox(height: 20));
         return AlertDialog(
+          contentPadding: EdgeInsets.fromLTRB(24, 20, 24, 0),
+          insetPadding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
           backgroundColor: Colors.grey[800],
           title: Center(child: Text(titleText, style: TextStyle(color: Colors.white))),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: descriptionWidgets,
+          content: Container(
+            width: double.maxFinite, // This will fix errors while adding ListView.builder as a child
+            child: SingleChildScrollView(
+              child: ListBody(
+                children: descriptionWidgets,
+              ),
             ),
           ),
           actions: <Widget>[
