@@ -43,11 +43,41 @@ class Player {
 class NamedPolygon {
   String name;
   Polygon polygon;
+  Color color;
 
   NamedPolygon({
     this.name,
     this.polygon,
+    this.color,
   });
+}
+
+class TextMarker {
+  String text;
+  LatLng location;
+  Function onClick = null;
+
+  TextMarker({this.text, this.location, this.onClick});
+
+  Marker getMarker() {
+    return Marker(
+      width: 200.0,
+      height: 80.0,
+      point: this.location,
+      builder: (ctx) => GestureDetector(
+        onTap: onClick,
+        child: Container(
+          child: Column(
+            children: [
+              Container(
+                child: OutlineText(this.text),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class ClickableMapObject {

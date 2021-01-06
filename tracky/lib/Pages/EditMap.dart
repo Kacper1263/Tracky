@@ -25,12 +25,11 @@ SOFTWARE.
 */
 
 import 'dart:async';
-import 'dart:convert';
+import 'package:flutter_map/plugin_api.dart';
 import 'package:location/location.dart' as loc;
 import 'package:background_location/background_location.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geodesy/geodesy.dart';
-import 'package:http/http.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import "package:latlong/latlong.dart";
@@ -60,13 +59,18 @@ class _EditMapState extends State<EditMap> {
   );
 
   List<Marker> tempMarkers = List<Marker>();
+  List<TextMarker> textMarkers = List<TextMarker>();
   List<NamedPolygon> polygons = List<NamedPolygon>();
 
   MapController mapController;
 
+  bool addingNewElement = false;
+  Type newElementToAdd;
+
+  NamedPolygon newPolygon = NamedPolygon();
+  TextMarker newTextMarker = TextMarker();
+
   //Location variables
-  bool addingNewPolygon = false;
-  NamedPolygon newPolygon;
   Location _locationData = null;
   bool firstTimeZoomedBefore = false;
 
@@ -155,6 +159,8 @@ class _EditMapState extends State<EditMap> {
 
     getLocation();
 
+    // TODO: load all data from API for edition
+
     super.initState();
   }
 
@@ -215,23 +221,38 @@ class _EditMapState extends State<EditMap> {
                 zoom: 15.0,
                 maxZoom: 19.3,
                 onTap: (tapLocation) {
-                  if (addingNewPolygon) {
-                    setState(() {
-                      tempMarkers.add(
-                        Marker(
-                          width: 150.0,
-                          height: 80.0,
-                          point: tapLocation,
-                          builder: (ctx) => Container(
-                            child: Icon(
-                              Icons.location_pin,
-                              color: Colors.red, // TODO: Polygon color
-                              size: 35,
+                  if (addingNewElement) {
+                    if (newElementToAdd == TextMarker) {
+                      setState(() {
+                        TextMarker _tm = TextMarker(
+                          text: newTextMarker.text,
+                          location: tapLocation,
+                        );
+                        _tm.onClick = () => textMarkerOnClick(_tm);
+                        textMarkers.add(_tm);
+                        setState(() {
+                          addingNewElement = false;
+                          newElementToAdd = null;
+                        });
+                      });
+                    } else if (newElementToAdd == NamedPolygon) {
+                      setState(() {
+                        tempMarkers.add(
+                          Marker(
+                            width: 150.0,
+                            height: 80.0,
+                            point: tapLocation,
+                            builder: (ctx) => Container(
+                              child: Icon(
+                                Icons.location_pin,
+                                color: Colors.red,
+                                size: 35,
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    });
+                        );
+                      });
+                    }
                   } else {
                     Geodesy geodesy = Geodesy();
                     List<ClickableMapObject> itemsInThisPlace = new List<ClickableMapObject>();
@@ -241,14 +262,6 @@ class _EditMapState extends State<EditMap> {
                           name: poly.name,
                           object: poly,
                         ));
-                        // Fluttertoast.showToast(
-                        //   msg: "Tapped on polygon. TODO: Edit polygon info", // TODO: Edit polygon info
-                        //   toastLength: Toast.LENGTH_LONG,
-                        //   backgroundColor: Colors.grey,
-                        //   textColor: Colors.white,
-                        //   gravity: ToastGravity.BOTTOM,
-                        //   fontSize: 12,
-                        // );
                       }
                     }
 
@@ -275,14 +288,14 @@ class _EditMapState extends State<EditMap> {
                                   child: RaisedButton(
                                     onPressed: () {
                                       Navigator.pop(context);
-                                      Fluttertoast.showToast(
-                                        msg: "Edit: " + itemsInThisPlace[i].name + " - TODO", // TODO: Edit element
-                                        toastLength: Toast.LENGTH_LONG,
-                                        backgroundColor: Colors.grey,
-                                        textColor: Colors.white,
-                                        gravity: ToastGravity.BOTTOM,
-                                        fontSize: 12,
-                                      );
+                                      if (itemsInThisPlace[i].object.runtimeType == NamedPolygon) {
+                                        TextEditingController _te = TextEditingController();
+                                        // Set old data for editing
+                                        _te.text = itemsInThisPlace[i].name;
+                                        newPolygon = NamedPolygon();
+                                        newPolygon.color = itemsInThisPlace[i].object.color;
+                                        polygonPopup(_te, oldPolygon: itemsInThisPlace[i].object);
+                                      }
                                     },
                                     padding: EdgeInsets.all(12),
                                     child: Text(itemsInThisPlace[i].name, style: TextStyle(fontSize: 17)),
@@ -300,14 +313,14 @@ class _EditMapState extends State<EditMap> {
                     }
                     // Only 1 element here
                     else {
-                      Fluttertoast.showToast(
-                        msg: "Tapped on ${itemsInThisPlace[0].object.runtimeType}. ${itemsInThisPlace[0].name}", // TODO: Edit polygon info
-                        toastLength: Toast.LENGTH_LONG,
-                        backgroundColor: Colors.grey,
-                        textColor: Colors.white,
-                        gravity: ToastGravity.BOTTOM,
-                        fontSize: 12,
-                      );
+                      if (itemsInThisPlace[0].object.runtimeType == NamedPolygon) {
+                        TextEditingController _te = TextEditingController();
+                        // Set old data for editing
+                        _te.text = itemsInThisPlace[0].name;
+                        newPolygon = NamedPolygon();
+                        newPolygon.color = itemsInThisPlace[0].object.color;
+                        polygonPopup(_te, oldPolygon: itemsInThisPlace[0].object);
+                      }
                     }
                   }
                 },
@@ -319,8 +332,9 @@ class _EditMapState extends State<EditMap> {
                   tileProvider: NonCachingNetworkTileProvider(), // CachedNetworkTileProvider()
                   maxZoom: 24.0,
                 ),
-                MarkerLayerOptions(markers: markers),
                 PolygonLayerOptions(polygonCulling: true, polygons: polygons.map((element) => element.polygon).toList()),
+                MarkerLayerOptions(markers: textMarkers.map((tMarker) => tMarker.getMarker()).toList()),
+                MarkerLayerOptions(markers: markers),
               ],
             ),
             floatingActionButton: Column(
@@ -343,28 +357,110 @@ class _EditMapState extends State<EditMap> {
                   heroTag: "btn4",
                   onPressed: () {
                     setState(() {
-                      addingNewPolygon = !addingNewPolygon;
+                      addingNewElement = !addingNewElement;
                     });
-                    if (addingNewPolygon) {
-                      // TODO: Popup with settings of the new polygon
-                    } else {
-                      // TODO: Save new polygon to list
-                      if (tempMarkers.length <= 0) return;
-                      List<LatLng> pointsOfPolygon = tempMarkers.map((e) => e.point).toList();
-                      tempMarkers.clear();
-                      polygons.add(
-                        NamedPolygon(
-                          name: "Poly" + DateTime.now().toString(),
-                          polygon: Polygon(
-                            color: Colors.red.withOpacity(0.5), // TODO: Polygon color
-                            points: pointsOfPolygon,
+                    if (addingNewElement) {
+                      Dialogs.infoDialogWithWidgetBody(
+                        context,
+                        okBtnText: "Cancel",
+                        onOkBtn: () {
+                          setState(() {
+                            addingNewElement = false;
+                            newElementToAdd = null;
+                          });
+                          Navigator.pop(context);
+                        },
+                        titleText: "Add new element",
+                        descriptionWidgets: <Widget>[
+                          Text(
+                            "What do you want to add?",
+                            style: TextStyle(color: Colors.white),
+                            textAlign: TextAlign.center,
                           ),
-                        ),
+                          SizedBox(height: 10),
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(0, 5, 0, 5),
+                            child: RaisedButton(
+                              padding: EdgeInsets.all(12),
+                              child: Text("Text"),
+                              color: Colors.grey[700],
+                              textColor: Colors.white,
+                              disabledColor: Colors.grey[800],
+                              disabledTextColor: Colors.grey[700],
+                              onPressed: () {
+                                Navigator.pop(context);
+                                setState(() {
+                                  newElementToAdd = TextMarker;
+                                });
+
+                                // Add new text
+                                TextEditingController _newTextController = TextEditingController();
+                                textMarkerPopup(_newTextController);
+                              },
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(0, 5, 0, 5),
+                            child: RaisedButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                setState(() {
+                                  newElementToAdd = NamedPolygon;
+                                });
+
+                                // Add new polygon
+                                TextEditingController _newTextController = TextEditingController();
+                                newPolygon = NamedPolygon();
+                                polygonPopup(_newTextController);
+                              },
+                              padding: EdgeInsets.all(12),
+                              child: Text("Polygon"),
+                              color: Colors.grey[700],
+                              textColor: Colors.white,
+                              disabledColor: Colors.grey[800],
+                              disabledTextColor: Colors.grey[700],
+                            ),
+                          ),
+                        ],
                       );
+                    } else {
+                      if (newElementToAdd == NamedPolygon) {
+                        if (tempMarkers.length <= 0) return;
+                        List<LatLng> pointsOfPolygon = tempMarkers.map((e) => e.point).toList();
+                        tempMarkers.clear();
+                        polygons.add(
+                          NamedPolygon(
+                            name: newPolygon.name,
+                            color: newPolygon.color,
+                            polygon: Polygon(
+                              color: newPolygon.color.withOpacity(0.5),
+                              points: pointsOfPolygon,
+                            ),
+                          ),
+                        );
+                        setState(() {
+                          newElementToAdd = null;
+                        });
+                      } else if (newElementToAdd == TextMarker) {
+                        setState(() {
+                          addingNewElement = false;
+                          newElementToAdd = null;
+                        });
+                      }
                     }
                   },
-                  tooltip: addingNewPolygon ? "Save polygon" : 'New polygon',
-                  child: Icon(addingNewPolygon ? Icons.save : Icons.add),
+                  tooltip: addingNewElement
+                      ? newElementToAdd == TextMarker
+                          ? "Cancel"
+                          : "Save"
+                      : 'New element',
+                  child: Icon(
+                    addingNewElement
+                        ? newElementToAdd == TextMarker
+                            ? Icons.cancel
+                            : Icons.save
+                        : Icons.add,
+                  ),
                 ),
               ],
             )),
@@ -378,5 +474,404 @@ class _EditMapState extends State<EditMap> {
           gravity: ToastGravity.BOTTOM,
           fontSize: 12);
     }
+  }
+
+  /// To edit set reference to [oldPolygon] and use [newPolygon] to edit variables
+  polygonPopup(TextEditingController _newTextController, {NamedPolygon oldPolygon}) {
+    Dialogs.infoDialogWithWidgetBody(
+      context,
+      titleText: oldPolygon == null ? "New polygon" : "Edit polygon",
+      okBtnText: "Cancel",
+      onOkBtn: () {
+        setState(() {
+          addingNewElement = false;
+          newElementToAdd = null;
+        });
+        Navigator.pop(context);
+      },
+      descriptionWidgets: [
+        TextField(
+          keyboardType: TextInputType.text,
+          textCapitalization: TextCapitalization.sentences,
+          controller: _newTextController,
+          style: TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
+            border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+            hintText: 'Polygon name',
+            hintStyle: TextStyle(color: Colors.grey[500]),
+          ),
+        ),
+        SizedBox(height: 10),
+        StatefulBuilder(
+          builder: (context, setState) => Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 20,
+            runSpacing: 10,
+            children: [
+              FloatingActionButton(
+                heroTag: "1-Color",
+                onPressed: () {
+                  setState(() {
+                    newPolygon.color = Colors.green;
+                  });
+                },
+                backgroundColor: Colors.green,
+                shape: CircleBorder(
+                  side: newPolygon.color == Colors.green
+                      ? BorderSide(
+                          color: Colors.yellow,
+                          width: 3,
+                          style: BorderStyle.solid,
+                        )
+                      : BorderSide.none,
+                ),
+              ),
+              FloatingActionButton(
+                heroTag: "2-Color",
+                onPressed: () {
+                  setState(() {
+                    newPolygon.color = Colors.red;
+                  });
+                },
+                backgroundColor: Colors.red,
+                shape: CircleBorder(
+                  side: newPolygon.color == Colors.red
+                      ? BorderSide(
+                          color: Colors.yellow,
+                          width: 3,
+                          style: BorderStyle.solid,
+                        )
+                      : BorderSide.none,
+                ),
+              ),
+              FloatingActionButton(
+                heroTag: "3-Color",
+                onPressed: () {
+                  setState(() {
+                    newPolygon.color = Colors.blue;
+                  });
+                },
+                backgroundColor: Colors.blue,
+                shape: CircleBorder(
+                  side: newPolygon.color == Colors.blue
+                      ? BorderSide(
+                          color: Colors.yellow,
+                          width: 3,
+                          style: BorderStyle.solid,
+                        )
+                      : BorderSide.none,
+                ),
+              ),
+              FloatingActionButton(
+                heroTag: "4-Color",
+                onPressed: () {
+                  setState(() {
+                    newPolygon.color = Colors.purple;
+                  });
+                },
+                backgroundColor: Colors.purple,
+                shape: CircleBorder(
+                  side: newPolygon.color == Colors.purple
+                      ? BorderSide(
+                          color: Colors.yellow,
+                          width: 3,
+                          style: BorderStyle.solid,
+                        )
+                      : BorderSide.none,
+                ),
+              ),
+              FloatingActionButton(
+                heroTag: "5-Color",
+                onPressed: () {
+                  setState(() {
+                    newPolygon.color = Colors.black;
+                  });
+                },
+                backgroundColor: Colors.black,
+                shape: CircleBorder(
+                  side: newPolygon.color == Colors.black
+                      ? BorderSide(
+                          color: Colors.yellow,
+                          width: 3,
+                          style: BorderStyle.solid,
+                        )
+                      : BorderSide.none,
+                ),
+              ),
+              FloatingActionButton(
+                heroTag: "6-Color",
+                onPressed: () {
+                  setState(() {
+                    newPolygon.color = Colors.pink[300];
+                  });
+                },
+                backgroundColor: Colors.pink[300],
+                shape: CircleBorder(
+                  side: newPolygon.color == Colors.pink[300]
+                      ? BorderSide(
+                          color: Colors.yellow,
+                          width: 3,
+                          style: BorderStyle.solid,
+                        )
+                      : BorderSide.none,
+                ),
+              ),
+              FloatingActionButton(
+                heroTag: "7-Color",
+                onPressed: () {
+                  setState(() {
+                    newPolygon.color = Colors.yellow;
+                  });
+                },
+                backgroundColor: Colors.yellow,
+                shape: CircleBorder(
+                  side: newPolygon.color == Colors.yellow
+                      ? BorderSide(
+                          color: Colors.red,
+                          width: 3,
+                          style: BorderStyle.solid,
+                        )
+                      : BorderSide.none,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(0, 10, 0, 5),
+          child: RaisedButton(
+            onPressed: () {
+              if (newPolygon.color == null) {
+                Fluttertoast.showToast(
+                  msg: "You need to set color",
+                  toastLength: Toast.LENGTH_LONG,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
+                  gravity: ToastGravity.BOTTOM,
+                  fontSize: 12,
+                );
+                return;
+              }
+
+              Navigator.pop(context);
+
+              if (oldPolygon == null) {
+                Fluttertoast.showToast(
+                  msg: "Tap on map to add polygon points, then click save",
+                  toastLength: Toast.LENGTH_LONG,
+                  backgroundColor: Colors.grey,
+                  textColor: Colors.white,
+                  gravity: ToastGravity.BOTTOM,
+                  fontSize: 12,
+                );
+
+                newPolygon.name = _newTextController.text.length > 0 ? _newTextController.text : "Polygon " + DateTime.now().toString();
+              } else {
+                int index = polygons.indexOf(oldPolygon);
+                setState(() {
+                  polygons[index].name =
+                      _newTextController.text.length > 0 ? _newTextController.text : "Polygon " + DateTime.now().toString();
+                  polygons[index].color = newPolygon.color;
+                  polygons[index].polygon.color = newPolygon.color.withOpacity(0.5);
+                });
+              }
+            },
+            padding: EdgeInsets.all(12),
+            child: Text("Continue"),
+            color: Colors.green,
+            textColor: Colors.white,
+            disabledColor: Colors.grey[800],
+            disabledTextColor: Colors.grey[700],
+          ),
+        ),
+        oldPolygon == null
+            ? Container()
+            : Padding(
+                padding: EdgeInsets.fromLTRB(0, 5, 0, 5),
+                child: RaisedButton(
+                  onPressed: () {
+                    Dialogs.confirmDialog(
+                      context,
+                      titleText: "Delete polygon",
+                      descriptionText: "Are you sure you want to delete this polygon?",
+                      onCancel: () {
+                        Navigator.pop(context);
+                      },
+                      onSend: () {
+                        setState(() {
+                          polygons.remove(oldPolygon);
+                        });
+
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                  padding: EdgeInsets.all(12),
+                  child: Text("Delete polygon"),
+                  color: Colors.red,
+                  textColor: Colors.white,
+                  disabledColor: Colors.grey[800],
+                  disabledTextColor: Colors.grey[700],
+                ),
+              ),
+      ],
+    );
+  }
+
+  textMarkerPopup(TextEditingController _newTextController) {
+    Dialogs.infoDialogWithWidgetBody(
+      context,
+      titleText: "New text",
+      okBtnText: "Cancel",
+      onOkBtn: () {
+        setState(() {
+          addingNewElement = false;
+          newElementToAdd = null;
+        });
+        Navigator.pop(context);
+      },
+      descriptionWidgets: [
+        TextField(
+          keyboardType: TextInputType.text,
+          textCapitalization: TextCapitalization.sentences,
+          controller: _newTextController,
+          style: TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
+            border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+            hintText: 'Content',
+            hintStyle: TextStyle(color: Colors.grey[500]),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(0, 5, 0, 5),
+          child: RaisedButton(
+            onPressed: () {
+              if (_newTextController.text.length <= 0) {
+                Fluttertoast.showToast(
+                  msg: "Text must have 1 or more characters",
+                  toastLength: Toast.LENGTH_LONG,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
+                  gravity: ToastGravity.BOTTOM,
+                  fontSize: 12,
+                );
+                return;
+              }
+
+              newTextMarker.text = _newTextController.text;
+
+              Fluttertoast.showToast(
+                msg: "Tap on place where you want to add this text",
+                toastLength: Toast.LENGTH_LONG,
+                backgroundColor: Colors.grey,
+                textColor: Colors.white,
+                gravity: ToastGravity.BOTTOM,
+                fontSize: 12,
+              );
+
+              Navigator.pop(context);
+            },
+            padding: EdgeInsets.all(12),
+            child: Text("Add this text"),
+            color: Colors.grey[700],
+            textColor: Colors.white,
+            disabledColor: Colors.grey[800],
+            disabledTextColor: Colors.grey[700],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// [_tm] - marker
+  textMarkerOnClick(_tm) {
+    // If adding something return and tond run edit
+    if (newElementToAdd != null) return;
+
+    int index = textMarkers.indexOf(_tm);
+    TextEditingController _newTextController = TextEditingController();
+    _newTextController.text = textMarkers[index].text;
+
+    Dialogs.infoDialogWithWidgetBody(
+      context,
+      titleText: "Edit text",
+      okBtnText: "Cancel",
+      onOkBtn: () {
+        Navigator.pop(context);
+      },
+      descriptionWidgets: [
+        TextField(
+          keyboardType: TextInputType.text,
+          textCapitalization: TextCapitalization.sentences,
+          controller: _newTextController,
+          style: TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
+            border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+            hintText: 'New content',
+            hintStyle: TextStyle(color: Colors.grey[500]),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(0, 5, 0, 5),
+          child: RaisedButton(
+            onPressed: () {
+              if (_newTextController.text.length <= 0) {
+                Fluttertoast.showToast(
+                  msg: "Text must have 1 or more characters",
+                  toastLength: Toast.LENGTH_LONG,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
+                  gravity: ToastGravity.BOTTOM,
+                  fontSize: 12,
+                );
+              } else {
+                setState(() {
+                  textMarkers[index].text = _newTextController.text;
+                });
+
+                Navigator.pop(context);
+              }
+            },
+            padding: EdgeInsets.all(12),
+            child: Text("Update text on marker"),
+            color: Colors.green,
+            textColor: Colors.white,
+            disabledColor: Colors.grey[800],
+            disabledTextColor: Colors.grey[700],
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(0, 5, 0, 5),
+          child: RaisedButton(
+            onPressed: () {
+              Dialogs.confirmDialog(context,
+                  titleText: "Delete marker", descriptionText: "This will delete this text marker. Are you sure?", onCancel: () {
+                Navigator.pop(context);
+              }, onSend: () {
+                setState(() {
+                  textMarkers.remove(_tm);
+                });
+
+                Navigator.pop(context);
+                Navigator.pop(context);
+              });
+            },
+            padding: EdgeInsets.all(12),
+            child: Text("Delete text marker"),
+            color: Colors.red,
+            textColor: Colors.white,
+            disabledColor: Colors.grey[800],
+            disabledTextColor: Colors.grey[700],
+          ),
+        ),
+      ],
+    );
   }
 }
