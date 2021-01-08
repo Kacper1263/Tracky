@@ -66,14 +66,8 @@ class TextMarker {
       point: this.location,
       builder: (ctx) => GestureDetector(
         onTap: onClick,
-        child: Container(
-          child: Column(
-            children: [
-              Container(
-                child: OutlineText(this.text),
-              ),
-            ],
-          ),
+        child: Center(
+          child: OutlineText(this.text),
         ),
       ),
     );

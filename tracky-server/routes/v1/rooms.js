@@ -204,7 +204,9 @@ router.get('/:id', (req, res) => {
             message: 'Room found',
             expiresIn: ExpiresInHours(room.expiresAt),
             roomId: room.id,
-            teams: room.teams
+            teams: room.teams,
+            textMarkers: room.textMarkers ?? [],
+            namedPolygons: room.namedPolygons ?? [],
         });
     }
     else{
@@ -310,6 +312,64 @@ router.delete('/:id', (req, res) => {
 })
 
 // *****************************
+// *            Map            *
+// *****************************
+
+// Edit map
+router.post('/map/:id', (req, res) => {
+    db.read()
+
+    const id = parseInt(req.params.id, 10);
+    
+    var list = db.get("rooms").value();
+    var roomId = list.findIndex(room => room.id === id);
+
+    if(roomId != -1){
+        // Verify hardwareID
+        var ownerHardwareID = db.get("rooms").get(roomId).get("ownerHardwareID").value()
+        if(ownerHardwareID == req.body.hardwareID){
+            var room = db.get("rooms").get(roomId).value();
+
+            var _textMarkers = JSON.parse(req.body.textMarkers);
+            var _namedPolygons = JSON.parse(req.body.namedPolygons);
+            
+            if(db.get("rooms").get(roomId).set("textMarkers", _textMarkers).set("namedPolygons", _namedPolygons).write()){
+
+                // log successful map update action
+                logsDb.get("logs").push({
+                    "action": "update map",
+                    "time": new Date().toLocaleString("pl"),
+                    "roomName": room.name,
+                }).write()
+
+                return res.status(200).send({
+                    success: 'true',
+                    message: 'Map updated',
+                    roomId: room.id,
+                });
+            }
+            else{
+                return res.status(500).send({
+                    success: 'false',
+                    message: 'Internal error while updating map',
+                });
+            }
+        }else{
+            return res.status(403).send({
+                success: "false",
+                message: "Your hardware ID is not equals to room owner hardware ID! Operation unauthorized."
+            })
+        }        
+    }
+    else{
+        return res.status(404).send({
+            success: 'false',
+            message: 'Room not found. Wrong ID',
+        });
+    }
+})
+
+// *****************************
 // *          Players          *
 // *****************************
 
@@ -372,7 +432,7 @@ router.post('/join/:id', (req, res) => {
     }
 })
 
-// Update player location on room ID
+// Update player location and Map data on room ID
 router.post('/:id', (req, res) => {
     db.read();
 
@@ -398,12 +458,15 @@ router.post('/:id', (req, res) => {
             });
         }
         
+        var room = db.get("rooms").get(roomId).value()
         
         return res.status(200).send({
             success: 'true',
             message: 'Room found, updating location and returning players',
-            teams: db.get("rooms").get(roomId).get("teams").value(),
-            showEnemyTeam: db.get("rooms").get(roomId).get("showEnemyTeam").value()
+            teams: room.teams,
+            showEnemyTeam: room.showEnemyTeam,
+            textMarkers: room.textMarkers ?? [],
+            namedPolygons: room.namedPolygons ?? [],
         });
     }
 

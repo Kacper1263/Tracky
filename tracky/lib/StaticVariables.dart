@@ -1,6 +1,5 @@
 class StaticVariables {
   static Version version = Version();
-  static bool mapEditorPreviewEnabled = false;
 }
 
 class Version {

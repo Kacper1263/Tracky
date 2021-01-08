@@ -249,25 +249,24 @@ class _RoomsListState extends State<RoomsList> {
                                                     Expanded(
                                                       child: RaisedButton(
                                                         padding: EdgeInsets.all(12),
-                                                        child: Text(
-                                                            StaticVariables.mapEditorPreviewEnabled ? "Edit map" : "Edit map (soon)",
-                                                            style: TextStyle(fontSize: 17)),
+                                                        child: Text("Edit map", style: TextStyle(fontSize: 17)),
                                                         color: Colors.grey[850],
                                                         textColor: Colors.white,
                                                         disabledColor: Colors.grey[800],
                                                         disabledTextColor: Colors.grey[700],
-                                                        onPressed: !StaticVariables.mapEditorPreviewEnabled
-                                                            ? null
-                                                            : () {
-                                                                Navigator.pushNamed(
-                                                                  context,
-                                                                  "/editMap",
-                                                                  arguments: {
-                                                                    "hardwareID": data["hardwareID"],
-                                                                    "roomID": rooms[index]["id"],
-                                                                  },
-                                                                );
-                                                              },
+                                                        onPressed: () {
+                                                          Navigator.pushNamed(
+                                                            context,
+                                                            "/editMap",
+                                                            arguments: {
+                                                              "nickname": data["nickname"],
+                                                              "serverInLan": data["serverInLan"],
+                                                              "hardwareID": data["hardwareID"],
+                                                              "roomID": rooms[index]["id"],
+                                                              "roomName": rooms[index]["name"],
+                                                            },
+                                                          );
+                                                        },
                                                       ),
                                                     ),
                                                   ],

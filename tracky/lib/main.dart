@@ -66,7 +66,7 @@ void main() {
         '/': (context) => HomePage(),
         '/roomsList': (context) => RoomsList(arguments: settings.arguments),
         '/gamePage': (context) => GamePage(title: "Tracky", arguments: settings.arguments),
-        '/editMap': (context) => EditMap(title: "Editor", arguments: settings.arguments),
+        '/editMap': (context) => EditMap(title: "Editor (beta)", arguments: settings.arguments),
         '/createRoom': (context) => CreateRoom(arguments: settings.arguments),
       };
       WidgetBuilder builder = routes[settings.name];

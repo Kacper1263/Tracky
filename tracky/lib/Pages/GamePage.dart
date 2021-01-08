@@ -51,6 +51,9 @@ class GamePage extends StatefulWidget {
 class _GamePageState extends State<GamePage> {
   Map data;
 
+  List<TextMarker> textMarkers = List<TextMarker>();
+  List<NamedPolygon> polygons = List<NamedPolygon>();
+
   bool connectionLost = false;
 
   var thisPlayer = new Player(
@@ -216,6 +219,32 @@ class _GamePageState extends State<GamePage> {
 
       if (teams == null) return;
 
+      polygons.clear();
+      textMarkers.clear();
+
+      // Load polygons
+      response["namedPolygons"].forEach((polygon) {
+        polygons.add(NamedPolygon(
+          name: polygon["name"],
+          color: HexColor(polygon["color"]),
+          polygon: Polygon(
+            color: HexColor(polygon["polygon"]["color"]),
+            points: polygon["polygon"]["points"].map<LatLng>((point) => LatLng(point["latitude"], point["longitude"])).toList(),
+          ),
+        ));
+      });
+
+      // Load text markers
+      response["textMarkers"].forEach((marker) {
+        TextMarker _markerToAdd = TextMarker(
+            text: marker["text"],
+            location:
+                LatLng(double.parse(marker["location"]["latitude"].toString()), double.parse(marker["location"]["longitude"].toString())));
+        _markerToAdd.onClick = () {};
+        textMarkers.add(_markerToAdd);
+      });
+
+      // Load players
       teams.forEach((team) {
         List<dynamic> players = team["players"];
         players.forEach((player) {
@@ -374,6 +403,8 @@ class _GamePageState extends State<GamePage> {
                   tileProvider: NonCachingNetworkTileProvider(), // CachedNetworkTileProvider()
                   maxZoom: 24.0,
                 ),
+                PolygonLayerOptions(polygonCulling: true, polygons: polygons.map((element) => element.polygon).toList()),
+                MarkerLayerOptions(markers: textMarkers.map((tMarker) => tMarker.getMarker()).toList()),
                 MarkerLayerOptions(markers: markers)
               ],
             ),

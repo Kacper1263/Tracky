@@ -25,11 +25,14 @@ SOFTWARE.
 */
 
 import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_map/plugin_api.dart';
 import 'package:location/location.dart' as loc;
 import 'package:background_location/background_location.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geodesy/geodesy.dart';
+import 'package:http/http.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import "package:latlong/latlong.dart";
@@ -125,6 +128,8 @@ class _EditMapState extends State<EditMap> {
       }
     }
 
+    SchedulerBinding.instance.addPostFrameCallback((_) => getDataFromServer());
+
     BackgroundLocation.setAndroidNotification(
         title: "Tracky - ASG team tracker",
         message: "I am updating Your location in map editor (I am not sending it to the server). Tap me to resume the app");
@@ -158,8 +163,6 @@ class _EditMapState extends State<EditMap> {
     mapController = MapController();
 
     getLocation();
-
-    // TODO: load all data from API for edition
 
     super.initState();
   }
@@ -204,9 +207,8 @@ class _EditMapState extends State<EditMap> {
     try {
       return WillPopScope(
         onWillPop: () {
-          // TODO: Save data to API
-          BackgroundLocation.stopLocationService();
-          return Future.value(true);
+          // Save data to API
+          updateDataOnServerAndQuit();
         },
         child: Scaffold(
             appBar: AppBar(
@@ -476,6 +478,157 @@ class _EditMapState extends State<EditMap> {
     }
   }
 
+  /// Get all data about namedPolygons and textMarkers on server
+  getDataFromServer() async {
+    Dialogs.loadingDialog(context, titleText: "Updating map", descriptionText: "Downloading map data from server. Please wait...");
+    String url;
+    if (data["serverInLan"])
+      url = "http://192.168.1.50:5050/api/v1/room/${data["roomID"]}";
+    else
+      url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomID"]}";
+
+    try {
+      Response response;
+
+      response = await get(url).timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        var json = jsonDecode(response.body);
+
+        json["namedPolygons"].forEach((polygon) {
+          polygons.add(NamedPolygon(
+            name: polygon["name"],
+            color: HexColor(polygon["color"]),
+            polygon: Polygon(
+              color: HexColor(polygon["polygon"]["color"]),
+              points: polygon["polygon"]["points"].map<LatLng>((point) => LatLng(point["latitude"], point["longitude"])).toList(),
+            ),
+          ));
+        });
+
+        json["textMarkers"].forEach((marker) {
+          TextMarker _markerToAdd = TextMarker(
+              text: marker["text"],
+              location: LatLng(
+                  double.parse(marker["location"]["latitude"].toString()), double.parse(marker["location"]["longitude"].toString())));
+          _markerToAdd.onClick = () => textMarkerOnClick(_markerToAdd);
+          textMarkers.add(_markerToAdd);
+        });
+
+        Fluttertoast.showToast(
+          msg: "Map data loaded!",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+        );
+        Navigator.pop(context); // Pop loading
+        return;
+      } else {
+        Fluttertoast.showToast(
+          msg: "Error while loading map data: ${jsonDecode(response.body)["message"]}",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        BackgroundLocation.stopLocationService();
+        Navigator.pop(context); // Pop loading
+        Navigator.pop(context); // Pop map to rooms list
+        return;
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Error while loading map data: $e",
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      BackgroundLocation.stopLocationService();
+      Navigator.pop(context); // Pop loading
+      Navigator.pop(context); // Pop map to rooms list
+      return;
+    }
+  }
+
+  updateDataOnServerAndQuit() async {
+    Dialogs.loadingDialog(context, titleText: "Updating map", descriptionText: "Updating map on server. Please wait...");
+    String url;
+    if (data["serverInLan"])
+      url = "http://192.168.1.50:5050/api/v1/room/map/${data["roomID"]}";
+    else
+      url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/map/${data["roomID"]}";
+
+    try {
+      Response response;
+      List<dynamic> textMarkersForServer = List<dynamic>();
+      List<dynamic> polygonsForServer = List<dynamic>();
+
+      // Data for json.encode
+      textMarkers.forEach((element) {
+        textMarkersForServer.add({
+          "text": element.text,
+          "location": {"latitude": element.location.latitude, "longitude": element.location.longitude}
+        });
+      });
+      polygons.forEach((element) {
+        polygonsForServer.add({
+          "name": element.name,
+          "color": element.color.value.toRadixString(16),
+          "polygon": {
+            "color": element.polygon.color.value.toRadixString(16),
+            "points": element.polygon.points.map((e) => {"latitude": e.latitude, "longitude": e.longitude}).toList()
+          },
+        });
+      });
+
+      response = await post(
+        url,
+        body: {
+          "hardwareID": data["hardwareID"],
+          "textMarkers": json.encode(textMarkersForServer),
+          "namedPolygons": json.encode(polygonsForServer),
+        },
+      ).timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        var json = jsonDecode(response.body);
+
+        Fluttertoast.showToast(
+          msg: "Map data updated!",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+        );
+        Navigator.pop(context); // Pop loading
+        Navigator.pop(context); // Pop map
+        BackgroundLocation.stopLocationService();
+        Navigator.pushReplacementNamed(
+          context,
+          '/roomsList',
+          arguments: {
+            "serverInLan": data["serverInLan"],
+            "nickname": data["nickname"],
+            "hardwareID": data["hardwareID"],
+            "searchBarText": "ID " + (data["roomID"].toString() + ": " + data["roomName"])
+          },
+        );
+        return;
+      } else {
+        Fluttertoast.showToast(
+            msg: "Error while updating data: ${jsonDecode(response.body)["message"]}",
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: Colors.red,
+            textColor: Colors.white);
+        Navigator.pop(context);
+        return;
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+          msg: "Error while updating data: $e", toastLength: Toast.LENGTH_LONG, backgroundColor: Colors.red, textColor: Colors.white);
+      Navigator.pop(context);
+      return;
+    }
+  }
+
   /// To edit set reference to [oldPolygon] and use [newPolygon] to edit variables
   polygonPopup(TextEditingController _newTextController, {NamedPolygon oldPolygon}) {
     Dialogs.infoDialogWithWidgetBody(
@@ -519,7 +672,7 @@ class _EditMapState extends State<EditMap> {
                 },
                 backgroundColor: Colors.green,
                 shape: CircleBorder(
-                  side: newPolygon.color == Colors.green
+                  side: newPolygon.color == Colors.green || newPolygon.color == HexColor(Colors.green.value.toRadixString(16))
                       ? BorderSide(
                           color: Colors.yellow,
                           width: 3,
@@ -537,7 +690,7 @@ class _EditMapState extends State<EditMap> {
                 },
                 backgroundColor: Colors.red,
                 shape: CircleBorder(
-                  side: newPolygon.color == Colors.red
+                  side: newPolygon.color == Colors.red || newPolygon.color == HexColor(Colors.red.value.toRadixString(16))
                       ? BorderSide(
                           color: Colors.yellow,
                           width: 3,
@@ -555,7 +708,7 @@ class _EditMapState extends State<EditMap> {
                 },
                 backgroundColor: Colors.blue,
                 shape: CircleBorder(
-                  side: newPolygon.color == Colors.blue
+                  side: newPolygon.color == Colors.blue || newPolygon.color == HexColor(Colors.blue.value.toRadixString(16))
                       ? BorderSide(
                           color: Colors.yellow,
                           width: 3,
@@ -573,7 +726,7 @@ class _EditMapState extends State<EditMap> {
                 },
                 backgroundColor: Colors.purple,
                 shape: CircleBorder(
-                  side: newPolygon.color == Colors.purple
+                  side: newPolygon.color == Colors.purple || newPolygon.color == HexColor(Colors.purple.value.toRadixString(16))
                       ? BorderSide(
                           color: Colors.yellow,
                           width: 3,
@@ -591,7 +744,7 @@ class _EditMapState extends State<EditMap> {
                 },
                 backgroundColor: Colors.black,
                 shape: CircleBorder(
-                  side: newPolygon.color == Colors.black
+                  side: newPolygon.color == Colors.black || newPolygon.color == HexColor(Colors.black.value.toRadixString(16))
                       ? BorderSide(
                           color: Colors.yellow,
                           width: 3,
@@ -609,7 +762,7 @@ class _EditMapState extends State<EditMap> {
                 },
                 backgroundColor: Colors.pink[300],
                 shape: CircleBorder(
-                  side: newPolygon.color == Colors.pink[300]
+                  side: newPolygon.color == Colors.pink[300] || newPolygon.color == HexColor(Colors.pink[300].value.toRadixString(16))
                       ? BorderSide(
                           color: Colors.yellow,
                           width: 3,
@@ -627,7 +780,7 @@ class _EditMapState extends State<EditMap> {
                 },
                 backgroundColor: Colors.yellow,
                 shape: CircleBorder(
-                  side: newPolygon.color == Colors.yellow
+                  side: newPolygon.color == Colors.yellow || newPolygon.color == HexColor(Colors.yellow.value.toRadixString(16))
                       ? BorderSide(
                           color: Colors.red,
                           width: 3,
