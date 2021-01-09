@@ -207,8 +207,42 @@ class _EditMapState extends State<EditMap> {
     try {
       return WillPopScope(
         onWillPop: () {
-          // Save data to API
-          updateDataOnServerAndQuit();
+          Dialogs.confirmDialog(
+            context,
+            titleText: "Save changes",
+            descriptionText: "Do you want to save changes?",
+            onCancel: () {
+              Navigator.pop(context); // Pop popup
+              Dialogs.confirmDialog(
+                context,
+                titleText: "Discarding changes",
+                descriptionText: "Are you sure you want to discard all changes? This action cannot be undone",
+                onCancel: () {
+                  Navigator.pop(context); // Pop popup
+                },
+                onSend: () {
+                  Navigator.pop(context); // Pop popup
+                  Navigator.pop(context); // Pop map
+                  BackgroundLocation.stopLocationService();
+                  Navigator.pushReplacementNamed(
+                    context,
+                    '/roomsList',
+                    arguments: {
+                      "serverInLan": data["serverInLan"],
+                      "nickname": data["nickname"],
+                      "hardwareID": data["hardwareID"],
+                      "searchBarText": ""
+                    },
+                  );
+                },
+              );
+            },
+            onSend: () {
+              Navigator.pop(context); // Pop popup
+              // Save data to API
+              updateDataOnServerAndQuit();
+            },
+          );
         },
         child: Scaffold(
             appBar: AppBar(

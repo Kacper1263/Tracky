@@ -3,7 +3,7 @@ class StaticVariables {
 }
 
 class Version {
-  String appVersionCode = "0.6.2"; //? Only code e.g. "0.5.5" WITHOUT patch like "0.5.5-patch1"
+  String appVersionCode = "0.7.0"; //? Only code e.g. "0.5.5" WITHOUT patch like "0.5.5-patch1"
 
   int getMajorVersionCode() {
     return int.parse(appVersionCode.split('.')[0]);
