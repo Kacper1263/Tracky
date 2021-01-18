@@ -25,9 +25,13 @@ SOFTWARE.
 */
 
 import 'dart:convert';
+import 'dart:io';
+import 'package:dio/dio.dart' as dio;
+import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:tracky/Dialogs.dart';
 
 class CreateRoom extends StatefulWidget {
@@ -103,6 +107,25 @@ class _CreateRoomState extends State<CreateRoom> {
         child: ListView(
           children: [
             SizedBox(height: 15),
+            RaisedButton(
+              padding: EdgeInsets.all(12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(data["editRoom"] == true ? Icons.save : Icons.input),
+                  SizedBox(width: 10),
+                  Text(data["editRoom"] == true ? "Export room" : "Import room", style: TextStyle(fontSize: 20))
+                ],
+              ),
+              color: Colors.blueGrey,
+              textColor: Colors.white,
+              disabledColor: Colors.grey[800],
+              disabledTextColor: Colors.grey[700],
+              onPressed: () {
+                data["editRoom"] == true ? exportRoom() : importRoom();
+              },
+            ),
+            SizedBox(height: 25),
             Text("Room name ", style: TextStyle(color: Colors.white)),
             SizedBox(height: 5),
             TextField(
@@ -464,11 +487,10 @@ class _CreateRoomState extends State<CreateRoom> {
                         onSend: () async {
                           try {
                             Navigator.pop(context);
-                            Fluttertoast.showToast(
-                              msg: "Deleting room. Please wait",
-                              toastLength: Toast.LENGTH_SHORT,
-                              backgroundColor: Colors.grey[700],
-                              textColor: Colors.white,
+                            Dialogs.loadingDialog(
+                              context,
+                              titleText: "Delete room",
+                              descriptionText: "Deleting room. Please wait...",
                             );
                             String url;
                             if (data["serverInLan"])
@@ -479,6 +501,7 @@ class _CreateRoomState extends State<CreateRoom> {
                             var response = await delete(url);
 
                             if (response.statusCode == 200) {
+                              Navigator.pop(context); // Pop loading
                               Fluttertoast.showToast(
                                 msg: "Room deleted!",
                                 toastLength: Toast.LENGTH_LONG,
@@ -486,6 +509,7 @@ class _CreateRoomState extends State<CreateRoom> {
                                 textColor: Colors.white,
                               );
                             } else {
+                              Navigator.pop(context); // Pop loading
                               Fluttertoast.showToast(
                                 msg: "Error while deleting room: ${jsonDecode(response.body)["message"]}",
                                 toastLength: Toast.LENGTH_LONG,
@@ -494,6 +518,7 @@ class _CreateRoomState extends State<CreateRoom> {
                               );
                             }
                           } catch (e) {
+                            Navigator.pop(context); // Pop loading
                             Fluttertoast.showToast(
                               msg: "Error while deleting room: $e",
                               toastLength: Toast.LENGTH_LONG,
@@ -531,5 +556,194 @@ class _CreateRoomState extends State<CreateRoom> {
         ),
       ),
     );
+  }
+
+  /// Save room data on device
+  exportRoom() async {
+    String url;
+    if (data["serverInLan"])
+      url = "http://192.168.1.50:5050/api/v1/room/export/${data["roomID"]}";
+    else
+      url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/export/${data["roomID"]}";
+
+    Dialogs.loadingDialog(
+      context,
+      titleText: "Export room",
+      descriptionText: "Downloading room data. Please wait...",
+    );
+
+    try {
+      Response response;
+      response = await get(url).timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        var json = jsonDecode(response.body);
+        Navigator.pop(context); // Pop loading
+
+        // Check permission
+        var status = await Permission.storage.status;
+        if (!status.isGranted) {
+          await Permission.storage.request();
+          status = await Permission.storage.status;
+          if (!status.isGranted) {
+            Fluttertoast.showToast(
+              msg: "Cannot save file without permission!",
+              toastLength: Toast.LENGTH_LONG,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+            );
+            return;
+          }
+        }
+
+        String path = await FilesystemPicker.open(
+          title: 'Save to folder',
+          context: context,
+          rootDirectory: Directory("/storage/emulated/0/"),
+          fsType: FilesystemType.folder,
+          pickText: 'Save file to this folder',
+          folderIconColor: Colors.teal,
+        );
+
+        path = path + "${json["room"]["name"]} ${DateTime.now().millisecondsSinceEpoch}.json";
+
+        const JsonEncoder encoder = JsonEncoder.withIndent('  ');
+        var dataToSave = {};
+        dataToSave["room"] = json["room"];
+
+        File file = File(path);
+        await file.writeAsString(encoder.convert(dataToSave));
+
+        Navigator.pop(context);
+        Navigator.pushReplacementNamed(
+          context,
+          '/roomsList',
+          arguments: {
+            "serverInLan": data["serverInLan"],
+            "nickname": data["nickname"],
+            "hardwareID": data["hardwareID"],
+            "searchBarText": "ID " + data["roomID"].toString() + ": " + data["roomName"].toString()
+          },
+        );
+        Fluttertoast.showToast(
+          msg: "Room exported to: " + path,
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.lightGreen,
+          textColor: Colors.white,
+        );
+        return;
+      } else {
+        Navigator.pop(context); // Pop loading
+        Fluttertoast.showToast(
+          msg: "Error while creating room: ${jsonDecode(response.body)["message"]}",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
+    } catch (e) {
+      Navigator.pop(context); // Pop loading
+      Fluttertoast.showToast(
+        msg: "Error while creating room: $e",
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
+  }
+
+  /// Load room data from device
+  importRoom() async {
+    // Check permission
+    var status = await Permission.storage.status;
+    if (!status.isGranted) {
+      await Permission.storage.request();
+      status = await Permission.storage.status;
+      if (!status.isGranted) {
+        Fluttertoast.showToast(
+          msg: "Cannot save file without permission!",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
+    }
+
+    String path = await FilesystemPicker.open(
+      title: 'Open file',
+      context: context,
+      rootDirectory: Directory("/storage/emulated/0/"),
+      fsType: FilesystemType.file,
+      folderIconColor: Colors.teal,
+      allowedExtensions: ['.json'],
+      fileTileSelectMode: FileTileSelectMode.wholeTile,
+    );
+
+    String url;
+    if (data["serverInLan"])
+      url = "http://192.168.1.50:5050/api/v1/room/import/new";
+    else
+      url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/import/new";
+
+    Dialogs.loadingDialog(
+      context,
+      titleText: "Import room",
+      descriptionText: "Sending room data. Please wait...",
+    );
+
+    try {
+      File file = File(path);
+      var fileContent = json.decode(await file.readAsString());
+
+      var _body = {};
+      _body["room"] = fileContent["room"];
+      _body["ownerHardwareID"] = data["hardwareID"];
+
+      var response = await dio.Dio().post(url, data: _body).timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        var json = response.data;
+
+        Navigator.pop(context); // Pop loading
+        Fluttertoast.showToast(
+          msg: "Room created!",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+        );
+        Navigator.pop(context);
+        Navigator.pushReplacementNamed(
+          context,
+          '/roomsList',
+          arguments: {
+            "serverInLan": data["serverInLan"],
+            "nickname": data["nickname"],
+            "hardwareID": data["hardwareID"],
+            "searchBarText": "ID " + (json["newRoomId"].toString()) + ": " + json["newRoomName"].toString()
+          },
+        );
+        return;
+      } else {
+        Navigator.pop(context); // Pop loading
+        Fluttertoast.showToast(
+            msg: "Error while creating room: ${jsonDecode(response.data)["message"]}",
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: Colors.red,
+            textColor: Colors.white);
+        return;
+      }
+    } catch (e) {
+      Navigator.pop(context); // Pop loading
+      Fluttertoast.showToast(
+        msg: "Error while creating room: $e",
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
   }
 }

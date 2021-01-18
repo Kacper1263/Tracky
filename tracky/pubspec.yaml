@@ -27,6 +27,9 @@ dependencies:
   screen: ^0.0.5
   fluttertoast: ^7.0.4
   flutter_udid: ^1.0.1
+  filesystem_picker: ^1.0.3
+  permission_handler: ^5.0.1+1
+  dio: ^3.0.10
   geodesy: ^0.3.2
   flutter:
     sdk: flutter

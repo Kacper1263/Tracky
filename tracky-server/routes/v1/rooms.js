@@ -532,6 +532,108 @@ router.post('/leave/:id', (req, res) => {
     }
 })
 
+// *****************************
+// *      Import / Export      *
+// *****************************
+
+// Export room data
+router.get('/export/:id', (req, res) => {
+    db.read()
+
+    const id = parseInt(req.params.id, 10);
+    
+    var list = db.get("rooms").value();
+    var roomId = list.findIndex(room => room.id === id);
+
+    if(roomId != -1){
+        var room = db.get("rooms").get(roomId).value();
+
+        // Clear all players before sending
+        room.teams.forEach((r)=>{
+            r.players = []
+        })
+
+        // log successful room export action
+        logsDb.get("logs").push({
+            "action": "export room",
+            "time": new Date().toLocaleString("pl"),
+            "roomID": room.id,
+            "roomName": room.name,
+        }).write()
+
+        return res.status(200).send({
+            success: 'true',
+            message: 'Room found',
+            room: {
+                name: room.name,
+                showEnemyTeam: room.showEnemyTeam,
+                teams: room.teams,
+                textMarkers: room.textMarkers ?? [],
+                namedPolygons: room.namedPolygons ?? [],
+            }
+        });
+    }
+    else{
+        return res.status(404).send({
+            success: 'false',
+            message: 'Room not found. Wrong ID',
+        });
+    }
+})
+
+// Import room
+router.post('/import/new', (req, res) => {
+    db.read();
+
+    // Check for expired rooms and players
+    RemoveExpiredRoomsAndPlayers()
+
+    var rooms = db.get("rooms").value()
+    var roomsCount = rooms.length;
+
+    if(roomsCount > 0) var lastRoomId = rooms[roomsCount - 1].id;
+    else var lastRoomId = 0
+
+    // When to expire
+    var expires = Date.now();
+    expires = expires + (86400000 * 2)// add 48h in ms
+
+    var expiresIn = ExpiresInHours(expires)
+    if(db.get("rooms").push({
+        "id": lastRoomId + 1,
+        "name": req.body.room.name,
+        "expiresAt": expires,
+        "showEnemyTeam": req.body.room.showEnemyTeam,
+        "ownerHardwareID": req.body.ownerHardwareID,
+        "teams": req.body.room.teams,
+        "textMarkers": req.body.room.textMarkers,
+        "namedPolygons": req.body.room.namedPolygons
+    }).write()){
+        // log successful room create action
+        logsDb.get("logs").push({
+            "action": "create room from file (import room)",
+            "time": new Date().toLocaleString("pl"),
+            "roomID": lastRoomId + 1,
+            "roomName": req.body.room.name,
+            "ownerHardwareID": req.body.ownerHardwareID,
+            "teams": req.body.room.teams
+        }).write()
+
+        return res.status(200).send({
+            success: "true",
+            message: "Created room with id " + (lastRoomId + 1),
+            newRoomId: lastRoomId + 1,
+            newRoomName: req.body.room.name,
+            expiresIn: expiresIn
+        })
+    }
+    else{
+        return res.status(500).send({
+            success: "false",
+            message: "Error while creating room"
+        })
+    }
+})
 
 function ExpiresInHours(time){
     return ((time - Date.now()) / 1000 / 60 / 60).toPrecision(2)
