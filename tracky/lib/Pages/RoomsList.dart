@@ -189,13 +189,16 @@ class _RoomsListState extends State<RoomsList> {
                                               mainAxisAlignment: MainAxisAlignment.center,
                                               children: [
                                                 Text(
-                                                  double.parse(rooms[index]["expiresIn"]) > 170
-                                                      ? "Never expires"
-                                                      : "Expires in: ${rooms[index]["expiresIn"]}h",
+                                                  double.parse(rooms[index]["expiresIn"]) == -1
+                                                      ? "Refreshing"
+                                                      : double.parse(rooms[index]["expiresIn"]) > 170
+                                                          ? "Never expires"
+                                                          : "Expires in: ${rooms[index]["expiresIn"]}h",
                                                   style: TextStyle(fontSize: 14, color: Colors.white),
                                                 ),
-                                                double.parse(rooms[index]["expiresIn"]) > 170 ||
-                                                        double.parse(rooms[index]["expiresIn"]) == 48
+                                                double.parse(rooms[index]["expiresIn"]) == -1 ||
+                                                        (double.parse(rooms[index]["expiresIn"]) > 170 ||
+                                                            double.parse(rooms[index]["expiresIn"]) == 48)
                                                     ? Container()
                                                     : IconButton(
                                                         padding: EdgeInsets.all(0),
@@ -206,10 +209,11 @@ class _RoomsListState extends State<RoomsList> {
                                                           color: Colors.white,
                                                         ),
                                                         onPressed: () {
-                                                          refreshRoomTime(rooms[index]["id"]);
+                                                          var before = rooms[index]["expiresIn"];
                                                           setState(() {
-                                                            rooms[index]["expiresIn"] = "48";
+                                                            rooms[index]["expiresIn"] = "-1";
                                                           });
+                                                          refreshRoomTime(rooms[index]["id"], index, before);
                                                         })
                                               ],
                                             ),
@@ -390,7 +394,7 @@ class _RoomsListState extends State<RoomsList> {
     }
   }
 
-  Future<bool> refreshRoomTime(int id) async {
+  Future<bool> refreshRoomTime(int id, int indexOfRoom, String timeBefore) async {
     String url;
     if (data["serverInLan"])
       url = "http://192.168.1.50:5050/api/v1/room/refresh/$id";
@@ -414,21 +418,32 @@ class _RoomsListState extends State<RoomsList> {
           backgroundColor: Colors.green,
           textColor: Colors.white,
         );
+        setState(() {
+          rooms[indexOfRoom]["expiresIn"] = "48";
+        });
         return true;
       } else {
         Fluttertoast.showToast(
-            msg: "Error while refreshing room time: ${response.body}",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white);
+          msg: "Error while refreshing room time: ${response.body}",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        setState(() {
+          rooms[indexOfRoom]["expiresIn"] = timeBefore;
+        });
         return false;
       }
     } catch (e) {
       Fluttertoast.showToast(
-          msg: "Error while refreshing room time: $e",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white);
+        msg: "Error while refreshing room time: $e",
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      setState(() {
+        rooms[indexOfRoom]["expiresIn"] = timeBefore;
+      });
       return false;
     }
   }
