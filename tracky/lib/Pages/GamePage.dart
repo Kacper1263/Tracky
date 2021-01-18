@@ -227,7 +227,7 @@ class _GamePageState extends State<GamePage> {
         "latitude": _locationData != null ? _locationData.latitude.toString() : "0",
         "longitude": _locationData != null ? _locationData.longitude.toString() : "0"
       },
-    ).timeout(Duration(seconds: 15)).then((res) {
+    ).timeout(Duration(seconds: 20)).then((res) {
       var response = jsonDecode(res.body);
       List<dynamic> teams = response["teams"];
       bool showEnemyTeam = response["showEnemyTeam"] == "true" ? true : false;
