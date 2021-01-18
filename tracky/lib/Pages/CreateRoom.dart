@@ -418,9 +418,7 @@ class _CreateRoomState extends State<CreateRoom> {
                                 "nickname": data["nickname"],
                                 "hardwareID": data["hardwareID"],
                                 "searchBarText": "ID " +
-                                    (data["editRoom"] == true
-                                        ? data["roomID"].toString() + ": " + roomNameController.text
-                                        : json["newRoomId"].toString()) +
+                                    (data["editRoom"] == true ? data["roomID"].toString() : json["newRoomId"].toString()) +
                                     ": " +
                                     roomNameController.text
                               },
