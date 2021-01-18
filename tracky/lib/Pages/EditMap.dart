@@ -538,7 +538,11 @@ class _EditMapState extends State<EditMap> {
 
   /// Get all data about namedPolygons and textMarkers on server
   getDataFromServer() async {
-    Dialogs.loadingDialog(context, titleText: "Updating map", descriptionText: "Downloading map data from server. Please wait...");
+    Dialogs.loadingDialog(
+      context,
+      titleText: "Updating map",
+      descriptionText: "Downloading map data from server. Please wait...",
+    );
     String url;
     if (data["serverInLan"])
       url = "http://192.168.1.50:5050/api/v1/room/${data["roomID"]}";
@@ -572,6 +576,8 @@ class _EditMapState extends State<EditMap> {
           _markerToAdd.onClick = () => textMarkerOnClick(_markerToAdd);
           textMarkers.add(_markerToAdd);
         });
+
+        setState(() {});
 
         Fluttertoast.showToast(
           msg: "Map data loaded!",

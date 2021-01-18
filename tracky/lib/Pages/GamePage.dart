@@ -144,6 +144,8 @@ class _GamePageState extends State<GamePage> {
       }
     }
 
+    updateAndFetchDataFromServer(); // Fetch data once for loading polygons before location update
+
     BackgroundLocation.setAndroidNotification(
         title: "Tracky - ASG team tracker", message: "I am updating Your location. Tap me to resume the app");
     BackgroundLocation.startLocationService();
