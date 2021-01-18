@@ -71,6 +71,7 @@ class _GamePageState extends State<GamePage> {
   //Location variables
   Location _locationData = null;
   int lastUpdate = 0;
+  bool permissionDenied = false;
   bool firstTimeZoomedBefore = false; // change this to true after first time finding GPS location
 
   /// Run it only on start
@@ -78,7 +79,7 @@ class _GamePageState extends State<GamePage> {
     var permissionStatus = await BackgroundLocation.checkPermissions();
     print(permissionStatus);
     if (permissionStatus.toString() == "PermissionStatus.undetermined" || permissionStatus.toString() == "PermissionStatus.denied") {
-      Dialogs.infoDialog(
+      await Dialogs.infoDialog(
         context,
         titleText: "Permissions, read carefully!",
         descriptionText:
@@ -88,22 +89,37 @@ class _GamePageState extends State<GamePage> {
           Navigator.pop(context);
           BackgroundLocation.getPermissions(
             onGranted: () {
+              permissionDenied = false;
               startGame();
             },
             onDenied: () {
-              updateTimer?.cancel();
-              leaveGame();
-              Navigator.pop(context);
+              permissionDenied = true;
+              Fluttertoast.showToast(
+                msg: "Without permission enabled your location will not be updated!",
+                toastLength: Toast.LENGTH_LONG,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
+                gravity: ToastGravity.BOTTOM,
+                fontSize: 14,
+              );
+              startGame();
             },
           );
         },
       );
+    } else if (permissionStatus.toString() == "PermissionStatus.denied") {
+      permissionDenied = true;
+      Fluttertoast.showToast(
+        msg: "Without permission enabled your location will not be updated!",
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        gravity: ToastGravity.BOTTOM,
+        fontSize: 14,
+      );
+      startGame();
     } else if (permissionStatus.toString() == "PermissionStatus.granted") {
       startGame();
-    } else {
-      updateTimer?.cancel();
-      leaveGame();
-      Navigator.pop(context);
     }
 
     return true;

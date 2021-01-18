@@ -76,13 +76,14 @@ class _EditMapState extends State<EditMap> {
   //Location variables
   Location _locationData = null;
   bool firstTimeZoomedBefore = false;
+  bool permissionDenied = false;
 
   /// Run it only on start
   Future<bool> getLocation() async {
     var permissionStatus = await BackgroundLocation.checkPermissions();
     print(permissionStatus);
     if (permissionStatus.toString() == "PermissionStatus.undetermined" || permissionStatus.toString() == "PermissionStatus.denied") {
-      Dialogs.infoDialog(
+      await Dialogs.infoDialog(
         context,
         titleText: "Permissions, read carefully!",
         descriptionText:
@@ -92,18 +93,41 @@ class _EditMapState extends State<EditMap> {
           Navigator.pop(context);
           BackgroundLocation.getPermissions(
             onGranted: () {
+              permissionDenied = false;
               startEditor();
             },
             onDenied: () {
-              Navigator.pop(context);
+              permissionDenied = true;
+              if (permissionDenied) {
+                Fluttertoast.showToast(
+                  msg: "Without permission enabled your location will not be updated!",
+                  toastLength: Toast.LENGTH_LONG,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
+                  gravity: ToastGravity.BOTTOM,
+                  fontSize: 14,
+                );
+              }
+              startEditor();
             },
           );
         },
       );
+    } else if (permissionStatus.toString() == "PermissionStatus.denied") {
+      permissionDenied = true;
+      if (permissionDenied) {
+        Fluttertoast.showToast(
+          msg: "Without permission enabled your location will not be updated!",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          gravity: ToastGravity.BOTTOM,
+          fontSize: 14,
+        );
+      }
+      startEditor();
     } else if (permissionStatus.toString() == "PermissionStatus.granted") {
       startEditor();
-    } else {
-      Navigator.pop(context);
     }
 
     return true;
