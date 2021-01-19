@@ -599,38 +599,46 @@ router.post('/import/new', (req, res) => {
     expires = expires + (86400000 * 2)// add 48h in ms
 
     var expiresIn = ExpiresInHours(expires)
-    if(db.get("rooms").push({
-        "id": lastRoomId + 1,
-        "name": req.body.room.name,
-        "expiresAt": expires,
-        "showEnemyTeam": req.body.room.showEnemyTeam,
-        "ownerHardwareID": req.body.ownerHardwareID,
-        "teams": req.body.room.teams,
-        "textMarkers": req.body.room.textMarkers,
-        "namedPolygons": req.body.room.namedPolygons
-    }).write()){
-        // log successful room create action
-        logsDb.get("logs").push({
-            "action": "create room from file (import room)",
-            "time": new Date().toLocaleString("pl"),
-            "roomID": lastRoomId + 1,
-            "roomName": req.body.room.name,
+    try{
+        if(db.get("rooms").push({
+            "id": lastRoomId + 1,
+            "name": req.body.room.name,
+            "expiresAt": expires,
+            "showEnemyTeam": req.body.room.showEnemyTeam,
             "ownerHardwareID": req.body.ownerHardwareID,
-            "teams": req.body.room.teams
-        }).write()
-
-        return res.status(200).send({
-            success: "true",
-            message: "Created room with id " + (lastRoomId + 1),
-            newRoomId: lastRoomId + 1,
-            newRoomName: req.body.room.name,
-            expiresIn: expiresIn
-        })
+            "teams": req.body.room.teams,
+            "textMarkers": req.body.room.textMarkers,
+            "namedPolygons": req.body.room.namedPolygons
+        }).write()){
+            // log successful room create action
+            logsDb.get("logs").push({
+                "action": "create room from file (import room)",
+                "time": new Date().toLocaleString("pl"),
+                "roomID": lastRoomId + 1,
+                "roomName": req.body.room.name,
+                "ownerHardwareID": req.body.ownerHardwareID,
+                "teams": req.body.room.teams
+            }).write()
+    
+            return res.status(200).send({
+                success: "true",
+                message: "Created room with id " + (lastRoomId + 1),
+                newRoomId: lastRoomId + 1,
+                newRoomName: req.body.room.name,
+                expiresIn: expiresIn
+            })
+        }
+        else{
+            return res.status(500).send({
+                success: "false",
+                message: "Error while creating room"
+            })
+        }
     }
-    else{
+    catch(e){
         return res.status(500).send({
             success: "false",
-            message: "Error while creating room"
+            message: "Error while creating room. File was in wrong format"
         })
     }
 })
