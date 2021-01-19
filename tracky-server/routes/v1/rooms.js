@@ -677,14 +677,24 @@ function RemoveExpiredRoomsAndPlayers(){
     var playersToRemove = []
 
     rooms.forEach(room => {
-        if(room.expiresAt < Date.now()) roomsToRemove.push(room)
+        try{
+            if(room.expiresAt < Date.now()) roomsToRemove.push(room)
+        }
+        catch(e){
+            console.log(e)
+        }
 
-        // Look for expired players
-        room.teams.forEach(team => {
-            team.players.forEach(player => {
-                if((Date.now() - player.lastSeen) > 1000 * 60 * 5) playersToRemove.push({"player": player, "team": team, "room": room})
+        try{
+            // Look for expired players
+            room.teams.forEach(team => {
+                team.players.forEach(player => {
+                    if((Date.now() - player.lastSeen) > 1000 * 60 * 5) playersToRemove.push({"player": player, "team": team, "room": room})
+                })
             })
-        })
+        }
+        catch(e){
+            console.log(e)
+        }
     });
 
     if(roomsToRemove.length > 0){
