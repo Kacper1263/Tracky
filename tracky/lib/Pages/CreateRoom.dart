@@ -722,15 +722,27 @@ class _CreateRoomState extends State<CreateRoom> {
       File file = File(path);
       dynamic fileString = await file.readAsString();
 
-      var fileContent = json.decode(
-        binaryCodec.decode(
-          Uint8List.fromList(
-            List<int>.from(
-              json.decode(fileString), //decode string to List<dynamic>
-            ), // List<dynamic> to List<int>
+      var fileContent;
+      try {
+        fileContent = json.decode(
+          binaryCodec.decode(
+            Uint8List.fromList(
+              List<int>.from(
+                json.decode(fileString), //decode string to List<dynamic>
+              ), // List<dynamic> to List<int>
+            ),
           ),
-        ),
-      );
+        );
+      } catch (e) {
+        Fluttertoast.showToast(
+          msg: "Error. This file is not valid room save",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        Navigator.pop(context); // pop loading
+        return;
+      }
 
       var _body = {};
       _body["room"] = fileContent["room"];
