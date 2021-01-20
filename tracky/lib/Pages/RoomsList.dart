@@ -283,7 +283,18 @@ class _RoomsListState extends State<RoomsList> {
                                             itemBuilder: (ct, i) {
                                               return RaisedButton(
                                                   onPressed: () async {
-                                                    bool joined = await joinRoom(rooms[index]["id"], rooms[index]["teams"][i]["name"]);
+                                                    bool joined;
+                                                    try {
+                                                      joined = await joinRoom(rooms[index]["id"], rooms[index]["teams"][i]["name"]);
+                                                    } catch (e) {
+                                                      Fluttertoast.showToast(
+                                                        msg: "Error while joining team: $e",
+                                                        toastLength: Toast.LENGTH_LONG,
+                                                        backgroundColor: Colors.red,
+                                                        textColor: Colors.white,
+                                                      );
+                                                      return;
+                                                    }
 
                                                     if (joined) {
                                                       Navigator.pushReplacementNamed(
