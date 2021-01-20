@@ -26,6 +26,8 @@ SOFTWARE.
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:binary_codec/binary_codec.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:flutter/material.dart';
@@ -55,15 +57,24 @@ class _CreateRoomState extends State<CreateRoom> {
   void initState() {
     data = widget.arguments;
     if (data["editRoom"] == true) {
-      roomNameController.text = data["roomName"];
+      roomNameController.text = data["roomName"].toString();
       showEnemyTeam = data["showEnemyTeam"] == "true";
       List<dynamic> _teams = data["teams"];
       for (int i = 0; i < _teams.length; i++) {
-        teams.add({
-          "name": _teams[i]["name"],
-          "color": _teams[i]["color"],
-          "players": [],
-        });
+        try {
+          teams.add({
+            "name": _teams[i]["name"].toString(),
+            "color": _teams[i]["color"],
+            "players": [],
+          });
+        } catch (e) {
+          Fluttertoast.showToast(
+            msg: "Error while loading team data: $e",
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
+        }
       }
     }
 
@@ -605,14 +616,25 @@ class _CreateRoomState extends State<CreateRoom> {
           folderIconColor: Colors.teal,
         );
 
-        path = path + "${json["room"]["name"]} ${DateTime.now().millisecondsSinceEpoch}.json";
+        path = path + "${json["room"]["name"]} ${DateTime.now().millisecondsSinceEpoch}.trd"; //? trd - Tracky Room Data :)
 
         const JsonEncoder encoder = JsonEncoder.withIndent('  ');
         var dataToSave = {};
         dataToSave["room"] = json["room"];
+        var encodedJson = encoder.convert(dataToSave);
+
+        var binDataToSave = binaryCodec.encode(encodedJson);
+        if (encodedJson.toString() != binaryCodec.decode(binDataToSave).toString()) {
+          Fluttertoast.showToast(
+            msg: "Error while creating save file. Data mismatch",
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
+        }
 
         File file = File(path);
-        await file.writeAsString(encoder.convert(dataToSave));
+        await file.writeAsString(binDataToSave.toString());
 
         Navigator.pop(context);
         Navigator.pushReplacementNamed(
@@ -678,9 +700,11 @@ class _CreateRoomState extends State<CreateRoom> {
       rootDirectory: Directory("/storage/emulated/0/"),
       fsType: FilesystemType.file,
       folderIconColor: Colors.teal,
-      allowedExtensions: ['.json'],
+      allowedExtensions: ['.trd'],
       fileTileSelectMode: FileTileSelectMode.wholeTile,
     );
+
+    if (path == null) return;
 
     String url;
     if (data["serverInLan"])
@@ -696,7 +720,17 @@ class _CreateRoomState extends State<CreateRoom> {
 
     try {
       File file = File(path);
-      var fileContent = json.decode(await file.readAsString());
+      dynamic fileString = await file.readAsString();
+
+      var fileContent = json.decode(
+        binaryCodec.decode(
+          Uint8List.fromList(
+            List<int>.from(
+              json.decode(fileString), //decode string to List<dynamic>
+            ), // List<dynamic> to List<int>
+          ),
+        ),
+      );
 
       var _body = {};
       _body["room"] = fileContent["room"];
