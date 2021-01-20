@@ -408,7 +408,7 @@ router.post('/join/:id', (req, res) => {
                 "action": "joined",
                 "time": new Date().toLocaleString("pl"),
                 "nickName": req.body.playerName,
-                "room": roomId,
+                "room": list[roomId].id,
                 "team": req.body.teamName
             }).write()
 
@@ -508,7 +508,7 @@ router.post('/leave/:id', (req, res) => {
                 "action": "leaved",
                 "time": new Date().toLocaleString("pl"),
                 "nickName": req.body.playerName,
-                "room": roomId,
+                "room": list[roomId].id,
                 "team": req.body.teamName
             }).write()
 
