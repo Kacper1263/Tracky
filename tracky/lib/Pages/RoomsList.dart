@@ -26,11 +26,13 @@ SOFTWARE.
 
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_udid/flutter_udid.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
 import 'package:tracky/Classes.dart';
+import 'package:tracky/Dialogs.dart';
 import 'package:tracky/StaticVariables.dart';
 
 class RoomsList extends StatefulWidget {
@@ -283,9 +285,32 @@ class _RoomsListState extends State<RoomsList> {
                                             itemBuilder: (ct, i) {
                                               return RaisedButton(
                                                   onPressed: () async {
+                                                    bool canceled = true;
+                                                    TextEditingController _password = new TextEditingController();
+                                                    if (rooms[index]["teams"][i]["passwordRequired"] == "true") {
+                                                      await Dialogs.oneInputDialog(
+                                                        _password,
+                                                        context,
+                                                        onCancel: () => Navigator.pop(context),
+                                                        onSend: () {
+                                                          canceled = false;
+                                                          Navigator.pop(context);
+                                                        },
+                                                        cancelText: "Cancel",
+                                                        sendText: "Join",
+                                                        titleText: "Team password",
+                                                        descriptionText: "You need to enter team password",
+                                                        hintText: "Password",
+                                                      );
+                                                    } else {
+                                                      _password.text = "";
+                                                    }
+                                                    if (canceled) return;
+
                                                     bool joined;
                                                     try {
-                                                      joined = await joinRoom(rooms[index]["id"], rooms[index]["teams"][i]["name"]);
+                                                      joined = await joinRoom(
+                                                          rooms[index]["id"], rooms[index]["teams"][i]["name"], _password.text);
                                                     } catch (e) {
                                                       Fluttertoast.showToast(
                                                         msg: "Error while joining team: $e",
@@ -311,9 +336,17 @@ class _RoomsListState extends State<RoomsList> {
                                                     }
                                                   },
                                                   padding: EdgeInsets.all(12),
-                                                  child: Text(
-                                                      "Join: ${rooms[index]["teams"][i]["name"]} (${(rooms[index]["teams"][i]["players"].length)})",
-                                                      style: TextStyle(fontSize: 17)),
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    children: [
+                                                      rooms[index]["teams"][i]["passwordRequired"] == "true"
+                                                          ? Padding(padding: EdgeInsets.fromLTRB(0, 0, 5, 0), child: Icon(Icons.lock))
+                                                          : Container(),
+                                                      Text(
+                                                          "Join: ${rooms[index]["teams"][i]["name"]} (${(rooms[index]["teams"][i]["players"].length)})",
+                                                          style: TextStyle(fontSize: 17)),
+                                                    ],
+                                                  ),
                                                   color: Colors.grey[800],
                                                   textColor: Colors.white,
                                                   disabledColor: Colors.grey[800],
@@ -368,7 +401,7 @@ class _RoomsListState extends State<RoomsList> {
     }
   }
 
-  Future<bool> joinRoom(int id, String team) async {
+  Future<bool> joinRoom(int id, String team, String password) async {
     String url;
     if (data["serverInLan"])
       url = "http://192.168.1.50:5050/api/v1/room/join/$id";
@@ -378,7 +411,7 @@ class _RoomsListState extends State<RoomsList> {
     try {
       Fluttertoast.showToast(
         msg: "Joining team: $team. Please wait",
-        toastLength: Toast.LENGTH_LONG,
+        toastLength: Toast.LENGTH_SHORT,
         backgroundColor: Colors.grey[700],
         textColor: Colors.white,
       );
@@ -386,13 +419,14 @@ class _RoomsListState extends State<RoomsList> {
       var response = await post(url, body: {
         "playerName": data["nickname"],
         "teamName": team,
+        "teamPassword": sha1.convert(utf8.encode(password)).toString(),
       });
 
       if (response.statusCode == 200) {
         return true;
       } else {
         Fluttertoast.showToast(
-            msg: "Error while joining team: ${response.body}",
+            msg: "Error while joining team: ${jsonDecode(response.body)["message"]}",
             toastLength: Toast.LENGTH_LONG,
             backgroundColor: Colors.red,
             textColor: Colors.white);

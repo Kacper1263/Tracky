@@ -28,6 +28,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:binary_codec/binary_codec.dart';
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:flutter/material.dart';
@@ -35,6 +36,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:tracky/Dialogs.dart';
+import 'package:uuid/uuid.dart';
 
 class CreateRoom extends StatefulWidget {
   final Object arguments;
@@ -49,6 +51,7 @@ class _CreateRoomState extends State<CreateRoom> {
   Map data;
   TextEditingController roomNameController = new TextEditingController();
   List<TextEditingController> textControllers = new List<TextEditingController>();
+  List<TextEditingController> teamPasswordControllers = new List<TextEditingController>();
   bool showEnemyTeam = false;
   bool sending = false;
   List teams = [];
@@ -63,9 +66,12 @@ class _CreateRoomState extends State<CreateRoom> {
       for (int i = 0; i < _teams.length; i++) {
         try {
           teams.add({
+            "id": _teams[i]["id"].toString(),
             "name": _teams[i]["name"].toString(),
             "color": _teams[i]["color"],
             "players": [],
+            "passwordRequired": _teams[i]["passwordRequired"] ?? "false",
+            "teamPassword": "",
           });
         } catch (e) {
           Fluttertoast.showToast(
@@ -83,9 +89,12 @@ class _CreateRoomState extends State<CreateRoom> {
 
   void addTeam() {
     teams.add({
+      "id": Uuid().v4().toString(),
       "name": "",
       "color": "",
       "players": [],
+      "passwordRequired": "false",
+      "teamPassword": "",
     });
   }
 
@@ -188,6 +197,7 @@ class _CreateRoomState extends State<CreateRoom> {
               physics: NeverScrollableScrollPhysics(),
               itemBuilder: (context, index) {
                 if (textControllers.length < teams.length) textControllers.add(new TextEditingController());
+                if (teamPasswordControllers.length < teams.length) teamPasswordControllers.add(new TextEditingController());
                 return Card(
                   color: Colors.grey[700],
                   child: ExpansionTile(
@@ -223,6 +233,58 @@ class _CreateRoomState extends State<CreateRoom> {
                           });
                         },
                       ),
+                      SizedBox(height: 15),
+                      Center(
+                        child: Text(
+                          "Team password (optional - can be empty)",
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                      ),
+                      SizedBox(height: 15),
+                      teams[index]["passwordRequired"] == "false"
+                          ? TextField(
+                              keyboardType: TextInputType.visiblePassword,
+                              textCapitalization: TextCapitalization.none,
+                              controller: teamPasswordControllers[index],
+                              style: TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+                                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
+                                border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+                                hintText: 'Leave empty if no password',
+                                hintStyle: TextStyle(color: Colors.grey[500]),
+                              ),
+                              onChanged: (value) {
+                                setState(() {
+                                  teams[index]["teamPassword"] = value;
+                                });
+                              },
+                            )
+                          : RaisedButton(
+                              padding: EdgeInsets.all(12),
+                              child: Text("Delete old team password", style: TextStyle(fontSize: 20)),
+                              color: Colors.blueGrey,
+                              textColor: Colors.white,
+                              disabledColor: Colors.grey[800],
+                              disabledTextColor: Colors.grey[700],
+                              onPressed: () {
+                                Dialogs.confirmDialog(
+                                  context,
+                                  titleText: "Info about passwords",
+                                  descriptionText:
+                                      "All teams passwords stored on server are encrypted so if you want to change password first you must delete it. This action will delete old password. Continue?",
+                                  onCancel: () {
+                                    Navigator.pop(context);
+                                  },
+                                  onSend: () {
+                                    Navigator.pop(context);
+                                    setState(() {
+                                      teams[index]["passwordRequired"] = "false";
+                                    });
+                                  },
+                                );
+                              },
+                            ),
                       SizedBox(height: 15),
                       Center(
                         child: Text(
@@ -370,6 +432,7 @@ class _CreateRoomState extends State<CreateRoom> {
                             setState(() {
                               teams.removeAt(index);
                               textControllers.removeAt(index);
+                              teamPasswordControllers.removeAt(index);
                             });
                           },
                           padding: EdgeInsets.all(12),
@@ -414,6 +477,32 @@ class _CreateRoomState extends State<CreateRoom> {
                           backgroundColor: Colors.grey[700],
                           textColor: Colors.white,
                         );
+
+                        // Hash passwords before sending if needed
+                        try {
+                          teams.forEach((team) {
+                            if (team["teamPassword"].toString().isNotEmpty) {
+                              var plainTextPassword = team["teamPassword"];
+                              var bytes = utf8.encode(plainTextPassword);
+                              var hashedPassword = sha1.convert(bytes).toString();
+                              team["teamPassword"] = hashedPassword;
+                              team["passwordRequired"] = "true";
+                            } else if (team["passwordRequired"] != "true") {
+                              team["passwordRequired"] = "false";
+                            }
+                          });
+                        } catch (e) {
+                          Fluttertoast.showToast(
+                            msg: "Error while hashing team password. $e",
+                            toastLength: Toast.LENGTH_LONG,
+                            backgroundColor: Colors.red,
+                            textColor: Colors.white,
+                            gravity: ToastGravity.BOTTOM,
+                            fontSize: 12,
+                          );
+                          setState(() => sending = false);
+                          return;
+                        }
 
                         try {
                           Response response;

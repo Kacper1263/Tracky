@@ -158,14 +158,28 @@ router.patch("/update", (req, res) => {
     // Verify hardwareID
     var ownerHardwareID = db.get("rooms").get(roomId).get("ownerHardwareID").value()
     if(ownerHardwareID == req.body.hardwareID){
-        if(db.get("rooms").get(roomId).set("name", req.body.roomName).set("showEnemyTeam", req.body.showEnemyTeam).set("teams", JSON.parse(req.body.teams)).write()){
+        var oldTeams = db.get("rooms").get(roomId).get("teams").value();
+        var teamsWithCorrectPasswords = JSON.parse(req.body.teams);
+        teamsWithCorrectPasswords.forEach((team) => {
+            if(team.passwordRequired == "true" && team.teamPassword == ""){
+                var oldTeamIndex = oldTeams.findIndex(t => t.id == team.id)
+                if(oldTeamIndex > -1){
+                    team.teamPassword = oldTeams[oldTeamIndex].teamPassword
+                }
+                else{
+                    console.log("Old team index not found!")
+                }
+            }
+        })
+
+        if(db.get("rooms").get(roomId).set("name", req.body.roomName).set("showEnemyTeam", req.body.showEnemyTeam).set("teams", teamsWithCorrectPasswords).write()){
             // log successful room update action
             logsDb.get("logs").push({
                 "action": "update room",
                 "time": new Date().toLocaleString("pl"),
                 "roomName": req.body.roomName,
                 "ownerHardwareID": req.body.hardwareID,
-                "teams": JSON.parse(req.body.teams)
+                "teams": teamsWithCorrectPasswords
             }).write()
             
             return res.status(200).send({
@@ -394,7 +408,15 @@ router.post('/join/:id', (req, res) => {
             if(player.name === req.body.playerName) isNameTaken = true
         })
 
-        // TODO: Check password
+        // Check password if required
+        if(list[roomId].teams[teamId].passwordRequired == "true"){
+            if(list[roomId].teams[teamId].teamPassword != req.body.teamPassword){
+                return res.status(401).send({
+                    success: 'false',
+                    message: 'Wrong team password',
+                });
+            }
+        }
 
         if(!isNameTaken){
             db.get("rooms").get(roomId).get("teams").get(teamId).get("players").push({
