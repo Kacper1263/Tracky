@@ -505,11 +505,22 @@ router.post('/:id', (req, res) => {
         }
         
         var room = db.get("rooms").get(roomId).value()
+
+        var teamsWithoutProtectedData = [];
+        room.teams.forEach((team) => {
+            teamsWithoutProtectedData.push({
+                "id": team.id,
+                "name": team.name,
+                "color": team.color,
+                "players": team.players,
+                "passwordRequired": team.passwordRequired,
+            })
+        })
         
         return res.status(200).send({
             success: 'true',
             message: 'Room found, updating location and returning players',
-            teams: room.teams,
+            teams: room.teams, // TODO: Send only players team
             showEnemyTeam: room.showEnemyTeam,
             textMarkers: room.textMarkers ?? [],
             namedPolygons: room.namedPolygons ?? [],
