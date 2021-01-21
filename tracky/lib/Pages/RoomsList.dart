@@ -303,6 +303,7 @@ class _RoomsListState extends State<RoomsList> {
                                                         hintText: "Password",
                                                       );
                                                     } else {
+                                                      canceled = false;
                                                       _password.text = "";
                                                     }
                                                     if (canceled) return;

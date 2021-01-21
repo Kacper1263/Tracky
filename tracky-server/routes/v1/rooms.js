@@ -73,6 +73,17 @@ router.get("/all", (req, res) => {
     var roomsWithExpireTime = []
 
     db.get("rooms").value().forEach(room => {
+        var teamsWithoutProtectedData = [];
+        room.teams.forEach((team) => {
+            teamsWithoutProtectedData.push({
+                "id": team.id,
+                "name": team.name,
+                "color": team.color,
+                "players": team.players.map(p => ({"name": p.name})) ?? [],
+                "passwordRequired": team.passwordRequired,
+            })
+        })
+
         roomsWithExpireTime.push({
             "id": room.id,
             "expiresAt": room.expiresAt,
@@ -80,7 +91,7 @@ router.get("/all", (req, res) => {
             "showEnemyTeam": room.showEnemyTeam,
             "isOwner": (room.ownerHardwareID == clientHardwareID && clientHardwareID != undefined).toString(),
             "expiresIn": ExpiresInHours(room.expiresAt),
-            "teams": room.teams
+            "teams": teamsWithoutProtectedData
         })
     });
 
@@ -213,12 +224,23 @@ router.get('/:id', (req, res) => {
     if(roomId != -1){
         var room = db.get("rooms").get(roomId).value();
 
+        var teamsWithoutProtectedData = [];
+        room.teams.forEach((team) => {
+            teamsWithoutProtectedData.push({
+                "id": team.id,
+                "name": team.name,
+                "color": team.color,
+                "players": team.players.map(p => ({"name": p.name})) ?? [],
+                "passwordRequired": team.passwordRequired,
+            })
+        })
+
         return res.status(200).send({
             success: 'true',
             message: 'Room found',
             expiresIn: ExpiresInHours(room.expiresAt),
             roomId: room.id,
-            teams: room.teams,
+            teams: teamsWithoutProtectedData,
             textMarkers: room.textMarkers ?? [],
             namedPolygons: room.namedPolygons ?? [],
         });
