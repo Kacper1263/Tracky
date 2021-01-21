@@ -394,6 +394,8 @@ router.post('/join/:id', (req, res) => {
             if(player.name === req.body.playerName) isNameTaken = true
         })
 
+        // TODO: Check password
+
         if(!isNameTaken){
             db.get("rooms").get(roomId).get("teams").get(teamId).get("players").push({
                 "name": req.body.playerName,

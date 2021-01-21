@@ -230,6 +230,43 @@ class _GamePageState extends State<GamePage> {
         "longitude": _locationData != null ? _locationData.longitude.toString() : "0"
       },
     ).timeout(Duration(seconds: 20)).then((res) {
+      if (connectionLost) {
+        connectionLost = false;
+        Fluttertoast.showToast(
+          msg: "Reconnected",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.lightGreen,
+          textColor: Colors.white,
+          gravity: ToastGravity.BOTTOM,
+          fontSize: 14,
+        );
+      }
+
+      if (res.statusCode != 200) {
+        try {
+          var response = jsonDecode(res.body);
+          Fluttertoast.showToast(
+            msg: "Error while updating position. ${response["message"]}",
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            gravity: ToastGravity.BOTTOM,
+            fontSize: 12,
+          );
+        } catch (e) {
+          Fluttertoast.showToast(
+            msg: "Error while updating position. Server returned code ${res.statusCode}",
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            gravity: ToastGravity.BOTTOM,
+            fontSize: 12,
+          );
+        }
+
+        return;
+      }
+
       var response = jsonDecode(res.body);
       List<dynamic> teams = response["teams"];
       bool showEnemyTeam = response["showEnemyTeam"] == "true" ? true : false;
@@ -287,18 +324,6 @@ class _GamePageState extends State<GamePage> {
       });
       otherPlayers = playersToAdd.sublist(0);
       setState(() {}); // Update locations on screen
-
-      if (connectionLost) {
-        connectionLost = false;
-        Fluttertoast.showToast(
-          msg: "Reconnected",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.lightGreen,
-          textColor: Colors.white,
-          gravity: ToastGravity.BOTTOM,
-          fontSize: 14,
-        );
-      }
     }).catchError((e) {
       if (e.toString().contains("TimeoutException")) {
         connectionLost = true;
