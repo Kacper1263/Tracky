@@ -98,13 +98,39 @@ class _CreateRoomState extends State<CreateRoom> {
     });
   }
 
-  bool validateData() {
+  bool validateTeamColors() {
+    bool noProblems = true;
+
+    teams.forEach((team) {
+      if (team["color"].toString().isEmpty) {
+        noProblems = false;
+        return false;
+      }
+    });
+
+    return noProblems;
+  }
+
+  bool validateTeamNameNotEmpty() {
+    bool noProblems = true;
+
+    teams.forEach((team) {
+      if (team["name"].toString().isEmpty) {
+        noProblems = false;
+        return false;
+      }
+    });
+
+    return noProblems;
+  }
+
+  bool validateTeamNamesLength() {
     bool noProblems = true;
 
     if (teams.length < 1) noProblems = false;
 
     teams.forEach((team) {
-      if (team["name"].toString().isEmpty || team["color"].toString().isEmpty) {
+      if (team["name"].toString().length > 35) {
         noProblems = false;
         return false;
       }
@@ -152,8 +178,11 @@ class _CreateRoomState extends State<CreateRoom> {
               keyboardType: TextInputType.text,
               textCapitalization: TextCapitalization.sentences,
               style: TextStyle(color: Colors.white),
+              maxLength: 40,
+              maxLengthEnforced: false,
               controller: roomNameController,
               decoration: InputDecoration(
+                counterStyle: TextStyle(fontSize: 0),
                 enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
                 focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
                 border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
@@ -220,7 +249,10 @@ class _CreateRoomState extends State<CreateRoom> {
                         textCapitalization: TextCapitalization.sentences,
                         controller: textControllers[index],
                         style: TextStyle(color: Colors.white),
+                        maxLength: 35,
+                        maxLengthEnforced: false,
                         decoration: InputDecoration(
+                          counterStyle: TextStyle(fontSize: 0),
                           enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
                           focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
                           border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
@@ -451,6 +483,15 @@ class _CreateRoomState extends State<CreateRoom> {
                 ? CircularProgressIndicator()
                 : RaisedButton(
                     onPressed: () async {
+                      if (roomNameController.text.length > 40) {
+                        Fluttertoast.showToast(
+                          msg: "Room name length must be lower than 41",
+                          toastLength: Toast.LENGTH_LONG,
+                          backgroundColor: Colors.red,
+                          textColor: Colors.white,
+                        );
+                        return;
+                      }
                       setState(() => sending = true);
                       String url;
                       if (data["serverInLan"])
@@ -462,12 +503,40 @@ class _CreateRoomState extends State<CreateRoom> {
                             ? "https://kacpermarcinkiewicz.com:5050/api/v1/room/update"
                             : "https://kacpermarcinkiewicz.com:5050/api/v1/room/create";
 
-                      if (!validateData()) {
+                      if (teams.length <= 0) {
                         Fluttertoast.showToast(
-                            msg: "One or more teams have empty name or unselected color or you don't create any team",
-                            toastLength: Toast.LENGTH_LONG,
-                            backgroundColor: Colors.red,
-                            textColor: Colors.white);
+                          msg: "You need to create one or more teams",
+                          toastLength: Toast.LENGTH_LONG,
+                          backgroundColor: Colors.red,
+                          textColor: Colors.white,
+                        );
+                        setState(() => sending = false);
+                        return;
+                      } else if (!validateTeamNameNotEmpty()) {
+                        Fluttertoast.showToast(
+                          msg: "One or more teams have empty name",
+                          toastLength: Toast.LENGTH_LONG,
+                          backgroundColor: Colors.red,
+                          textColor: Colors.white,
+                        );
+                        setState(() => sending = false);
+                        return;
+                      } else if (!validateTeamNamesLength()) {
+                        Fluttertoast.showToast(
+                          msg: "One or more teams have name longer than 35",
+                          toastLength: Toast.LENGTH_LONG,
+                          backgroundColor: Colors.red,
+                          textColor: Colors.white,
+                        );
+                        setState(() => sending = false);
+                        return;
+                      } else if (!validateTeamColors()) {
+                        Fluttertoast.showToast(
+                          msg: "One or more teams have unselected color",
+                          toastLength: Toast.LENGTH_LONG,
+                          backgroundColor: Colors.red,
+                          textColor: Colors.white,
+                        );
                         setState(() => sending = false);
                         return;
                       } else {
@@ -484,7 +553,7 @@ class _CreateRoomState extends State<CreateRoom> {
                             if (team["teamPassword"].toString().isNotEmpty) {
                               var plainTextPassword = team["teamPassword"];
                               var bytes = utf8.encode(plainTextPassword);
-                              var hashedPassword = sha1.convert(bytes).toString();
+                              var hashedPassword = sha256.convert(bytes).toString();
                               team["teamPassword"] = hashedPassword;
                               team["passwordRequired"] = "true";
                             } else if (team["passwordRequired"] != "true") {

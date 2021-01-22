@@ -343,9 +343,11 @@ class _RoomsListState extends State<RoomsList> {
                                                       rooms[index]["teams"][i]["passwordRequired"] == "true"
                                                           ? Padding(padding: EdgeInsets.fromLTRB(0, 0, 5, 0), child: Icon(Icons.lock))
                                                           : Container(),
-                                                      Text(
-                                                          "Join: ${rooms[index]["teams"][i]["name"]} (${(rooms[index]["teams"][i]["players"].length)})",
-                                                          style: TextStyle(fontSize: 17)),
+                                                      Flexible(
+                                                        child: Text(
+                                                            "Join: ${rooms[index]["teams"][i]["name"]} (${(rooms[index]["teams"][i]["players"].length)})",
+                                                            style: TextStyle(fontSize: 17)),
+                                                      ),
                                                     ],
                                                   ),
                                                   color: Colors.grey[800],
@@ -420,7 +422,7 @@ class _RoomsListState extends State<RoomsList> {
       var response = await post(url, body: {
         "playerName": data["nickname"],
         "teamName": team,
-        "teamPassword": sha1.convert(utf8.encode(password)).toString(),
+        "teamPassword": sha256.convert(utf8.encode(password)).toString(),
       });
 
       if (response.statusCode == 200) {

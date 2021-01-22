@@ -178,8 +178,11 @@ By clicking agree and using this app you agree to privacy policy available on Go
               keyboardType: TextInputType.text,
               textCapitalization: TextCapitalization.sentences,
               style: TextStyle(color: Colors.white),
+              maxLength: 25,
+              maxLengthEnforced: false,
               controller: nicknameController,
               decoration: InputDecoration(
+                counterStyle: TextStyle(fontSize: 0),
                 enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
                 focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
                 border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
@@ -194,7 +197,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
                   : () {
                       if (nicknameController.text.length > 25) {
                         Fluttertoast.showToast(
-                            msg: "Nickname must contains less than 25 characters",
+                            msg: "Nickname must contains less than 26 characters",
                             toastLength: Toast.LENGTH_LONG,
                             fontSize: 16,
                             backgroundColor: Colors.red,

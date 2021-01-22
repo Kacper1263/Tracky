@@ -19,7 +19,7 @@ class Player {
 
   Marker getMarker() {
     return Marker(
-      width: 150.0,
+      width: 350.0,
       height: 80.0,
       point: this.location,
       builder: (ctx) => Container(
@@ -62,7 +62,7 @@ class TextMarker {
   Marker getMarker() {
     return Marker(
       width: 200.0,
-      height: 80.0,
+      height: 1000.0,
       point: this.location,
       builder: (ctx) => GestureDetector(
         onTap: onClick,

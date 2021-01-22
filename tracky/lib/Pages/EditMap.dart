@@ -956,7 +956,10 @@ class _EditMapState extends State<EditMap> {
           textCapitalization: TextCapitalization.sentences,
           controller: _newTextController,
           style: TextStyle(color: Colors.white),
+          maxLength: 40,
+          maxLengthEnforced: false,
           decoration: InputDecoration(
+            counterStyle: TextStyle(fontSize: 0),
             enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
             focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
             border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
@@ -976,6 +979,15 @@ class _EditMapState extends State<EditMap> {
                   textColor: Colors.white,
                   gravity: ToastGravity.BOTTOM,
                   fontSize: 12,
+                );
+                return;
+              }
+              if (_newTextController.text.length > 40) {
+                Fluttertoast.showToast(
+                  msg: "Content length must be lower than 40",
+                  toastLength: Toast.LENGTH_LONG,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
                 );
                 return;
               }
@@ -1027,7 +1039,10 @@ class _EditMapState extends State<EditMap> {
           textCapitalization: TextCapitalization.sentences,
           controller: _newTextController,
           style: TextStyle(color: Colors.white),
+          maxLength: 40,
+          maxLengthEnforced: false,
           decoration: InputDecoration(
+            counterStyle: TextStyle(fontSize: 0),
             enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
             focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
             border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
@@ -1039,6 +1054,15 @@ class _EditMapState extends State<EditMap> {
           padding: EdgeInsets.fromLTRB(0, 5, 0, 5),
           child: RaisedButton(
             onPressed: () {
+              if (_newTextController.text.length > 40) {
+                Fluttertoast.showToast(
+                  msg: "Content length must be lower than 40",
+                  toastLength: Toast.LENGTH_LONG,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
+                );
+                return;
+              }
               if (_newTextController.text.length <= 0) {
                 Fluttertoast.showToast(
                   msg: "Text must have 1 or more characters",
