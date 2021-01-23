@@ -33,7 +33,8 @@ try {
     require('path')
     require('lowdb')
     require('readline-sync')
-    require('https');
+    require('https')
+    require('ws')
 } catch (e) {
     return console.log(`\n   You don't have required packages! \n\n   Use "npm i" to install them! \n\n`)
 }
@@ -43,11 +44,13 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const fs = require('fs')
 const readline = require('readline-sync')
+const chat = require('./chat')
 
 //#region Config variables
 // var adminPassword = randomFromZeroToNine() + randomFromZeroToNine() + randomFromZeroToNine() + randomFromZeroToNine() //Generate 4 random numbers
 var databaseName = "rooms"
 var apiPort = 5000;
+var chatPort = 5001;
 var minRequiredAppVersion = "0.0.0"
 var httpsEnabled = false;
 var privateKey  = ""
@@ -61,6 +64,7 @@ try {
     //adminPassword = cfg.adminPassword
     databaseName = cfg.databaseName
     apiPort = cfg.apiPort
+    chatPort = cfg.chatPort
     minRequiredAppVersion = cfg.minRequiredAppVersion
     httpsEnabled = cfg.httpsEnabled
     if(httpsEnabled){
@@ -74,6 +78,7 @@ try {
             //adminPassword: adminPassword,
             databaseName: databaseName,
             apiPort: apiPort,
+            chatPort: chatPort,
             minRequiredAppVersion: minRequiredAppVersion,
             httpsEnabled: httpsEnabled,
             httpsPrivateKey: privateKey,
@@ -115,6 +120,7 @@ app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
 //Routes API v1
 var routes_v1 = require('./routes/v1/index')
+const { Chat } = require('./chat')
 app.get("/",function (req, res) {
     res.status(200).send(`<h1>This is an API of Tracky - ASG team tracker </h1>`);
 });
@@ -130,14 +136,22 @@ app.use(function (req, res) {
 });
 
 if(!httpsEnabled){
+    // API 
     app.listen(process.env.PORT || apiPort, () => {
         console.log(`API running on port ${process.env.PORT || apiPort}`)
     });
+
+    // Chat websocket
+    chat(chatPort)
 }
 else{
+    // API
     var credentials = {key: privateKey, cert: certificate};
     var httpsServer = https.createServer(credentials, app);
     httpsServer.listen(process.env.PORT || apiPort, () => {
         console.log(`API running on port ${process.env.PORT || apiPort} with HTTPS support`)
     });
+
+    // Chat websocket
+    chat(chatPort, {credentials: credentials})
 }

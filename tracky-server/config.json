@@ -1,6 +1,7 @@
 {
   "databaseName": "rooms",
   "apiPort": 5050,
+  "chatPort": 5051,
   "minRequiredAppVersion": "0.8.3",
   "httpsEnabled": false,
   "httpsPrivateKey": "sslcert/privkey.pem",
