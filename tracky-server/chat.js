@@ -9,15 +9,21 @@ class Room {
     }
 }
 
+/** {credentials} = {} - because without this calling function without credentials like ```chat(5001)``` can throw error */
 module.exports = (port, {credentials} = {}) => {
-    console.chatLog = function(message){
-        console.log("[Chat] - " + message) // TODO: In production change this to logsDb instead of console log
+    String.prototype.isNullOrEmpty = function() {
+        var str = this.toString()
+        return (!str || 0 === str.length);
+    }
+    String.prototype.isNotNullOrEmpty = function() {
+        var str = this.toString()
+        return !(!str || 0 === str.length);
     }
 
     /**
      * @type {Room[]}
      */
-    var rooms = []
+    var rooms = [] // TODO: This should be lowdb database
 
     /**
      * @type {websocket.Server}
@@ -40,8 +46,8 @@ module.exports = (port, {credentials} = {}) => {
         wss = new websocket.Server({port: port})
         wss.on('connection', onConnection)
         wss.on('close', onCloseServer)
-        wss.on('error', (error) => console.chatLog("Error: " + error))
-        console.chatLog("Started on port " + port)
+        wss.on('error', (error) => log("Error: " + error))
+        log("Started on port " + port)
     }
     
     function StartHttpsServer(port, credentials){
@@ -51,12 +57,11 @@ module.exports = (port, {credentials} = {}) => {
         wss = new websocket.Server({server: httpsServer})
         wss.on('connection', onConnection)
         wss.on('close', onCloseServer)
-        wss.on('error', (error) => console.chatLog("Error: " + error))
-        console.chatLog("Started on port " + port + " with HTTPS support")
+        wss.on('error', (error) => log("Error: " + error))
+        log("Started on port " + port + " with HTTPS support")
     }
 
     /** 
-     * 
      * @param {websocket} ws 
      * @param {IncomingMessage} req 
      */
@@ -73,80 +78,106 @@ module.exports = (port, {credentials} = {}) => {
             ws.isAlive = true;
             ws.on('pong', heartbeat);
     
-            console.chatLog("Connected client with id (" + ws.id + ")")
+            log("Connected client with id (" + ws.id + ")")
     
             ws.on('message', (message) => {
-                // wss.clients.forEach((client) => {
-                //     if(client != ws && client.readyState == websocket.OPEN){
-                //         client.send(ws.id + ": " + message)
-                //     }
-                // })
-                if(isJson(message)){
-                    var json = JSON.parse(message);
-                    var action = json.action?.toString().toLowerCase() ?? null
-                    
-                    if(action == null) return
+                try{
+                    // wss.clients.forEach((client) => {
+                    //     if(client != ws && client.readyState == websocket.OPEN){
+                    //         client.send(ws.id + ": " + message)
+                    //     }
+                    // })
+                    if(isJson(message)){
+                        var json = JSON.parse(message);
+                        var action = json.action?.toString().toLowerCase() ?? null
+                        
+                        if(action == null) return
 
-                    if(action == "join"){
-                        if(json.data == null) return;
-                        if(json.data.roomId != null && json.data.nickname != null){
-                            if(ws.player.roomId != null) removePlayerFromRoom(ws)
+                        if(action == "message"){
+                            if(!json.data) return;
+                            if(ws.player.roomId == null) return ws.send(JSON.stringify({success: false, messageType: "response", message: "You are not in room"}))
+                            if(ws.player.nickname.toString().isNullOrEmpty()) return ws.send(JSON.stringify({success: false, messageType: "response", message: "You can't send message without nickname"}))
+                            if(!json.data.message?.toString().isNotNullOrEmpty()) return ws.send(JSON.stringify({success: false, messageType: "response", message: "Message cannot be empty"}))
 
-                            ws.player.status = "connected"
-                            ws.player.nickname = json.data.nickname
-                            ws.player.roomId = json.data.roomId
-
-                            var roomIndex = rooms.findIndex((r) => r.id == json.data.roomId)
-
-                            if(roomIndex == -1){
-                                rooms.push(new Room({id: json.data.roomId, players: [{...ws.player}]}))
-                                ws.send(JSON.stringify({success: true, message: "Room created, player added"}))
-                            }
-                            else{
-                                rooms[roomIndex].players.push({...ws.player})
-                                ws.send(JSON.stringify({success: true, message: "Player added"}))
+                            wss.clients.forEach((client) => {
+                                if(client != ws && client.readyState == websocket.OPEN && client.player.roomId == ws.player.roomId){
+                                    client.send(ws.player.nickname + ": " + json.data.message)
+                                }
+                            })
+                        }
+    
+                        if(action == "join"){
+                            if(json.data == null) return;
+                            if(json.data.roomId != null && json.data.nickname != null){
+                                if(ws.player.roomId != null) removePlayerFromRoom(ws)
+    
+                                ws.player.status = "connected"
+                                ws.player.nickname = json.data.nickname
+                                ws.player.roomId = json.data.roomId
+    
+                                var roomIndex = rooms.findIndex((r) => r.id == json.data.roomId)
+    
+                                if(roomIndex == -1){
+                                    rooms.push(new Room({id: json.data.roomId, players: [{...ws.player}]}))
+                                    ws.send(JSON.stringify({success: true, messageType: "response", message: "Room created, player added"}))
+                                }
+                                else{
+                                    rooms[roomIndex].players.push({...ws.player})
+                                    ws.send(JSON.stringify({success: true, messageType: "response", message: "Player added"}))
+                                }
                             }
                         }
-                    }
 
-                    if(action == "status"){
-                        ws.send(JSON.stringify({success: true, player: ws.player}))
-                    }
-
-                    if(action == "rooms"){
-                        ws.send(JSON.stringify({success: true, rooms: rooms}))
+                        if(action == "leave"){
+                            if(json.data == null) return;
+                            if(ws.player.roomId != null) {
+                                if(removePlayerFromRoom(ws)){
+                                    ws.send(JSON.stringify({success: true, messageType: "response", message: "Room leaved"}))
+                                }
+                                else{
+                                    ws.send(JSON.stringify({success: false, messageType: "response", message: "Error while leaving room. Player data has been reset"}))
+                                }
+                            }
+                        }
+    
+                        if(action == "status"){
+                            ws.send(JSON.stringify({success: true, messageType: "response", player: ws.player}))
+                        }
+    
+                        if(action == "rooms"){
+                            ws.send(JSON.stringify({success: true, messageType: "response", rooms: rooms}))
+                        }
                     }
                 }
+                catch(e){
+                    log("Error in onMessage: " + e)
+                }
+                console.log(JSON.stringify(rooms,null,2))
             })
 
-            ws.on('error', (wsErr) => console.chatLog("WS Error: " + wsErr))
+            ws.on('error', (wsErr) => log("WS Error: " + wsErr))
     
             ws.on('close', (code, reason) => {
                 if(ws.player.roomId != null){
                     var removed = removePlayerFromRoom(ws)
-                    console.chatLog("Disconnected" + (removed ? " (and removed from room) " : " ") + "client with id (" + ws.id + "). Code: " + code + ". Reason: " + reason)
+                    log("Disconnected" + (removed ? " (and removed from room) " : " ") + "client with id (" + ws.id + "). Code: " + code + ". Reason: " + reason)
                 }
-                else console.chatLog("Disconnected client with id (" + ws.id + "). Code: " + code + ". Reason: " + reason)
+                else log("Disconnected client with id (" + ws.id + "). Code: " + code + ". Reason: " + reason)
             })
         }catch(er){
-            console.chatLog("Error: " + er)
+            log("Error: " + er)
         }
     }
 
-    /** 
-     * 
-     * @param {websocket} ws 
-     * @param {IncomingMessage} req 
-     */
-    function onCloseServer(ws, req){   
+    function onCloseServer(){   
         clearInterval(interval);
     }
     
-    // Keep alive interval
+    //#region Keep alive interval
     const interval = setInterval(function ping() {
         wss.clients.forEach(function each(ws) {        
           if (ws.isAlive === false) {
-            console.chatLog("Disconnected client with id (" + ws.id + ") after isAlive == false")
+            log("Disconnected client with id (" + ws.id + ") after isAlive == false")
             return ws.terminate();
           }
       
@@ -154,26 +185,51 @@ module.exports = (port, {credentials} = {}) => {
           ws.ping(noop);
         });
     }, 30000);
+
     function noop() {}
+
     function heartbeat() {
       this.isAlive = true;
     }
+    //#endregion
 
+    /**
+     * @param {websocket} ws client's websocket 
+     */
     function removePlayerFromRoom(ws){
         var roomIndex = rooms.findIndex(r => r.id == ws.player.roomId)
         if(roomIndex == -1) {
-            console.chatLog("Error while removing player from room, room with id " + ws.player.roomId + " not found")
+            log("Error while removing player from room, room with id " + ws.player.roomId + " not found")
+            resetPlayerData(ws)
             return false
         }
 
         var indexOfPlayer = rooms[roomIndex].players.findIndex((p) => p.id == ws.id)
         if(indexOfPlayer == -1) {
-            console.chatLog("Error while removing player from room, player not found in room with id " + ws.player.roomId)
+            log("Error while removing player from room, player not found in room with id " + ws.player.roomId)
+            resetPlayerData(ws)
             return false
         } 
 
         rooms[roomIndex].players.splice(indexOfPlayer,1)
+        resetPlayerData(ws)
+
+        // if room is empty delete it
+        if(rooms[roomIndex].players.length <= 0) rooms.splice(roomIndex,1)
         return true
+    }
+
+    /**
+     * @param {websocket} ws client's websocket 
+     */
+    function resetPlayerData(ws){
+        ws.player.status = "not connected"
+        ws.player.nickname = null
+        ws.player.roomId = null
+    }
+
+    function log(message){
+        console.log("[Chat] - " + message) // TODO: In production change this to logsDb instead of console log
     }
 
     function isJson(str) {
