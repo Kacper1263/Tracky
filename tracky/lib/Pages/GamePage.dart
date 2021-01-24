@@ -26,6 +26,8 @@ SOFTWARE.
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui';
+import 'package:flutter/scheduler.dart';
 import 'package:location/location.dart' as loc;
 import 'package:background_location/background_location.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -73,6 +75,7 @@ class _GamePageState extends State<GamePage> {
   int lastUpdate = 0;
   bool permissionDenied = false;
   bool firstTimeZoomedBefore = false; // change this to true after first time finding GPS location
+  bool showChat = false;
 
   /// Run it only on start
   Future<bool> getLocation() async {
@@ -418,6 +421,28 @@ class _GamePageState extends State<GamePage> {
     otherPlayers.forEach((p) => markers.add(p.getMarker()));
     markers.add(thisPlayer.getMarker());
 
+    List<String> messages = [
+      "Message 1",
+      "Message 2",
+      "Message 3",
+      "Message 4",
+      "Message 5",
+      "Message 6",
+      "Message 6",
+      "Message 6",
+      "Message 6",
+      "Message 6",
+      "Message 6",
+      "Message 6",
+      "Message 6",
+      "Message 6",
+      "Message 6",
+      "Message 6",
+      "Message 6",
+      "Message 6",
+      "Message 6",
+      "Message 6",
+    ];
     try {
       return WillPopScope(
         onWillPop: () {
@@ -427,73 +452,199 @@ class _GamePageState extends State<GamePage> {
           return Future.value(true);
         },
         child: Scaffold(
-            appBar: AppBar(
-              title: Text(widget.title),
-              centerTitle: true,
-              backgroundColor: Colors.grey[700],
-            ),
-            body: FlutterMap(
-              mapController: mapController,
-              options: MapOptions(
-                center: LatLng(0, 0),
-                zoom: 15.0,
-                maxZoom: 19.3,
-              ),
-              layers: [
-                TileLayerOptions(
-                  urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  subdomains: ['a', 'b', 'c'],
-                  tileProvider: NonCachingNetworkTileProvider(), // CachedNetworkTileProvider()
-                  maxZoom: 24.0,
-                ),
-                PolygonLayerOptions(polygonCulling: true, polygons: polygons.map((element) => element.polygon).toList()),
-                MarkerLayerOptions(markers: textMarkers.map((tMarker) => tMarker.getMarker()).toList()),
-                MarkerLayerOptions(markers: markers)
-              ],
-            ),
-            floatingActionButton: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                // FloatingActionButton(
-                //   heroTag: "btn1",
-                //   onPressed: () {
-                //     setState(() {
-                //       thisPlayer.name = "You";
-                //       thisPlayer.color = Colors.lightBlue[600];
-                //     });
-                //   },
-                //   tooltip: 'Revive me',
-                //   child: Icon(Icons.sentiment_satisfied),
-                // ),
-                // SizedBox(
-                //   height: 10,
-                // ),
-                // FloatingActionButton(
-                //   heroTag: "btn2",
-                //   onPressed: () {
-                //     setState(() {
-                //       thisPlayer.name = "You (dead)";
-                //       thisPlayer.color = Colors.red;
-                //     });
-                //   },
-                //   tooltip: 'Kill me',
-                //   child: Icon(Icons.sentiment_very_dissatisfied),
-                // ),
-                // SizedBox(
-                //   height: 20,
-                // ),
-                FloatingActionButton(
-                  heroTag: "btn3",
-                  onPressed: () {
-                    setState(() {
-                      findMe();
-                    });
-                  },
-                  tooltip: 'Find me',
-                  child: Icon(Icons.gps_fixed),
-                ),
-              ],
-            )),
+          appBar: !showChat
+              ? AppBar(
+                  title: Text(widget.title),
+                  centerTitle: true,
+                  backgroundColor: Colors.grey[700],
+                )
+              : null,
+          body: Stack(
+            children: [
+              !showChat
+                  ? FlutterMap(
+                      mapController: mapController,
+                      options: MapOptions(
+                        center: LatLng(0, 0),
+                        zoom: 15.0,
+                        maxZoom: 19.3,
+                      ),
+                      layers: [
+                        TileLayerOptions(
+                          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          subdomains: ['a', 'b', 'c'],
+                          tileProvider: NonCachingNetworkTileProvider(), // CachedNetworkTileProvider()
+                          maxZoom: 24.0,
+                        ),
+                        PolygonLayerOptions(polygonCulling: true, polygons: polygons.map((element) => element.polygon).toList()),
+                        MarkerLayerOptions(markers: textMarkers.map((tMarker) => tMarker.getMarker()).toList()),
+                        MarkerLayerOptions(markers: markers)
+                      ],
+                    )
+                  : Container(
+                      color: Colors.grey[900],
+                      child: SafeArea(
+                        child: Column(
+                          children: [
+                            Stack(
+                              children: [
+                                Container(),
+                                Align(
+                                  alignment: Alignment.topCenter,
+                                  child: Container(
+                                    color: Colors.grey[850],
+                                    width: double.maxFinite,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          Text("Chat", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 25)),
+                                          SizedBox(height: 10),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: RaisedButton(
+                                                  padding: EdgeInsets.all(12),
+                                                  child: Text("Connect", style: TextStyle(fontSize: 17)),
+                                                  color: Colors.green,
+                                                  textColor: Colors.white,
+                                                  disabledColor: Colors.grey[800],
+                                                  disabledTextColor: Colors.grey[700],
+                                                  onPressed: () {},
+                                                ),
+                                              ),
+                                              SizedBox(width: 10),
+                                              Expanded(
+                                                child: RaisedButton(
+                                                  padding: EdgeInsets.all(12),
+                                                  child: Text("Disconnect", style: TextStyle(fontSize: 17)),
+                                                  color: Colors.red,
+                                                  textColor: Colors.white,
+                                                  disabledColor: Colors.grey[800],
+                                                  disabledTextColor: Colors.grey[700],
+                                                  onPressed: () {},
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  left: 10,
+                                  top: 10,
+                                  child: CircleAvatar(
+                                    backgroundColor: Colors.grey[600],
+                                    radius: 15,
+                                    child: IconButton(
+                                      padding: EdgeInsets.zero,
+                                      icon: Icon(
+                                        Icons.close,
+                                        size: 20,
+                                      ),
+                                      color: Colors.white,
+                                      onPressed: () {
+                                        setState(() {
+                                          showChat = false;
+                                        });
+                                        SchedulerBinding.instance.addPostFrameCallback((_) => findMe());
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Expanded(
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: messages.length,
+                                padding: EdgeInsets.only(top: 10, bottom: 10),
+                                itemBuilder: (context, index) {
+                                  return Container(
+                                    padding: EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 10),
+                                    child: Text(messages[index]),
+                                  );
+                                },
+                              ),
+                            ),
+                            Container(
+                              padding: EdgeInsets.only(left: 10, bottom: 10, top: 10),
+                              height: 60,
+                              width: double.infinity,
+                              color: Colors.grey[850],
+                              child: Row(
+                                children: <Widget>[
+                                  Expanded(
+                                    child: TextField(
+                                      decoration: InputDecoration(
+                                          hintText: "Write message...",
+                                          hintStyle: TextStyle(color: Colors.white),
+                                          border: InputBorder.none),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 15,
+                                  ),
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    child: FittedBox(
+                                      child: FloatingActionButton(
+                                        onPressed: () {},
+                                        child: Icon(
+                                          Icons.send,
+                                          color: Colors.white,
+                                          size: 18,
+                                        ),
+                                        backgroundColor: Colors.blue,
+                                        elevation: 0,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 5,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+            ],
+          ),
+          floatingActionButton: !showChat
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    FloatingActionButton(
+                      heroTag: "btn1",
+                      onPressed: () {
+                        setState(() {
+                          showChat = true;
+                        });
+                      },
+                      tooltip: 'Chat',
+                      child: Icon(Icons.message),
+                    ),
+                    SizedBox(height: 10),
+                    FloatingActionButton(
+                      heroTag: "btn3",
+                      onPressed: () {
+                        setState(() {
+                          findMe();
+                        });
+                      },
+                      tooltip: 'Find me',
+                      child: Icon(Icons.gps_fixed),
+                    ),
+                  ],
+                )
+              : Container(),
+        ),
       );
     } catch (e) {
       Fluttertoast.showToast(

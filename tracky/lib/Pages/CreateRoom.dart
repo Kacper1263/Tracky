@@ -32,6 +32,7 @@ import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -88,6 +89,7 @@ class _CreateRoomState extends State<CreateRoom> {
   }
 
   void addTeam() {
+    HapticFeedback.vibrate();
     teams.add({
       "id": Uuid().v4().toString(),
       "name": "",

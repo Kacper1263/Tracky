@@ -9,6 +9,8 @@ class Room {
     }
 }
 
+//! THIS CODE IS NOT CLUSTER READY! 
+
 /** {credentials} = {} - because without this calling function without credentials like ```chat(5001)``` can throw error */
 module.exports = (port, {credentials} = {}) => {
     String.prototype.isNullOrEmpty = function() {
