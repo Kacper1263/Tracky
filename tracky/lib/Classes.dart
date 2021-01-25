@@ -120,3 +120,19 @@ class HexColor extends Color {
 
   HexColor(final String hexColor) : super(_getColorFromHex(hexColor));
 }
+
+enum ChatMessageType {
+  RECEIVED,
+  SENT,
+  INFO_CONNECTED,
+  INFO_DISCONNECTED_OR_ERROR,
+  OTHER,
+}
+
+class ChatMessage {
+  final isGlobal;
+  final ChatMessageType type;
+  final String message;
+
+  ChatMessage(this.type, this.message, {this.isGlobal = false});
+}

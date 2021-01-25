@@ -330,6 +330,7 @@ class _RoomsListState extends State<RoomsList> {
                                                           "roomId": rooms[index]["id"],
                                                           "nickname": data["nickname"],
                                                           "team": rooms[index]["teams"][i]["name"],
+                                                          "teamId": rooms[index]["teams"][i]["id"],
                                                           "teamColor": rooms[index]["teams"][i]["color"],
                                                           "serverInLan": data["serverInLan"],
                                                         },

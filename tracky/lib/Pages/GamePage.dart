@@ -37,6 +37,7 @@ import 'package:flutter_map/flutter_map.dart';
 import "package:latlong/latlong.dart";
 import 'package:screen/screen.dart';
 import 'package:tracky/Dialogs.dart';
+import 'package:web_socket_channel/io.dart';
 
 import '../Classes.dart';
 
@@ -75,7 +76,15 @@ class _GamePageState extends State<GamePage> {
   int lastUpdate = 0;
   bool permissionDenied = false;
   bool firstTimeZoomedBefore = false; // change this to true after first time finding GPS location
+
+  // Chat
   bool showChat = false;
+  bool chatConnected = false;
+  bool showNewMsgDot = false;
+  bool isGlobalChat = false;
+  IOWebSocketChannel chatChannel;
+  List<ChatMessage> chatMessages = [];
+  TextEditingController chatController = TextEditingController();
 
   /// Run it only on start
   Future<bool> getLocation() async {
@@ -308,12 +317,12 @@ class _GamePageState extends State<GamePage> {
         players.forEach((player) {
           if (player["name"] != data["nickname"] ||
               (player["name"] == data["nickname"] &&
-                  team["name"] != data["team"])) if ((team["name"] != data["team"] && showEnemyTeam) || team["name"] == data["team"]) {
+                  team["id"] != data["teamId"])) if ((team["id"] != data["teamId"] && showEnemyTeam) || team["id"] == data["teamId"]) {
             playersToAdd.add(
               new Player(
                 name: player["name"],
                 color: HexColor(team["color"]),
-                icon: team["name"] != data["team"] // Check is in my team
+                icon: team["id"] != data["teamId"] // Check is in my team
                     ? "enemy"
                     : "normal",
                 location: LatLng(
@@ -417,37 +426,16 @@ class _GamePageState extends State<GamePage> {
   @override
   Widget build(BuildContext context) {
     data = widget.arguments;
-    List<Marker> markers = List<Marker>();
+    List<Marker> markers = [];
     otherPlayers.forEach((p) => markers.add(p.getMarker()));
     markers.add(thisPlayer.getMarker());
 
-    List<String> messages = [
-      "Message 1",
-      "Message 2",
-      "Message 3",
-      "Message 4",
-      "Message 5",
-      "Message 6",
-      "Message 6",
-      "Message 6",
-      "Message 6",
-      "Message 6",
-      "Message 6",
-      "Message 6",
-      "Message 6",
-      "Message 6",
-      "Message 6",
-      "Message 6",
-      "Message 6",
-      "Message 6",
-      "Message 6",
-      "Message 6",
-    ];
     try {
       return WillPopScope(
         onWillPop: () {
           updateTimer?.cancel();
           leaveGame();
+          chatChannel?.sink?.close();
           BackgroundLocation.stopLocationService();
           return Future.value(true);
         },
@@ -492,29 +480,201 @@ class _GamePageState extends State<GamePage> {
                                 Align(
                                   alignment: Alignment.topCenter,
                                   child: Container(
-                                    color: Colors.grey[850],
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[850],
+                                      borderRadius: new BorderRadius.only(
+                                        bottomLeft: const Radius.circular(20.0),
+                                        bottomRight: const Radius.circular(20.0),
+                                      ),
+                                    ),
                                     width: double.maxFinite,
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.center,
                                         children: [
-                                          Text("Chat", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 25)),
-                                          SizedBox(height: 10),
+                                          const Text("Chat",
+                                              textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 25)),
+                                          const SizedBox(height: 10),
                                           Row(
                                             children: [
                                               Expanded(
                                                 child: RaisedButton(
                                                   padding: EdgeInsets.all(12),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.only(
+                                                      topLeft: Radius.circular(20),
+                                                    ),
+                                                  ),
+                                                  child: Text("Team chat", style: TextStyle(fontSize: 17)),
+                                                  color: Colors.blueGrey,
+                                                  textColor: Colors.white,
+                                                  disabledColor: Colors.grey[800],
+                                                  disabledTextColor: Colors.grey[700],
+                                                  onPressed: isGlobalChat
+                                                      ? () {
+                                                          setState(() {
+                                                            isGlobalChat = false;
+                                                          });
+                                                        }
+                                                      : null,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: RaisedButton(
+                                                  padding: EdgeInsets.all(12),
+                                                  child: Text("Global chat", style: TextStyle(fontSize: 17)),
+                                                  color: Colors.blueGrey,
+                                                  textColor: Colors.white,
+                                                  disabledColor: Colors.grey[800],
+                                                  disabledTextColor: Colors.grey[700],
+                                                  onPressed: !isGlobalChat
+                                                      ? () {
+                                                          setState(() {
+                                                            isGlobalChat = true;
+                                                          });
+                                                        }
+                                                      : null,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.only(
+                                                      topRight: Radius.circular(20),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: RaisedButton(
+                                                  padding: EdgeInsets.all(12),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.only(
+                                                      bottomLeft: Radius.circular(20),
+                                                    ),
+                                                  ),
                                                   child: Text("Connect", style: TextStyle(fontSize: 17)),
                                                   color: Colors.green,
                                                   textColor: Colors.white,
                                                   disabledColor: Colors.grey[800],
                                                   disabledTextColor: Colors.grey[700],
-                                                  onPressed: () {},
+                                                  onPressed: chatConnected
+                                                      ? null
+                                                      : () async {
+                                                          var url;
+                                                          if (data["serverInLan"])
+                                                            url = "ws://192.168.1.50:5051";
+                                                          else
+                                                            url = "ws://kacpermarcinkiewicz.com:5051";
+
+                                                          try {
+                                                            chatChannel =
+                                                                IOWebSocketChannel.connect(url, pingInterval: Duration(seconds: 10));
+                                                            setState(() {
+                                                              chatMessages.insert(
+                                                                0,
+                                                                new ChatMessage(ChatMessageType.OTHER, "[CONNECTING]"),
+                                                              );
+                                                            });
+                                                            chatChannel.sink.add(
+                                                              json.encode({
+                                                                "action": "join",
+                                                                "data": {
+                                                                  "roomId": data["roomId"],
+                                                                  "teamId": data["teamId"],
+                                                                  "nickname": data["nickname"]
+                                                                }
+                                                              }),
+                                                            );
+
+                                                            chatChannel.stream.listen(
+                                                              (message) {
+                                                                print(message);
+                                                                setState(() {
+                                                                  var json = jsonDecode(message);
+
+                                                                  // Check is user now connected
+                                                                  if (json["success"] == true && chatConnected == false) {
+                                                                    setState(() {
+                                                                      chatConnected = true;
+                                                                      chatMessages.insert(
+                                                                        0,
+                                                                        new ChatMessage(ChatMessageType.INFO_CONNECTED, "[CONNECTED]"),
+                                                                      );
+                                                                    });
+                                                                    return;
+                                                                  }
+
+                                                                  if (json["messageType"] == "response") {
+                                                                    setState(() {
+                                                                      chatMessages.insert(
+                                                                        0,
+                                                                        new ChatMessage(
+                                                                          ChatMessageType.OTHER,
+                                                                          "[${json["message"] ?? json}]",
+                                                                        ),
+                                                                      );
+                                                                    });
+                                                                  } else if (json["messageType"] == "message") {
+                                                                    setState(() {
+                                                                      if (!showChat && !showNewMsgDot) {
+                                                                        setState(() {
+                                                                          showNewMsgDot = true;
+                                                                        });
+                                                                      }
+
+                                                                      var author = json["nickname"];
+                                                                      if (author.toString().length >= 15) {
+                                                                        author = author.toString().substring(0, 12) + "...";
+                                                                      }
+
+                                                                      chatMessages.insert(
+                                                                        0,
+                                                                        new ChatMessage(
+                                                                          ChatMessageType.RECEIVED,
+                                                                          "[$author] - ${json["message"]}",
+                                                                          isGlobal: json["isGlobal"],
+                                                                        ),
+                                                                      );
+                                                                    });
+                                                                  }
+                                                                });
+                                                              },
+                                                              cancelOnError: false,
+                                                              onDone: () {
+                                                                setState(() {
+                                                                  chatConnected = false;
+                                                                  chatMessages.insert(
+                                                                    0,
+                                                                    new ChatMessage(
+                                                                        ChatMessageType.INFO_DISCONNECTED_OR_ERROR, "[DISCONNECTED]"),
+                                                                  );
+                                                                });
+                                                              },
+                                                              onError: (e) {
+                                                                setState(() {
+                                                                  chatMessages.insert(
+                                                                    0,
+                                                                    new ChatMessage(
+                                                                        ChatMessageType.INFO_DISCONNECTED_OR_ERROR, "[ERROR] - $e"),
+                                                                  );
+                                                                });
+                                                              },
+                                                            );
+                                                          } catch (e) {
+                                                            setState(() {
+                                                              chatMessages.insert(
+                                                                0,
+                                                                new ChatMessage(ChatMessageType.INFO_DISCONNECTED_OR_ERROR, "[ERROR] - $e"),
+                                                              );
+                                                            });
+                                                          }
+                                                        },
                                                 ),
                                               ),
-                                              SizedBox(width: 10),
+                                              const SizedBox(width: 10),
                                               Expanded(
                                                 child: RaisedButton(
                                                   padding: EdgeInsets.all(12),
@@ -523,7 +683,19 @@ class _GamePageState extends State<GamePage> {
                                                   textColor: Colors.white,
                                                   disabledColor: Colors.grey[800],
                                                   disabledTextColor: Colors.grey[700],
-                                                  onPressed: () {},
+                                                  onPressed: !chatConnected
+                                                      ? null
+                                                      : () {
+                                                          setState(() {
+                                                            chatConnected = false;
+                                                            chatChannel?.sink?.close();
+                                                          });
+                                                        },
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.only(
+                                                      bottomRight: Radius.circular(20),
+                                                    ),
+                                                  ),
                                                 ),
                                               ),
                                             ],
@@ -555,34 +727,91 @@ class _GamePageState extends State<GamePage> {
                                     ),
                                   ),
                                 ),
+                                Positioned(
+                                  right: 10,
+                                  top: 10,
+                                  child: CircleAvatar(
+                                    backgroundColor: Colors.grey[600],
+                                    radius: 15,
+                                    child: IconButton(
+                                      padding: EdgeInsets.zero,
+                                      tooltip: "Clear",
+                                      icon: Icon(
+                                        Icons.delete_sweep,
+                                        size: 20,
+                                      ),
+                                      color: Colors.white,
+                                      onPressed: () {
+                                        setState(() {
+                                          chatMessages = [];
+                                        });
+                                        SchedulerBinding.instance.addPostFrameCallback((_) => findMe());
+                                      },
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                             Expanded(
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: messages.length,
-                                padding: EdgeInsets.only(top: 10, bottom: 10),
-                                itemBuilder: (context, index) {
-                                  return Container(
-                                    padding: EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 10),
-                                    child: Text(messages[index]),
-                                  );
+                              child: GestureDetector(
+                                onTap: () {
+                                  FocusScope.of(context).unfocus();
                                 },
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  itemCount: chatMessages.length,
+                                  padding: const EdgeInsets.only(top: 10, bottom: 10),
+                                  reverse: true,
+                                  itemBuilder: (context, index) {
+                                    return Container(
+                                      padding: const EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 10),
+                                      child: Row(
+                                        mainAxisAlignment: chatMessages[index].type == ChatMessageType.SENT
+                                            ? MainAxisAlignment.end
+                                            : MainAxisAlignment.start,
+                                        children: [
+                                          chatMessages[index].type == ChatMessageType.SENT ||
+                                                  chatMessages[index].type == ChatMessageType.RECEIVED
+                                              ? Icon(chatMessages[index].isGlobal ? Icons.public : Icons.public_off, color: Colors.blueGrey)
+                                              : SizedBox.shrink(),
+                                          SizedBox(width: 5),
+                                          Text(
+                                            chatMessages[index].message,
+                                            style: TextStyle(
+                                              color: chatMessages[index].type == ChatMessageType.INFO_CONNECTED
+                                                  ? Colors.green
+                                                  : chatMessages[index].type == ChatMessageType.INFO_DISCONNECTED_OR_ERROR
+                                                      ? Colors.red
+                                                      : chatMessages[index].type == ChatMessageType.OTHER
+                                                          ? Colors.blue
+                                                          : Colors.white,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                             Container(
-                              padding: EdgeInsets.only(left: 10, bottom: 10, top: 10),
+                              padding: const EdgeInsets.only(left: 10, bottom: 10, top: 10),
+                              color: Colors.grey[850],
                               height: 60,
                               width: double.infinity,
-                              color: Colors.grey[850],
                               child: Row(
                                 children: <Widget>[
                                   Expanded(
                                     child: TextField(
+                                      enabled: chatConnected,
+                                      controller: chatController,
+                                      style: TextStyle(color: Colors.white),
                                       decoration: InputDecoration(
-                                          hintText: "Write message...",
-                                          hintStyle: TextStyle(color: Colors.white),
-                                          border: InputBorder.none),
+                                        hintText: "Write message...",
+                                        hintStyle: const TextStyle(color: Colors.white),
+                                        border: InputBorder.none,
+                                      ),
                                     ),
                                   ),
                                   SizedBox(
@@ -593,11 +822,33 @@ class _GamePageState extends State<GamePage> {
                                     height: 40,
                                     child: FittedBox(
                                       child: FloatingActionButton(
-                                        onPressed: () {},
-                                        child: Icon(
+                                        onPressed: !chatConnected
+                                            ? null
+                                            : () async {
+                                                var messageToSend = chatController.text;
+                                                if (messageToSend.length <= 0) return;
+                                                setState(() {
+                                                  chatChannel.sink.add(
+                                                    json.encode({
+                                                      "action": "message",
+                                                      "data": {
+                                                        "message": messageToSend,
+                                                        "destination": isGlobalChat ? "global" : data["teamId"]
+                                                      }
+                                                    }),
+                                                  );
+                                                  chatMessages.insert(
+                                                    0,
+                                                    new ChatMessage(ChatMessageType.SENT, "[You] - $messageToSend", isGlobal: isGlobalChat),
+                                                  );
+                                                });
+
+                                                chatController.text = "";
+                                              },
+                                        child: const Icon(
                                           Icons.send,
                                           color: Colors.white,
-                                          size: 18,
+                                          size: 29,
                                         ),
                                         backgroundColor: Colors.blue,
                                         elevation: 0,
@@ -625,10 +876,25 @@ class _GamePageState extends State<GamePage> {
                       onPressed: () {
                         setState(() {
                           showChat = true;
+                          showNewMsgDot = false;
                         });
                       },
                       tooltip: 'Chat',
-                      child: Icon(Icons.message),
+                      child: Stack(
+                        children: [
+                          const Icon(Icons.message),
+                          showNewMsgDot
+                              ? Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: CircleAvatar(
+                                    backgroundColor: Colors.red,
+                                    radius: 5,
+                                  ),
+                                )
+                              : SizedBox.shrink(),
+                        ],
+                      ),
                     ),
                     SizedBox(height: 10),
                     FloatingActionButton(
@@ -639,7 +905,7 @@ class _GamePageState extends State<GamePage> {
                         });
                       },
                       tooltip: 'Find me',
-                      child: Icon(Icons.gps_fixed),
+                      child: const Icon(Icons.gps_fixed),
                     ),
                   ],
                 )

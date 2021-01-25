@@ -89,6 +89,11 @@ module.exports = (port, {credentials} = {}) => {
                     //         client.send(ws.id + ": " + message)
                     //     }
                     // })
+                    if(message == "status"){
+                        ws.send(JSON.stringify({success: true, messageType: "response", player: ws.player}))
+                    }
+                    console.log(isJson(message));
+
                     if(isJson(message)){
                         var json = JSON.parse(message);
                         var action = json.action?.toString().toLowerCase() ?? null
@@ -100,22 +105,25 @@ module.exports = (port, {credentials} = {}) => {
                             if(ws.player.roomId == null) return ws.send(JSON.stringify({success: false, messageType: "response", message: "You are not in room"}))
                             if(ws.player.nickname.toString().isNullOrEmpty()) return ws.send(JSON.stringify({success: false, messageType: "response", message: "You can't send message without nickname"}))
                             if(!json.data.message?.toString().isNotNullOrEmpty()) return ws.send(JSON.stringify({success: false, messageType: "response", message: "Message cannot be empty"}))
-
+                            if(!json.data.destination?.toString().isNotNullOrEmpty()) return ws.send(JSON.stringify({success: false, messageType: "response", message: "Destination cannot be empty"}))
+                            
+                            var isMsgGlobal = json.data.destination?.toString() == "global";
                             wss.clients.forEach((client) => {
                                 if(client != ws && client.readyState == websocket.OPEN && client.player.roomId == ws.player.roomId){
-                                    client.send(ws.player.nickname + ": " + json.data.message)
+                                    if((isMsgGlobal) || (json.data.destination?.toString() == client.player.teamId)) client.send(JSON.stringify({success: true, messageType: "message", nickname: ws.player.nickname, isGlobal: isMsgGlobal,message: json.data.message}))
                                 }
                             })
                         }
     
                         if(action == "join"){
                             if(json.data == null) return;
-                            if(json.data.roomId != null && json.data.nickname != null){
+                            if(json.data.roomId != null && json.data.nickname != null && json.data.teamId){
                                 if(ws.player.roomId != null) removePlayerFromRoom(ws)
     
                                 ws.player.status = "connected"
                                 ws.player.nickname = json.data.nickname
                                 ws.player.roomId = json.data.roomId
+                                ws.player.teamId = json.data.teamId
     
                                 var roomIndex = rooms.findIndex((r) => r.id == json.data.roomId)
     

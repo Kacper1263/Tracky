@@ -145,13 +145,13 @@ class _CreateRoomState extends State<CreateRoom> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Tracky"),
+        title: const Text("Tracky"),
         centerTitle: true,
         backgroundColor: Colors.grey[850],
       ),
       body: Container(
         color: Colors.grey[900],
-        padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+        padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
         child: ListView(
           children: [
             SizedBox(height: 15),
@@ -174,7 +174,7 @@ class _CreateRoomState extends State<CreateRoom> {
               },
             ),
             SizedBox(height: 25),
-            Text("Room name ", style: TextStyle(color: Colors.white)),
+            const Text("Room name ", style: TextStyle(color: Colors.white)),
             SizedBox(height: 5),
             TextField(
               keyboardType: TextInputType.text,
@@ -203,14 +203,14 @@ class _CreateRoomState extends State<CreateRoom> {
                     });
                   },
                 ),
-                Text("Show enemy team ", style: TextStyle(color: Colors.white)),
+                const Text("Show enemy team ", style: TextStyle(color: Colors.white)),
               ],
             ),
             SizedBox(height: 35),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Teams: ", style: TextStyle(color: Colors.white, fontSize: 20)),
+                const Text("Teams: ", style: TextStyle(color: Colors.white, fontSize: 20)),
                 IconButton(
                     icon: Icon(Icons.add_circle, color: Colors.white),
                     onPressed: () {
@@ -220,7 +220,7 @@ class _CreateRoomState extends State<CreateRoom> {
                     })
               ],
             ),
-            Divider(color: Colors.white, indent: 8, endIndent: 8),
+            const Divider(color: Colors.white, indent: 8, endIndent: 8),
             SizedBox(height: 15),
             ListView.builder(
               itemCount: teams.length,
@@ -242,7 +242,7 @@ class _CreateRoomState extends State<CreateRoom> {
                     title: Center(
                       child: Text(
                         "${index + 1})  ${teams[index]["name"]} ",
-                        style: TextStyle(fontSize: 20, color: Colors.white),
+                        style: const TextStyle(fontSize: 20, color: Colors.white),
                       ),
                     ),
                     children: [
@@ -269,7 +269,7 @@ class _CreateRoomState extends State<CreateRoom> {
                       ),
                       SizedBox(height: 15),
                       Center(
-                        child: Text(
+                        child: const Text(
                           "Team password (optional - can be empty)",
                           style: TextStyle(fontSize: 16, color: Colors.white),
                         ),
@@ -296,7 +296,7 @@ class _CreateRoomState extends State<CreateRoom> {
                             )
                           : RaisedButton(
                               padding: EdgeInsets.all(12),
-                              child: Text("Delete old team password", style: TextStyle(fontSize: 20)),
+                              child: const Text("Delete old team password", style: TextStyle(fontSize: 20)),
                               color: Colors.blueGrey,
                               textColor: Colors.white,
                               disabledColor: Colors.grey[800],
@@ -321,7 +321,7 @@ class _CreateRoomState extends State<CreateRoom> {
                             ),
                       SizedBox(height: 15),
                       Center(
-                        child: Text(
+                        child: const Text(
                           "Select team color",
                           style: TextStyle(fontSize: 16, color: Colors.white),
                         ),

@@ -139,10 +139,10 @@ if(!httpsEnabled){
     // API 
     app.listen(process.env.PORT || apiPort, () => {
         console.log(`API running on port ${process.env.PORT || apiPort}`)
-    });
 
-    // Chat websocket
-    chat(chatPort)
+        // Start chat websocket
+        chat(chatPort)
+    });
 }
 else{
     // API
@@ -150,8 +150,8 @@ else{
     var httpsServer = https.createServer(credentials, app);
     httpsServer.listen(process.env.PORT || apiPort, () => {
         console.log(`API running on port ${process.env.PORT || apiPort} with HTTPS support`)
-    });
-
-    // Chat websocket
-    chat(chatPort, {credentials: credentials})
+        
+        // Start chat websocket
+        chat(chatPort, {credentials: credentials})
+    });    
 }

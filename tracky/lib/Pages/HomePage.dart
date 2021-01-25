@@ -325,6 +325,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
             serverConnectionStatus = -1;
         });
       }).catchError((er) {
+        print(er);
         setState(() {
           serverConnectionStatus = -1;
         });
