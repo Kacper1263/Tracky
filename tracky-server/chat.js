@@ -93,7 +93,7 @@ module.exports = (port, {credentials} = {}) => {
                         ws.send(JSON.stringify({success: true, messageType: "response", player: ws.player}))
                     }
 
-                    //? JOIN: {"action":"join", "data":{"roomId": 4, "nickname": "player", "message":"Hello", "teamId": "05321b0c-053a-449d-8136-ada8923aaa24", "destination":"global"}}
+                    //? JOIN: {"action":"join", "data":{"roomId": 4, "nickname": "player", "message":"Hello", "teamId": "05321b0c-053a-449d-8136-ada8923aaa24", "destination":"global", "teamName": "No pass","teamColor": "ff4caf50"}}
 
                     if(isJson(message)){
                         var json = JSON.parse(message);
@@ -111,20 +111,32 @@ module.exports = (port, {credentials} = {}) => {
                             var isMsgGlobal = json.data.destination?.toString() == "global";
                             wss.clients.forEach((client) => {
                                 if(client != ws && client.readyState == websocket.OPEN && client.player.roomId == ws.player.roomId){
-                                    if((isMsgGlobal) || (json.data.destination?.toString() == client.player.teamId)) client.send(JSON.stringify({success: true, messageType: "message", nickname: ws.player.nickname, isGlobal: isMsgGlobal,message: json.data.message}))
+                                    if((isMsgGlobal) || (json.data.destination?.toString() == client.player.teamId)) { 
+                                        client.send(JSON.stringify({
+                                            success: true, 
+                                            messageType: "message", 
+                                            nickname: ws.player.nickname, 
+                                            isGlobal: isMsgGlobal,
+                                            message: json.data.message,
+                                            teamName: ws.player.teamName,
+                                            teamColor: ws.player.teamColor,
+                                        })) 
+                                    }
                                 }
                             })
                         }
     
                         if(action == "join"){
                             if(json.data == null) return;
-                            if(json.data.roomId != null && json.data.nickname != null && json.data.teamId){
+                            if(json.data.roomId != null && json.data.nickname != null && json.data.teamId && json.data.teamName && json.data.teamColor){
                                 if(ws.player.roomId != null) removePlayerFromRoom(ws)
     
                                 ws.player.status = "connected"
                                 ws.player.nickname = json.data.nickname
                                 ws.player.roomId = json.data.roomId
                                 ws.player.teamId = json.data.teamId
+                                ws.player.teamName = json.data.teamName
+                                ws.player.teamColor = json.data.teamColor
     
                                 var roomIndex = rooms.findIndex((r) => r.id == json.data.roomId)
     
@@ -237,6 +249,9 @@ module.exports = (port, {credentials} = {}) => {
         ws.player.status = "not connected"
         ws.player.nickname = null
         ws.player.roomId = null
+        ws.player.teamId = null
+        ws.player.teamName = null
+        ws.player.teamColor = null
     }
 
     function log(message){

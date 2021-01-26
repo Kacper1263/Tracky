@@ -134,8 +134,10 @@ class ChatMessage {
   final ChatMessageType type;
   final String message;
   final String author;
+  final String teamName;
+  final Color teamColor;
 
-  ChatMessage(this.type, this.message, {this.author, this.isGlobal = false});
+  ChatMessage(this.type, this.message, {this.author, this.teamName, this.teamColor, this.isGlobal = false});
 }
 
 class MessageCard extends StatefulWidget {
@@ -143,9 +145,18 @@ class MessageCard extends StatefulWidget {
   final String message;
   final bool isGlobal;
   final ChatMessageType type;
+  final String teamName;
+  final Color teamColor;
 
-  const MessageCard({Key key, @required this.author, @required this.message, @required this.isGlobal, @required this.type})
-      : super(key: key);
+  const MessageCard({
+    Key key,
+    @required this.author,
+    @required this.message,
+    @required this.isGlobal,
+    @required this.type,
+    @required this.teamName,
+    @required this.teamColor,
+  }) : super(key: key);
 
   @override
   _MessageCardState createState() => _MessageCardState();
@@ -177,9 +188,14 @@ class _MessageCardState extends State<MessageCard> {
                           )
                         : SizedBox.shrink(),
 
+                    // Team
+                    Text(
+                      "[${widget.teamName}]",
+                      style: TextStyle(color: widget.teamColor, fontSize: 14),
+                    ),
                     // Author
                     Text(
-                      widget.author,
+                      " - " + widget.author,
                       style: TextStyle(color: Colors.blueGrey[300], fontSize: 14),
                     )
                   ],
