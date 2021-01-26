@@ -54,8 +54,8 @@ class GamePage extends StatefulWidget {
 class _GamePageState extends State<GamePage> {
   Map data;
 
-  List<TextMarker> textMarkers = List<TextMarker>();
-  List<NamedPolygon> polygons = List<NamedPolygon>();
+  List<TextMarker> textMarkers = [];
+  List<NamedPolygon> polygons = [];
 
   bool connectionLost = false;
 
@@ -236,7 +236,7 @@ class _GamePageState extends State<GamePage> {
     post(
       url,
       body: {
-        "teamName": data["team"],
+        "teamId": data["teamId"],
         "playerName": data["nickname"],
         "latitude": _locationData != null ? _locationData.latitude.toString() : "0",
         "longitude": _locationData != null ? _locationData.longitude.toString() : "0"
@@ -403,7 +403,7 @@ class _GamePageState extends State<GamePage> {
     try {
       var response = await post(url, body: {
         "playerName": data["nickname"],
-        "teamName": data["team"],
+        "teamId": data["teamId"],
       });
 
       if (response.statusCode != 200) {
@@ -626,17 +626,14 @@ class _GamePageState extends State<GamePage> {
                                                                       }
 
                                                                       var author = json["nickname"];
-                                                                      if (author.toString().length >= 15) {
-                                                                        author = author.toString().substring(0, 12) + "...";
+                                                                      if (author.toString().length > 13) {
+                                                                        author = author.toString().substring(0, 10) + "...";
                                                                       }
 
                                                                       chatMessages.insert(
                                                                         0,
-                                                                        new ChatMessage(
-                                                                          ChatMessageType.RECEIVED,
-                                                                          "[$author] - ${json["message"]}",
-                                                                          isGlobal: json["isGlobal"],
-                                                                        ),
+                                                                        new ChatMessage(ChatMessageType.RECEIVED, "${json["message"]}",
+                                                                            isGlobal: json["isGlobal"], author: author),
                                                                       );
                                                                     });
                                                                   }
@@ -770,24 +767,12 @@ class _GamePageState extends State<GamePage> {
                                             ? MainAxisAlignment.end
                                             : MainAxisAlignment.start,
                                         children: [
-                                          chatMessages[index].type == ChatMessageType.SENT ||
-                                                  chatMessages[index].type == ChatMessageType.RECEIVED
-                                              ? Icon(chatMessages[index].isGlobal ? Icons.public : Icons.public_off, color: Colors.blueGrey)
-                                              : SizedBox.shrink(),
-                                          SizedBox(width: 5),
-                                          Text(
-                                            chatMessages[index].message,
-                                            style: TextStyle(
-                                              color: chatMessages[index].type == ChatMessageType.INFO_CONNECTED
-                                                  ? Colors.green
-                                                  : chatMessages[index].type == ChatMessageType.INFO_DISCONNECTED_OR_ERROR
-                                                      ? Colors.red
-                                                      : chatMessages[index].type == ChatMessageType.OTHER
-                                                          ? Colors.blue
-                                                          : Colors.white,
-                                              fontSize: 16,
-                                            ),
-                                          ),
+                                          MessageCard(
+                                            message: chatMessages[index].message,
+                                            isGlobal: chatMessages[index].isGlobal,
+                                            author: chatMessages[index].author,
+                                            type: chatMessages[index].type,
+                                          )
                                         ],
                                       ),
                                     );
@@ -806,6 +791,7 @@ class _GamePageState extends State<GamePage> {
                                     child: TextField(
                                       enabled: chatConnected,
                                       controller: chatController,
+                                      textCapitalization: TextCapitalization.sentences,
                                       style: TextStyle(color: Colors.white),
                                       decoration: InputDecoration(
                                         hintText: "Write message...",
@@ -838,9 +824,13 @@ class _GamePageState extends State<GamePage> {
                                                     }),
                                                   );
                                                   chatMessages.insert(
-                                                    0,
-                                                    new ChatMessage(ChatMessageType.SENT, "[You] - $messageToSend", isGlobal: isGlobalChat),
-                                                  );
+                                                      0,
+                                                      new ChatMessage(
+                                                        ChatMessageType.SENT,
+                                                        "$messageToSend",
+                                                        isGlobal: isGlobalChat,
+                                                        author: "You",
+                                                      ));
                                                 });
 
                                                 chatController.text = "";

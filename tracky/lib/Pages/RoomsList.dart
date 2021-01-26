@@ -311,7 +311,7 @@ class _RoomsListState extends State<RoomsList> {
                                                     bool joined;
                                                     try {
                                                       joined = await joinRoom(
-                                                          rooms[index]["id"], rooms[index]["teams"][i]["name"], _password.text);
+                                                          rooms[index]["id"], rooms[index]["teams"][i]["id"], _password.text);
                                                     } catch (e) {
                                                       Fluttertoast.showToast(
                                                         msg: "Error while joining team: $e",
@@ -414,7 +414,7 @@ class _RoomsListState extends State<RoomsList> {
 
     try {
       Fluttertoast.showToast(
-        msg: "Joining team: $team. Please wait",
+        msg: "Joining team. Please wait",
         toastLength: Toast.LENGTH_SHORT,
         backgroundColor: Colors.grey[700],
         textColor: Colors.white,
@@ -422,7 +422,7 @@ class _RoomsListState extends State<RoomsList> {
 
       var response = await post(url, body: {
         "playerName": data["nickname"],
-        "teamName": team,
+        "teamId": team,
         "teamPassword": sha256.convert(utf8.encode(password)).toString(),
       });
 

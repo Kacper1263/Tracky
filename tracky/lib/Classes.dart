@@ -133,6 +133,94 @@ class ChatMessage {
   final isGlobal;
   final ChatMessageType type;
   final String message;
+  final String author;
 
-  ChatMessage(this.type, this.message, {this.isGlobal = false});
+  ChatMessage(this.type, this.message, {this.author, this.isGlobal = false});
+}
+
+class MessageCard extends StatefulWidget {
+  final String author;
+  final String message;
+  final bool isGlobal;
+  final ChatMessageType type;
+
+  const MessageCard({Key key, @required this.author, @required this.message, @required this.isGlobal, @required this.type})
+      : super(key: key);
+
+  @override
+  _MessageCardState createState() => _MessageCardState();
+}
+
+class _MessageCardState extends State<MessageCard> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.7,
+      decoration: BoxDecoration(
+        color: widget.author != null ? Colors.grey[800] : Colors.grey[900],
+        borderRadius: new BorderRadius.all(
+          const Radius.circular(10.0),
+        ),
+      ),
+      padding: const EdgeInsets.all(10),
+      child: widget.author != null
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    // Global/Team icon
+                    widget.type == ChatMessageType.SENT || widget.type == ChatMessageType.RECEIVED
+                        ? Padding(
+                            padding: const EdgeInsets.only(right: 5.0),
+                            child: Icon(widget.isGlobal ? Icons.public : Icons.public_off, color: Colors.blueGrey[300], size: 20),
+                          )
+                        : SizedBox.shrink(),
+
+                    // Author
+                    Text(
+                      widget.author,
+                      style: TextStyle(color: Colors.blueGrey[300], fontSize: 14),
+                    )
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(3.0),
+                  child: Text(
+                    widget.message,
+                    textAlign: TextAlign.start,
+                    style: TextStyle(
+                      color: widget.type == ChatMessageType.INFO_CONNECTED
+                          ? Colors.green
+                          : widget.type == ChatMessageType.INFO_DISCONNECTED_OR_ERROR
+                              ? Colors.red
+                              : widget.type == ChatMessageType.OTHER
+                                  ? Colors.blue
+                                  : Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          //? System messages like connected
+          : Row(
+              children: [
+                Text(
+                  widget.message,
+                  style: TextStyle(
+                    color: widget.type == ChatMessageType.INFO_CONNECTED
+                        ? Colors.green
+                        : widget.type == ChatMessageType.INFO_DISCONNECTED_OR_ERROR
+                            ? Colors.red
+                            : widget.type == ChatMessageType.OTHER
+                                ? Colors.blue
+                                : Colors.white,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
 }

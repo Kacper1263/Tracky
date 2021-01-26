@@ -421,7 +421,7 @@ router.post('/join/:id', (req, res) => {
     
     var list = db.get("rooms").value();
     var roomId = list.findIndex(room => room.id === id);
-    if(roomId != -1) var teamId = list[roomId].teams.findIndex(team => team.name === req.body.teamName)
+    if(roomId != -1) var teamId = list[roomId].teams.findIndex(team => team.id === req.body.teamId)
 
     if(roomId != -1 && teamId != -1){
         // Check is name not taken
@@ -487,7 +487,7 @@ router.post('/:id', (req, res) => {
     var list = db.get("rooms").value();
     var success = false;
     var roomId = list.findIndex(room => room.id === id);
-    if(roomId != -1) var teamId = list[roomId].teams.findIndex(team => team.name === req.body.teamName)
+    if(roomId != -1) var teamId = list[roomId].teams.findIndex(team => team.id === req.body.teamId)
 
     if(roomId != -1 && teamId != -1){
         success = true;
@@ -544,7 +544,7 @@ router.post('/leave/:id', (req, res) => {
     
     var list = db.get("rooms").value();
     var roomId = list.findIndex(room => room.id === id);
-    if(roomId != -1) var teamId = list[roomId].teams.findIndex(team => team.name === req.body.teamName)
+    if(roomId != -1) var teamId = list[roomId].teams.findIndex(team => team.id === req.body.teamId)
 
     if(roomId != -1 && teamId != -1){
         // Check is player with that name in team

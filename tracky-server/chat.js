@@ -92,7 +92,8 @@ module.exports = (port, {credentials} = {}) => {
                     if(message == "status"){
                         ws.send(JSON.stringify({success: true, messageType: "response", player: ws.player}))
                     }
-                    console.log(isJson(message));
+
+                    //? JOIN: {"action":"join", "data":{"roomId": 4, "nickname": "player", "message":"Hello", "teamId": "05321b0c-053a-449d-8136-ada8923aaa24", "destination":"global"}}
 
                     if(isJson(message)){
                         var json = JSON.parse(message);
