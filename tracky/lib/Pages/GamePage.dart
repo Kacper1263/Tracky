@@ -27,6 +27,7 @@ SOFTWARE.
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
+import 'package:intl/intl.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:location/location.dart' as loc;
 import 'package:background_location/background_location.dart';
@@ -686,6 +687,9 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                                                                 author: author,
                                                                                 teamName: teamName,
                                                                                 teamColor: HexColor(json["teamColor"]),
+                                                                                dateTime: DateFormat("kk:mm - dd.MM.yyyy").format(
+                                                                                  DateTime.now(),
+                                                                                ),
                                                                               ),
                                                                             );
                                                                           });
@@ -838,6 +842,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                             type: chatMessages[index].type,
                                             teamName: chatMessages[index].teamName,
                                             teamColor: chatMessages[index].teamColor,
+                                            dateTime: chatMessages[index].dateTime,
                                           )
                                         ],
                                       ),
@@ -906,6 +911,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                                         author: "You",
                                                         teamName: teamName,
                                                         teamColor: HexColor(data["teamColor"]),
+                                                        dateTime: DateFormat("kk:mm - dd.MM.yyyy").format(DateTime.now()),
                                                       ),
                                                     );
 

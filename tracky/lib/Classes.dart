@@ -136,8 +136,9 @@ class ChatMessage {
   final String author;
   final String teamName;
   final Color teamColor;
+  final String dateTime;
 
-  ChatMessage(this.type, this.message, {this.author, this.teamName, this.teamColor, this.isGlobal = false});
+  ChatMessage(this.type, this.message, {this.author, this.teamName, this.teamColor, this.dateTime = "", this.isGlobal = false});
 }
 
 class MessageCard extends StatefulWidget {
@@ -147,6 +148,7 @@ class MessageCard extends StatefulWidget {
   final ChatMessageType type;
   final String teamName;
   final Color teamColor;
+  final String dateTime;
 
   const MessageCard({
     Key key,
@@ -156,6 +158,7 @@ class MessageCard extends StatefulWidget {
     @required this.type,
     @required this.teamName,
     @required this.teamColor,
+    @required this.dateTime,
   }) : super(key: key);
 
   @override
@@ -221,6 +224,19 @@ class _MessageCardState extends State<MessageCard> {
                     ),
                   ),
                 ),
+
+                // Date + time
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      widget.dateTime,
+                      style: TextStyle(color: Colors.blueGrey[300], fontSize: 10),
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                    ),
+                  ],
+                )
               ],
             )
           //? System messages like connected
