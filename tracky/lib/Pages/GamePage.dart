@@ -603,7 +603,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                                                 if (data["serverInLan"])
                                                                   url = "ws://192.168.1.50:5051";
                                                                 else
-                                                                  url = "ws://kacpermarcinkiewicz.com:5051";
+                                                                  url = "wss://kacpermarcinkiewicz.com:5051";
 
                                                                 try {
                                                                   chatChannel?.sink?.close();
