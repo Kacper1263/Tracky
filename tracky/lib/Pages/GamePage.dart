@@ -80,6 +80,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   // Chat
   bool showChat = false;
   bool chatConnected = false;
+  bool chatConnecting = false; // While connecting but not connected
   bool showNewMsgDot = false;
   bool isGlobalChat = false;
   bool hideTopMenu = false;
@@ -358,7 +359,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
         connectionLost = true;
         Fluttertoast.showToast(
           msg: "Connection to server lost. Trying to reconnect",
-          toastLength: Toast.LENGTH_LONG,
+          toastLength: Toast.LENGTH_SHORT,
           backgroundColor: Colors.red,
           textColor: Colors.white,
           gravity: ToastGravity.BOTTOM,
@@ -504,12 +505,13 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                         child: Column(
                           children: [
                             Stack(
+                              alignment: AlignmentDirectional.center,
                               children: [
                                 Container(),
                                 Align(
                                   alignment: Alignment.topCenter,
                                   child: Container(
-                                    height: hideTopMenu ? 55 : null,
+                                    height: hideTopMenu ? 50 : null,
                                     decoration: BoxDecoration(
                                       color: Colors.grey[850],
                                       borderRadius: new BorderRadius.only(
@@ -519,13 +521,10 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                     ),
                                     width: double.maxFinite,
                                     child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
+                                      padding: const EdgeInsets.fromLTRB(8, 50, 8, 8),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.center,
                                         children: [
-                                          const Text("Chat",
-                                              textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 25)),
-                                          const SizedBox(height: 10),
                                           hideTopMenu
                                               ? SizedBox.shrink()
                                               : Row(
@@ -594,9 +593,11 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                                         textColor: Colors.white,
                                                         disabledColor: Colors.grey[800],
                                                         disabledTextColor: Colors.grey[700],
-                                                        onPressed: chatConnected
+                                                        onPressed: chatConnected || chatConnecting
                                                             ? null
                                                             : () async {
+                                                                if (chatConnecting) return;
+                                                                setState(() => chatConnecting = true);
                                                                 var url;
                                                                 if (data["serverInLan"])
                                                                   url = "ws://192.168.1.50:5051";
@@ -604,6 +605,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                                                   url = "ws://kacpermarcinkiewicz.com:5051";
 
                                                                 try {
+                                                                  chatChannel?.sink?.close();
                                                                   chatChannel =
                                                                       IOWebSocketChannel.connect(url, pingInterval: Duration(seconds: 10));
                                                                   setState(() {
@@ -635,6 +637,8 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                                                         if (json["success"] == true && chatConnected == false) {
                                                                           setState(() {
                                                                             chatConnected = true;
+                                                                            chatConnecting = false;
+
                                                                             chatMessages.insert(
                                                                               0,
                                                                               new ChatMessage(
@@ -663,9 +667,10 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                                                             }
 
                                                                             var author = json["nickname"];
-                                                                            if (author.toString().length > 13) {
-                                                                              author = author.toString().substring(0, 10) + "...";
-                                                                            }
+                                                                            //? Replaced in [MessageCard] class
+                                                                            // if (author.toString().length > 13) {
+                                                                            //   author = author.toString().substring(0, 10) + "...";
+                                                                            // }
 
                                                                             var teamName = json["teamName"];
                                                                             if (teamName.toString().length > 13) {
@@ -691,6 +696,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                                                     onDone: () {
                                                                       setState(() {
                                                                         chatConnected = false;
+                                                                        chatConnecting = false;
                                                                         chatMessages.insert(
                                                                           0,
                                                                           new ChatMessage(
@@ -749,6 +755,14 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                         ],
                                       ),
                                     ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 10,
+                                  child: const Text(
+                                    "Chat",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: Colors.white, fontSize: 25),
                                   ),
                                 ),
                                 Positioned(

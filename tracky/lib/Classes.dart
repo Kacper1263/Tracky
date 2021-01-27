@@ -193,10 +193,14 @@ class _MessageCardState extends State<MessageCard> {
                       "[${widget.teamName}]",
                       style: TextStyle(color: widget.teamColor, fontSize: 14),
                     ),
-                    // Author
-                    Text(
-                      " - " + widget.author,
-                      style: TextStyle(color: Colors.blueGrey[300], fontSize: 14),
+
+                    // Author //? Expanded and overflow are for overflow protection on smaller devices
+                    Expanded(
+                      child: Text(
+                        " - " + widget.author,
+                        style: TextStyle(color: Colors.blueGrey[300], fontSize: 14),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     )
                   ],
                 ),
@@ -222,17 +226,20 @@ class _MessageCardState extends State<MessageCard> {
           //? System messages like connected
           : Row(
               children: [
-                Text(
-                  widget.message,
-                  style: TextStyle(
-                    color: widget.type == ChatMessageType.INFO_CONNECTED
-                        ? Colors.green
-                        : widget.type == ChatMessageType.INFO_DISCONNECTED_OR_ERROR
-                            ? Colors.red
-                            : widget.type == ChatMessageType.OTHER
-                                ? Colors.blue
-                                : Colors.white,
-                    fontSize: 16,
+                //? Expanded will fix text overflow
+                Expanded(
+                  child: Text(
+                    widget.message,
+                    style: TextStyle(
+                      color: widget.type == ChatMessageType.INFO_CONNECTED
+                          ? Colors.green
+                          : widget.type == ChatMessageType.INFO_DISCONNECTED_OR_ERROR
+                              ? Colors.red
+                              : widget.type == ChatMessageType.OTHER
+                                  ? Colors.blue
+                                  : Colors.white,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ],
