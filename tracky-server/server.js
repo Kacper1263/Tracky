@@ -135,23 +135,56 @@ app.use(function (req, res) {
     res.status(404).send({ success: 'false', code: 404, message: "Page not found! Bad API route!" });
 });
 
-if(!httpsEnabled){
-    // API 
-    app.listen(process.env.PORT || apiPort, () => {
-        console.log(`API running on port ${process.env.PORT || apiPort}`)
+var onlyApi = false;
+var onlyChat = false;
+process.argv.forEach((arg) => {
+    if(arg == "--only-chat") onlyChat = true;
+    if(arg == "--only-api") onlyApi = true;
+})
 
-        // Start chat websocket
-        chat(chatPort)
-    });
+if(!httpsEnabled){
+    if(!onlyApi && !onlyChat){
+        // API 
+        app.listen(process.env.PORT || apiPort, () => {
+            console.log(`API running on port ${process.env.PORT || apiPort}`)
+
+            // Start chat websocket
+            chat(chatPort)
+        });
+    }
+    else if(onlyApi){
+        // API 
+        app.listen(process.env.PORT || apiPort, () => {
+            console.log(`API running on port ${process.env.PORT || apiPort}`)
+        });
+    }
+    else if(onlyChat) chat(chatPort)
+    
 }
 else{
-    // API
-    var credentials = {key: privateKey, cert: certificate};
-    var httpsServer = https.createServer(credentials, app);
-    httpsServer.listen(process.env.PORT || apiPort, () => {
-        console.log(`API running on port ${process.env.PORT || apiPort} with HTTPS support`)
-        
+    if(!onlyApi && !onlyChat){
+        // API
+        var credentials = {key: privateKey, cert: certificate};
+        var httpsServer = https.createServer(credentials, app);
+        httpsServer.listen(process.env.PORT || apiPort, () => {
+            console.log(`API running on port ${process.env.PORT || apiPort} with HTTPS support`)
+            
+            // Start chat websocket
+            chat(chatPort, {credentials: credentials})
+        });  
+    }  
+    else if(onlyApi){
+        // API
+        var credentials = {key: privateKey, cert: certificate};
+        var httpsServer = https.createServer(credentials, app);
+        httpsServer.listen(process.env.PORT || apiPort, () => {
+            console.log(`API running on port ${process.env.PORT || apiPort} with HTTPS support`)
+        });  
+    }
+    else if(onlyChat){
+        var credentials = {key: privateKey, cert: certificate};
+        var httpsServer = https.createServer(credentials, app);
         // Start chat websocket
         chat(chatPort, {credentials: credentials})
-    });    
+    }
 }

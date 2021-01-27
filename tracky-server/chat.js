@@ -1,6 +1,24 @@
 const websocket = require('ws')
 const https = require('https');
 const { IncomingMessage } = require('http'); // For intellisense
+const fs = require('fs')
+
+
+//#region Config variables
+var databaseName = "questions"
+
+// Get data from config
+var cfg = fs.readFileSync("./config.json")
+cfg = JSON.parse(cfg)
+var databaseName = cfg.databaseName
+//#endregion
+
+//#region db settings
+const low = require('lowdb')
+const FileSync = require('lowdb/adapters/FileSync') 
+const logsAdapter = new FileSync(`${databaseName}-logs.json`)
+const logsDb = low(logsAdapter)
+//#endregion
 
 class Room {
     constructor({id = -1,players = []}){
@@ -50,6 +68,7 @@ module.exports = (port, {credentials} = {}) => {
         wss.on('close', onCloseServer)
         wss.on('error', (error) => log("Error: " + error))
         log("Started on port " + port)
+        console.log("[Chat] - Started on port " + port)
     }
     
     function StartHttpsServer(port, credentials){
@@ -61,6 +80,7 @@ module.exports = (port, {credentials} = {}) => {
         wss.on('close', onCloseServer)
         wss.on('error', (error) => log("Error: " + error))
         log("Started on port " + port + " with HTTPS support")
+        console.log("[Chat] - Started on port " + port + " with HTTPS support")
     }
 
     /** 
@@ -175,7 +195,6 @@ module.exports = (port, {credentials} = {}) => {
                 catch(e){
                     log("Error in onMessage: " + e)
                 }
-                console.log(JSON.stringify(rooms,null,2))
             })
 
             ws.on('error', (wsErr) => log("WS Error: " + wsErr))
@@ -255,7 +274,12 @@ module.exports = (port, {credentials} = {}) => {
     }
 
     function log(message){
-        console.log("[Chat] - " + message) // TODO: In production change this to logsDb instead of console log
+        // log chat action
+        logsDb.get("logs").push({
+            "action": "Chat action",
+            "time": new Date().toLocaleString("pl"),
+            "roomID": message,
+        }).write()
     }
 
     function isJson(str) {
