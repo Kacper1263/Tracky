@@ -71,6 +71,8 @@ class _CreateRoomState extends State<CreateRoom> {
             "name": _teams[i]["name"].toString(),
             "color": _teams[i]["color"],
             "players": [],
+            "canSeeEveryone": _teams[i]["canSeeEveryone"] ?? "false",
+            "showForEveryone": _teams[i]["showForEveryone"] ?? "false",
             "passwordRequired": _teams[i]["passwordRequired"] ?? "false",
             "teamPassword": "",
           });

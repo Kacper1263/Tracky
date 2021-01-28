@@ -81,6 +81,8 @@ router.get("/all", (req, res) => {
                 "color": team.color,
                 "players": team.players.map(p => ({"name": p.name})) ?? [],
                 "passwordRequired": team.passwordRequired,
+                "showForEveryone": team.showForEveryone,
+                "canSeeEveryone": team.canSeeEveryone
             })
         })
 
@@ -232,6 +234,8 @@ router.get('/:id', (req, res) => {
                 "color": team.color,
                 "players": team.players.map(p => ({"name": p.name})) ?? [],
                 "passwordRequired": team.passwordRequired,
+                "showForEveryone": team.showForEveryone,
+                "canSeeEveryone": team.canSeeEveryone
             })
         })
 
@@ -515,7 +519,8 @@ router.post('/:id', (req, res) => {
                 "color": team.color,
                 "players": team.players,
                 "passwordRequired": team.passwordRequired,
-                "showForEveryone": team.showForEveryone
+                "showForEveryone": team.showForEveryone,
+                "canSeeEveryone": team.canSeeEveryone
             })
         })
 
