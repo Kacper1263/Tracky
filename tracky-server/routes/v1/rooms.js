@@ -497,7 +497,7 @@ router.post('/:id', (req, res) => {
         success = true;
 
         var playerIndex = list[roomId].teams[teamId].players.findIndex(player => player.name === req.body.playerName)
-        var hideMe = req.body.hideMe ?? false
+        var hideMe = req.body.hideMe == "true" ?? false
 
         if(playerIndex > -1){
             db.get("rooms").get(roomId).get("teams").get(teamId).get("players").get(playerIndex).set("latitude", req.body.latitude).set("longitude", req.body.longitude).set("lastSeen", Date.now()).set("hideMe", hideMe.toString()).write();
@@ -533,13 +533,17 @@ router.post('/:id', (req, res) => {
             let teamCanSeeEveryone = room.teams[teamId].canSeeEveryone ?? "false"
 
             if(showTeamForEveryone == "true"){
-                teamsToReturn.push(t)
+                // Return everyone but not hidden players
+                teamToReturn.players = t.players.filter((_p) => _p.hideMe != "true")
+                teamsToReturn.push(teamToReturn)
                 return
             }
 
             // if player is in team that can see everyone return every team
             if(teamCanSeeEveryone == "true") {
-                teamsToReturn.push(t)
+                // Return everyone but not hidden players
+                teamToReturn.players = t.players.filter((_p) => _p.hideMe != "true")
+                teamsToReturn.push(teamToReturn)
                 return
             }
 

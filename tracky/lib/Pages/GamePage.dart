@@ -72,6 +72,9 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   MapController mapController;
   Timer updateTimer;
 
+  // Player settings
+  bool hidePlayerOnMap = false;
+
   //Location variables
   Location _locationData = null;
   int lastUpdate = 0;
@@ -258,7 +261,8 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
         "teamId": data["teamId"],
         "playerName": data["nickname"],
         "latitude": _locationData != null ? _locationData.latitude.toString() : "0",
-        "longitude": _locationData != null ? _locationData.longitude.toString() : "0"
+        "longitude": _locationData != null ? _locationData.longitude.toString() : "0",
+        "hideMe": hidePlayerOnMap.toString(),
       },
     ).timeout(Duration(seconds: 20)).then((res) {
       if (connectionLost) {
@@ -300,8 +304,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
 
       var response = jsonDecode(res.body);
       List<dynamic> teams = response["teams"];
-      bool showEnemyTeam = response["showEnemyTeam"] == "true" ? true : false;
-      List<Player> playersToAdd = new List<Player>();
+      List<Player> playersToAdd = [];
 
       if (teams == null) return;
 
@@ -444,6 +447,44 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     }
   }
 
+  showPlayerSettings(mainSetState) {
+    Dialogs.infoDialogWithWidgetBody(
+      context,
+      titleText: "Player settings",
+      okBtnText: "Close",
+      onOkBtn: () {
+        Navigator.pop(context);
+      },
+      descriptionWidgets: [
+        StatefulBuilder(
+          builder: (context, setState) => Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 20,
+            runSpacing: 10,
+            children: [
+              Row(
+                children: [
+                  Switch(
+                    value: hidePlayerOnMap,
+                    onChanged: (value) {
+                      setState(() {
+                        hidePlayerOnMap = value;
+                      });
+                      mainSetState(() {
+                        hidePlayerOnMap = value;
+                      });
+                    },
+                  ),
+                  Expanded(child: Text("Hide me on map for everyone", style: TextStyle(color: Colors.white))),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   chatTextFieldFocusChanged() {
     if (chatFocusNode.hasFocus) {
       setState(() {
@@ -461,6 +502,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     data = widget.arguments;
     List<Marker> markers = [];
     otherPlayers.forEach((p) => markers.add(p.getMarker()));
+    thisPlayer.isHidden = hidePlayerOnMap;
     markers.add(thisPlayer.getMarker());
 
     try {
@@ -948,6 +990,15 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                   children: [
                     FloatingActionButton(
                       heroTag: "btn1",
+                      onPressed: () {
+                        showPlayerSettings(setState);
+                      },
+                      tooltip: 'Player settings',
+                      child: const Icon(Icons.account_circle, size: 30),
+                    ),
+                    SizedBox(height: 10),
+                    FloatingActionButton(
+                      heroTag: "btn2",
                       onPressed: () {
                         setState(() {
                           showChat = true;

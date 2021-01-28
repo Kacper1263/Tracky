@@ -9,12 +9,14 @@ class Player {
   Color color;
   String icon;
   LatLng location;
+  bool isHidden;
 
   Player({
     this.name,
     this.color,
     this.icon,
     this.location,
+    this.isHidden = false,
   });
 
   Marker getMarker() {
@@ -29,7 +31,7 @@ class Player {
               child: OutlineText(this.name),
             ),
             Icon(
-              NamedIcons.getIconByName(this.icon),
+              isHidden ? NamedIcons.getIconByName("hidden") : NamedIcons.getIconByName(this.icon),
               color: this.color,
               size: 35,
             ),
@@ -106,6 +108,7 @@ class NamedIcons {
     "normal": Icons.radio_button_checked,
     "enemy": Icons.radio_button_unchecked,
     "dead": Icons.sentiment_very_dissatisfied,
+    "hidden": Icons.blur_on,
   };
 
   static IconData getIconByName(final String iconName) {
