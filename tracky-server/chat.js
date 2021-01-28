@@ -278,7 +278,7 @@ module.exports = (port, {credentials} = {}) => {
         logsDb.get("logs").push({
             "action": "Chat action",
             "time": new Date().toLocaleString("pl"),
-            "roomID": message,
+            "message": message,
         }).write()
     }
 
