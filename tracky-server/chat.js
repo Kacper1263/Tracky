@@ -274,6 +274,7 @@ module.exports = (port, {credentials} = {}) => {
     }
 
     function log(message){
+        logsDb.read()
         // log chat action
         logsDb.get("logs").push({
             "action": "Chat action",
