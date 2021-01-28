@@ -95,6 +95,8 @@ class _CreateRoomState extends State<CreateRoom> {
       "name": "",
       "color": "",
       "players": [],
+      "canSeeEveryone": "false",
+      "showForEveryone": "false",
       "passwordRequired": "false",
       "teamPassword": "",
     });
@@ -319,6 +321,35 @@ class _CreateRoomState extends State<CreateRoom> {
                                 );
                               },
                             ),
+                      SizedBox(height: 15),
+                      Row(
+                        children: [
+                          Switch(
+                            value: teams[index]["canSeeEveryone"] == "true",
+                            inactiveTrackColor: Colors.grey[800],
+                            onChanged: (value) {
+                              setState(() {
+                                teams[index]["canSeeEveryone"] = value.toString();
+                              });
+                            },
+                          ),
+                          Expanded(child: const Text("Can see everyone ", style: TextStyle(color: Colors.white))),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Switch(
+                            value: teams[index]["showForEveryone"] == "true",
+                            inactiveTrackColor: Colors.grey[800],
+                            onChanged: (value) {
+                              setState(() {
+                                teams[index]["showForEveryone"] = value.toString();
+                              });
+                            },
+                          ),
+                          Expanded(child: const Text("Can be seen by everyone ", style: TextStyle(color: Colors.white))),
+                        ],
+                      ),
                       SizedBox(height: 15),
                       Center(
                         child: const Text(

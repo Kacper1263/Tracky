@@ -493,9 +493,10 @@ router.post('/:id', (req, res) => {
         success = true;
 
         var playerIndex = list[roomId].teams[teamId].players.findIndex(player => player.name === req.body.playerName)
+        var hideMe = req.body.hideMe ?? false
 
         if(playerIndex > -1){
-            db.get("rooms").get(roomId).get("teams").get(teamId).get("players").get(playerIndex).set("latitude", req.body.latitude).set("longitude", req.body.longitude).set("lastSeen", Date.now()).write();
+            db.get("rooms").get(roomId).get("teams").get(teamId).get("players").get(playerIndex).set("latitude", req.body.latitude).set("longitude", req.body.longitude).set("lastSeen", Date.now()).set("hideMe", hideMe.toString()).write();
         }
         else{
             return res.status(404).send({
@@ -514,13 +515,45 @@ router.post('/:id', (req, res) => {
                 "color": team.color,
                 "players": team.players,
                 "passwordRequired": team.passwordRequired,
+                "showForEveryone": team.showForEveryone
             })
+        })
+
+        var teamsToReturn = []
+        teamsWithoutProtectedData.forEach((t) => {
+            let teamToReturn = {...t} // Clone t before clearing
+            teamToReturn.players = [] //? Clear players list
+
+            let showTeamForEveryone = t.showForEveryone ?? "false"
+            let teamCanSeeEveryone = room.teams[teamId].canSeeEveryone ?? "false"
+
+            if(showTeamForEveryone == "true"){
+                teamsToReturn.push(t)
+                return
+            }
+
+            // if player is in team that can see everyone return every team
+            if(teamCanSeeEveryone == "true") {
+                teamsToReturn.push(t)
+                return
+            }
+
+            // if show enemy team is off, return only players team
+            if(room.showEnemyTeam == "false" && t.id != req.body.teamId) return
+
+            t.players.forEach((p) => {
+                // if player is hidden, skip
+                if(p.hideMe == "true") return;
+                teamToReturn.players.push(p)
+            })
+
+            teamsToReturn.push(teamToReturn)
         })
         
         return res.status(200).send({
             success: 'true',
             message: 'Room found, updating location and returning players',
-            teams: room.teams, // TODO: Send only players team
+            teams: teamsToReturn,
             showEnemyTeam: room.showEnemyTeam,
             textMarkers: room.textMarkers ?? [],
             namedPolygons: room.namedPolygons ?? [],

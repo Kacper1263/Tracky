@@ -334,9 +334,11 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       teams.forEach((team) {
         List<dynamic> players = team["players"];
         players.forEach((player) {
-          if (player["name"] != data["nickname"] ||
-              (player["name"] == data["nickname"] &&
-                  team["id"] != data["teamId"])) if ((team["id"] != data["teamId"] && showEnemyTeam) || team["id"] == data["teamId"]) {
+          /*
+ player["name"] != data["nickname"]||(player["name"] == data["nickname"] &&
+                  team["id"] != data["teamId"])) if ((team["id"] != data["teamId"] && showEnemyTeam) || team["id"] == data["teamId"]
+          */
+          if (player["name"] != data["nickname"]) {
             playersToAdd.add(
               new Player(
                 name: player["name"],
@@ -630,7 +632,6 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
 
                                                                   chatChannel.stream.listen(
                                                                     (message) {
-                                                                      print(message);
                                                                       setState(() {
                                                                         var json = jsonDecode(message);
 
