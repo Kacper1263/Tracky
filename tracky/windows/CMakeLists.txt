@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
-project(tracky LANGUAGES CXX)
+project(windows LANGUAGES CXX)
 
-set(BINARY_NAME "tracky")
+set(BINARY_NAME "windows")
 
 cmake_policy(SET CMP0063 NEW)
 
