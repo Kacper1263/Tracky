@@ -38,6 +38,7 @@ import 'package:flutter_map/flutter_map.dart';
 import "package:latlong/latlong.dart";
 import 'package:screen/screen.dart';
 import 'package:tracky/Dialogs.dart';
+import 'package:tracky/StaticVariables.dart';
 import 'package:web_socket_channel/io.dart';
 
 import '../Classes.dart';
@@ -70,6 +71,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   var otherPlayers = <Player>[];
 
   MapController mapController;
+  GlobalKey mapKey = new GlobalKey();
   Timer updateTimer;
 
   // Player settings
@@ -80,6 +82,8 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   int lastUpdate = 0;
   bool permissionDenied = false;
   bool firstTimeZoomedBefore = false; // change this to true after first time finding GPS location
+  LatLng mapLocationBeforeChatOpen = new LatLng(0, 0);
+  double mapZoomBeforeChatOpen = 0;
 
   // Chat
   bool showChat = false;
@@ -224,6 +228,8 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     getLocation();
 
     chatFocusNode.addListener(chatTextFieldFocusChanged);
+
+    if (StaticVariables.autoChatConnect) connectToChat();
 
     WidgetsBinding.instance.addObserver(this);
 
@@ -526,6 +532,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
             children: [
               !showChat
                   ? FlutterMap(
+                      key: mapKey,
                       mapController: mapController,
                       options: MapOptions(
                         center: LatLng(0, 0),
@@ -638,139 +645,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                                         textColor: Colors.white,
                                                         disabledColor: Colors.grey[800],
                                                         disabledTextColor: Colors.grey[700],
-                                                        onPressed: chatConnected || chatConnecting
-                                                            ? null
-                                                            : () async {
-                                                                if (chatConnecting) return;
-                                                                setState(() => chatConnecting = true);
-                                                                var url;
-                                                                if (data["serverInLan"])
-                                                                  url = "ws://192.168.1.50:5051";
-                                                                else
-                                                                  url = "wss://kacpermarcinkiewicz.com:5051";
-
-                                                                try {
-                                                                  chatChannel?.sink?.close();
-                                                                  chatChannel =
-                                                                      IOWebSocketChannel.connect(url, pingInterval: Duration(seconds: 10));
-                                                                  setState(() {
-                                                                    chatMessages.insert(
-                                                                      0,
-                                                                      new ChatMessage(ChatMessageType.OTHER, "[CONNECTING]"),
-                                                                    );
-                                                                  });
-                                                                  chatChannel.sink.add(
-                                                                    json.encode({
-                                                                      "action": "join",
-                                                                      "data": {
-                                                                        "roomId": data["roomId"],
-                                                                        "teamId": data["teamId"],
-                                                                        "teamName": data["team"],
-                                                                        "nickname": data["nickname"],
-                                                                        "teamColor": data["teamColor"]
-                                                                      }
-                                                                    }),
-                                                                  );
-
-                                                                  chatChannel.stream.listen(
-                                                                    (message) {
-                                                                      setState(() {
-                                                                        var json = jsonDecode(message);
-
-                                                                        // Check is user now connected
-                                                                        if (json["success"] == true && chatConnected == false) {
-                                                                          setState(() {
-                                                                            chatConnected = true;
-                                                                            chatConnecting = false;
-
-                                                                            chatMessages.insert(
-                                                                              0,
-                                                                              new ChatMessage(
-                                                                                  ChatMessageType.INFO_CONNECTED, "[CONNECTED]"),
-                                                                            );
-                                                                          });
-                                                                          return;
-                                                                        }
-
-                                                                        if (json["messageType"] == "response") {
-                                                                          setState(() {
-                                                                            chatMessages.insert(
-                                                                              0,
-                                                                              new ChatMessage(
-                                                                                ChatMessageType.OTHER,
-                                                                                "[${json["message"] ?? json}]",
-                                                                              ),
-                                                                            );
-                                                                          });
-                                                                        } else if (json["messageType"] == "message") {
-                                                                          setState(() {
-                                                                            if (!showChat && !showNewMsgDot) {
-                                                                              setState(() {
-                                                                                showNewMsgDot = true;
-                                                                              });
-                                                                            }
-
-                                                                            var author = json["nickname"];
-                                                                            //? Replaced in [MessageCard] class
-                                                                            // if (author.toString().length > 13) {
-                                                                            //   author = author.toString().substring(0, 10) + "...";
-                                                                            // }
-
-                                                                            var teamName = json["teamName"];
-                                                                            if (teamName.toString().length > 13) {
-                                                                              teamName = teamName.toString().substring(0, 10) + "...";
-                                                                            }
-
-                                                                            chatMessages.insert(
-                                                                              0,
-                                                                              new ChatMessage(
-                                                                                ChatMessageType.RECEIVED,
-                                                                                "${json["message"]}",
-                                                                                isGlobal: json["isGlobal"],
-                                                                                author: author,
-                                                                                teamName: teamName,
-                                                                                teamColor: HexColor(json["teamColor"]),
-                                                                                dateTime: DateFormat("kk:mm - dd.MM.yyyy").format(
-                                                                                  DateTime.now(),
-                                                                                ),
-                                                                              ),
-                                                                            );
-                                                                          });
-                                                                        }
-                                                                      });
-                                                                    },
-                                                                    cancelOnError: false,
-                                                                    onDone: () {
-                                                                      setState(() {
-                                                                        chatConnected = false;
-                                                                        chatConnecting = false;
-                                                                        chatMessages.insert(
-                                                                          0,
-                                                                          new ChatMessage(
-                                                                              ChatMessageType.INFO_DISCONNECTED_OR_ERROR, "[DISCONNECTED]"),
-                                                                        );
-                                                                      });
-                                                                    },
-                                                                    onError: (e) {
-                                                                      setState(() {
-                                                                        chatMessages.insert(
-                                                                          0,
-                                                                          new ChatMessage(
-                                                                              ChatMessageType.INFO_DISCONNECTED_OR_ERROR, "[ERROR] - $e"),
-                                                                        );
-                                                                      });
-                                                                    },
-                                                                  );
-                                                                } catch (e) {
-                                                                  setState(() {
-                                                                    chatMessages.insert(
-                                                                      0,
-                                                                      new ChatMessage(
-                                                                          ChatMessageType.INFO_DISCONNECTED_OR_ERROR, "[ERROR] - $e"),
-                                                                    );
-                                                                  });
-                                                                }
-                                                              },
+                                                        onPressed: chatConnected || chatConnecting ? null : connectToChat,
                                                       ),
                                                     ),
                                                     hideTopMenu ? SizedBox.shrink() : SizedBox(width: 10),
@@ -830,7 +705,9 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                           showChat = false;
                                           hideTopMenu = false;
                                         });
-                                        SchedulerBinding.instance.addPostFrameCallback((_) => findMe());
+                                        SchedulerBinding.instance.addPostFrameCallback(
+                                          (_) => mapController.move(mapLocationBeforeChatOpen, mapZoomBeforeChatOpen),
+                                        );
                                       },
                                     ),
                                   ),
@@ -1001,6 +878,9 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                       heroTag: "btn2",
                       onPressed: () {
                         setState(() {
+                          mapLocationBeforeChatOpen.latitude = mapController.center.latitude;
+                          mapLocationBeforeChatOpen.longitude = mapController.center.longitude;
+                          mapZoomBeforeChatOpen = mapController.zoom;
                           showChat = true;
                           showNewMsgDot = false;
                         });
@@ -1046,6 +926,133 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
           textColor: Colors.white,
           gravity: ToastGravity.BOTTOM,
           fontSize: 12);
+    }
+  }
+
+  connectToChat() async {
+    if (chatConnecting) return;
+    setState(() => chatConnecting = true);
+    var url;
+    if (data["serverInLan"])
+      url = "ws://192.168.1.50:5051";
+    else
+      url = "wss://kacpermarcinkiewicz.com:5051";
+
+    try {
+      chatChannel?.sink?.close();
+      chatChannel = IOWebSocketChannel.connect(url, pingInterval: Duration(seconds: 10));
+      setState(() {
+        chatMessages.insert(
+          0,
+          new ChatMessage(ChatMessageType.OTHER, "[CONNECTING]"),
+        );
+      });
+      chatChannel.sink.add(
+        json.encode({
+          "action": "join",
+          "data": {
+            "roomId": data["roomId"],
+            "teamId": data["teamId"],
+            "teamName": data["team"],
+            "nickname": data["nickname"],
+            "teamColor": data["teamColor"]
+          }
+        }),
+      );
+
+      chatChannel.stream.listen(
+        (message) {
+          setState(() {
+            var json = jsonDecode(message);
+
+            // Check is user now connected
+            if (json["success"] == true && chatConnected == false) {
+              setState(() {
+                chatConnected = true;
+                chatConnecting = false;
+
+                chatMessages.insert(
+                  0,
+                  new ChatMessage(ChatMessageType.INFO_CONNECTED, "[CONNECTED]"),
+                );
+              });
+              return;
+            }
+
+            if (json["messageType"] == "response") {
+              setState(() {
+                chatMessages.insert(
+                  0,
+                  new ChatMessage(
+                    ChatMessageType.OTHER,
+                    "[${json["message"] ?? json}]",
+                  ),
+                );
+              });
+            } else if (json["messageType"] == "message") {
+              setState(() {
+                if (!showChat && !showNewMsgDot) {
+                  setState(() {
+                    showNewMsgDot = true;
+                  });
+                }
+
+                var author = json["nickname"];
+                //? Replaced in [MessageCard] class
+                // if (author.toString().length > 13) {
+                //   author = author.toString().substring(0, 10) + "...";
+                // }
+
+                var teamName = json["teamName"];
+                if (teamName.toString().length > 13) {
+                  teamName = teamName.toString().substring(0, 10) + "...";
+                }
+
+                chatMessages.insert(
+                  0,
+                  new ChatMessage(
+                    ChatMessageType.RECEIVED,
+                    "${json["message"]}",
+                    isGlobal: json["isGlobal"],
+                    author: author,
+                    teamName: teamName,
+                    teamColor: HexColor(json["teamColor"]),
+                    dateTime: DateFormat("kk:mm - dd.MM.yyyy").format(
+                      DateTime.now(),
+                    ),
+                  ),
+                );
+              });
+            }
+          });
+        },
+        cancelOnError: false,
+        onDone: () {
+          setState(() {
+            chatConnected = false;
+            chatConnecting = false;
+            chatMessages.insert(
+              0,
+              new ChatMessage(ChatMessageType.INFO_DISCONNECTED_OR_ERROR, "[DISCONNECTED]"),
+            );
+          });
+        },
+        onError: (e) {
+          setState(() {
+            chatMessages.insert(
+              0,
+              new ChatMessage(ChatMessageType.INFO_DISCONNECTED_OR_ERROR, "[ERROR] - $e"),
+            );
+          });
+        },
+      );
+    } catch (e) {
+      setState(() {
+        chatMessages.insert(
+          0,
+          new ChatMessage(ChatMessageType.INFO_DISCONNECTED_OR_ERROR, "[ERROR] - $e"),
+        );
+      });
     }
   }
 }

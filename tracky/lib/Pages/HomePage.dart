@@ -30,6 +30,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_udid/flutter_udid.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tracky/StaticVariables.dart';
 
 import '../Dialogs.dart';
@@ -53,8 +54,15 @@ class _HomePageState extends State<HomePage> {
   String infoMessage = "";
   String serverMinRequiredAppVersion = "0.0.0";
 
+  SharedPreferences sharedPreferences;
+
   @override
   void initState() {
+    SharedPreferences.getInstance().then((value) {
+      sharedPreferences = value;
+      StaticVariables.autoChatConnect = sharedPreferences.getBool("autoChatConnect") ?? true;
+    });
+
     // Check server status
     checkServerStatus();
 
@@ -88,6 +96,12 @@ By clicking agree and using this app you agree to privacy policy available on Go
         title: Text("Tracky"),
         centerTitle: true,
         backgroundColor: Colors.grey[850],
+        leading: IconButton(
+          onPressed: () => showSettings(),
+          icon: Icon(
+            Icons.settings,
+          ),
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
@@ -331,5 +345,37 @@ By clicking agree and using this app you agree to privacy policy available on Go
         });
       });
     });
+  }
+
+  showSettings() {
+    Dialogs.infoDialogWithWidgetBody(
+      context,
+      titleText: "App settings",
+      descriptionWidgets: <Widget>[
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          alignment: WrapAlignment.spaceBetween,
+          children: [
+            Text("Auto connect to chat ", style: TextStyle(color: Colors.white)),
+            StatefulBuilder(
+              builder: (context, StateSetter setState) {
+                // Needed to change state of dialog
+                return Switch(
+                  value: StaticVariables.autoChatConnect,
+                  onChanged: (val) {
+                    setState(() {
+                      StaticVariables.autoChatConnect = val;
+                      sharedPreferences?.setBool("autoChatConnect", val);
+                    });
+                  },
+                );
+              },
+            )
+          ],
+        )
+      ],
+      okBtnText: "Close",
+      onOkBtn: () => Navigator.pop(context),
+    );
   }
 }
