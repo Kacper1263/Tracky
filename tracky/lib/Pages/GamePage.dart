@@ -36,6 +36,7 @@ import 'package:http/http.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import "package:latlong/latlong.dart";
+import 'package:permission_handler/permission_handler.dart';
 import 'package:screen/screen.dart';
 import 'package:tracky/Dialogs.dart';
 import 'package:tracky/StaticVariables.dart';
@@ -104,18 +105,20 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     if (permissionStatus.toString() == "PermissionStatus.undetermined" || permissionStatus.toString() == "PermissionStatus.denied") {
       await Dialogs.infoDialog(
         context,
-        titleText: "Permissions, read carefully!",
+        titleText: "Permissions, please read carefully!",
         descriptionText:
             'Now you should see a window asking for location permissions. These permissions are needed to run the application. It is possible that you will be able to choose between "Allow only while using the app" and "Allow all the time", We RECOMMEND to choose "Allow all the time" because it will allow your location to be updated also when you lock the phone, go to the home screen or change the application to another. We will download your location ONLY if you are in a room on the server and the app is running in the background. When you close the app or leave the room, we will not use your location. If you want, you can choose to share your location only while using the app, but it can make your location update only when the screen is unlocked. While the application will be using your location, you will be informed about it by a notification on the bar. \n\nThis setting can be changed later in the system settings.',
         okBtnText: "Ok",
-        onOkBtn: () {
+        onOkBtn: () async {
           Navigator.pop(context);
-          BackgroundLocation.getPermissions(
-            onGranted: () {
+          var permission = await Permission.locationAlways.request();
+          if (permission.isGranted) {
+            permissionDenied = false;
+            startGame();
+          } else {
+            if (await Permission.location.isGranted) {
               permissionDenied = false;
-              startGame();
-            },
-            onDenied: () {
+            } else {
               permissionDenied = true;
               Fluttertoast.showToast(
                 msg: "Without permission enabled your location will not be updated!",
@@ -125,9 +128,10 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                 gravity: ToastGravity.BOTTOM,
                 fontSize: 14,
               );
-              startGame();
-            },
-          );
+            }
+
+            startGame();
+          }
         },
       );
     } else if (permissionStatus.toString() == "PermissionStatus.denied") {
@@ -142,6 +146,9 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       );
       startGame();
     } else if (permissionStatus.toString() == "PermissionStatus.granted") {
+      if (await Permission.locationAlways.isDenied) {
+        await Permission.locationAlways.request();
+      }
       startGame();
     }
 
@@ -875,6 +882,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                     ),
                     SizedBox(height: 10),
                     FloatingActionButton(
+                      backgroundColor: chatConnected ? null : Colors.grey[800],
                       heroTag: "btn2",
                       onPressed: () {
                         setState(() {
