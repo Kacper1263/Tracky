@@ -44,7 +44,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const fs = require('fs')
 const readline = require('readline-sync')
-const chat = require('./chat')
+
 
 //#region Config variables
 // var adminPassword = randomFromZeroToNine() + randomFromZeroToNine() + randomFromZeroToNine() + randomFromZeroToNine() //Generate 4 random numbers
@@ -98,6 +98,7 @@ try {
 // Check is password set
 if(!databaseName || !apiPort) return console.log("You must set databaseName and apiPort in config.json!") 
 
+const chat = require('./chat')
 
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')

@@ -43,7 +43,7 @@ module.exports = (port, {credentials} = {}) => {
     /**
      * @type {Room[]}
      */
-    var rooms = [] // TODO: This should be lowdb database
+    var rooms = []
 
     /**
      * @type {websocket.Server}
