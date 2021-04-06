@@ -72,7 +72,6 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   var otherPlayers = <Player>[];
 
   MapController mapController;
-  GlobalKey mapKey = new GlobalKey();
   Timer updateTimer;
 
   // Player settings
@@ -83,8 +82,6 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   int lastUpdate = 0;
   bool permissionDenied = false;
   bool firstTimeZoomedBefore = false; // change this to true after first time finding GPS location
-  LatLng mapLocationBeforeChatOpen = new LatLng(0, 0);
-  double mapZoomBeforeChatOpen = 0;
 
   // Chat
   bool showChat = false;
@@ -535,337 +532,332 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                   backgroundColor: Colors.grey[700],
                 )
               : null,
-          body: Stack(
+          body: IndexedStack(
+            index: !showChat ? 0 : 1, // Indexed stack for not loosing map data
             children: [
-              !showChat
-                  ? FlutterMap(
-                      key: mapKey,
-                      mapController: mapController,
-                      options: MapOptions(
-                        center: LatLng(0, 0),
-                        zoom: 15.0,
-                        maxZoom: 19.3,
-                      ),
-                      layers: [
-                        TileLayerOptions(
-                          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          subdomains: ['a', 'b', 'c'],
-                          tileProvider: NonCachingNetworkTileProvider(), // CachedNetworkTileProvider()
-                          maxZoom: 24.0,
-                        ),
-                        PolygonLayerOptions(polygonCulling: true, polygons: polygons.map((element) => element.polygon).toList()),
-                        MarkerLayerOptions(markers: textMarkers.map((tMarker) => tMarker.getMarker()).toList()),
-                        MarkerLayerOptions(markers: markers)
-                      ],
-                    )
-                  : Container(
-                      color: Colors.grey[900],
-                      child: SafeArea(
-                        child: Column(
-                          children: [
-                            Stack(
-                              alignment: AlignmentDirectional.center,
-                              children: [
-                                Container(),
-                                Align(
-                                  alignment: Alignment.topCenter,
-                                  child: Container(
-                                    height: hideTopMenu ? 50 : null,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[850],
-                                      borderRadius: new BorderRadius.only(
-                                        bottomLeft: Radius.circular(hideTopMenu ? 0 : 20.0),
-                                        bottomRight: Radius.circular(hideTopMenu ? 0 : 20.0),
-                                      ),
-                                    ),
-                                    width: double.maxFinite,
-                                    child: Padding(
-                                      padding: const EdgeInsets.fromLTRB(8, 50, 8, 8),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        children: [
-                                          hideTopMenu
-                                              ? SizedBox.shrink()
-                                              : Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: RaisedButton(
-                                                        padding: EdgeInsets.all(12),
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius: BorderRadius.only(
-                                                            topLeft: Radius.circular(20),
-                                                          ),
-                                                        ),
-                                                        child: Text("Team chat", style: TextStyle(fontSize: 17)),
-                                                        color: Colors.blueGrey,
-                                                        textColor: Colors.white,
-                                                        disabledColor: Colors.grey[800],
-                                                        disabledTextColor: Colors.grey[700],
-                                                        onPressed: isGlobalChat
-                                                            ? () {
-                                                                setState(() {
-                                                                  isGlobalChat = false;
-                                                                });
-                                                              }
-                                                            : null,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 10),
-                                                    Expanded(
-                                                      child: RaisedButton(
-                                                        padding: EdgeInsets.all(12),
-                                                        child: Text("Global chat", style: TextStyle(fontSize: 17)),
-                                                        color: Colors.blueGrey,
-                                                        textColor: Colors.white,
-                                                        disabledColor: Colors.grey[800],
-                                                        disabledTextColor: Colors.grey[700],
-                                                        onPressed: !isGlobalChat
-                                                            ? () {
-                                                                setState(() {
-                                                                  isGlobalChat = true;
-                                                                });
-                                                              }
-                                                            : null,
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius: BorderRadius.only(
-                                                            topRight: Radius.circular(20),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                          hideTopMenu
-                                              ? SizedBox.shrink()
-                                              : Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: RaisedButton(
-                                                        padding: EdgeInsets.all(12),
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius: BorderRadius.only(
-                                                            bottomLeft: Radius.circular(20),
-                                                          ),
-                                                        ),
-                                                        child: Text("Connect", style: TextStyle(fontSize: 17)),
-                                                        color: Colors.green,
-                                                        textColor: Colors.white,
-                                                        disabledColor: Colors.grey[800],
-                                                        disabledTextColor: Colors.grey[700],
-                                                        onPressed: chatConnected || chatConnecting ? null : connectToChat,
-                                                      ),
-                                                    ),
-                                                    hideTopMenu ? SizedBox.shrink() : SizedBox(width: 10),
-                                                    Expanded(
-                                                      child: RaisedButton(
-                                                        padding: EdgeInsets.all(12),
-                                                        child: Text("Disconnect", style: TextStyle(fontSize: 17)),
-                                                        color: Colors.red,
-                                                        textColor: Colors.white,
-                                                        disabledColor: Colors.grey[800],
-                                                        disabledTextColor: Colors.grey[700],
-                                                        onPressed: !chatConnected
-                                                            ? null
-                                                            : () {
-                                                                setState(() {
-                                                                  chatConnected = false;
-                                                                  chatChannel?.sink?.close();
-                                                                });
-                                                              },
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius: BorderRadius.only(
-                                                            bottomRight: Radius.circular(20),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                )
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  top: 10,
-                                  child: const Text(
-                                    "Chat",
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(color: Colors.white, fontSize: 25),
-                                  ),
-                                ),
-                                Positioned(
-                                  left: 10,
-                                  top: 10,
-                                  child: CircleAvatar(
-                                    backgroundColor: Colors.grey[600],
-                                    radius: 15,
-                                    child: IconButton(
-                                      padding: EdgeInsets.zero,
-                                      icon: Icon(
-                                        Icons.close,
-                                        size: 20,
-                                      ),
-                                      color: Colors.white,
-                                      onPressed: () {
-                                        setState(() {
-                                          showChat = false;
-                                          hideTopMenu = false;
-                                        });
-                                        SchedulerBinding.instance.addPostFrameCallback(
-                                          (_) => mapController.move(mapLocationBeforeChatOpen, mapZoomBeforeChatOpen),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  right: 10,
-                                  top: 10,
-                                  child: CircleAvatar(
-                                    backgroundColor: Colors.grey[600],
-                                    radius: 15,
-                                    child: IconButton(
-                                      padding: EdgeInsets.zero,
-                                      tooltip: "Clear",
-                                      icon: Icon(
-                                        Icons.delete_sweep,
-                                        size: 20,
-                                      ),
-                                      color: Colors.white,
-                                      onPressed: () {
-                                        setState(() {
-                                          chatMessages = [];
-                                        });
-                                        SchedulerBinding.instance.addPostFrameCallback((_) => findMe());
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  FocusScope.of(context).unfocus();
-                                },
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  itemCount: chatMessages.length,
-                                  padding: const EdgeInsets.only(top: 10, bottom: 10),
-                                  reverse: true,
-                                  itemBuilder: (context, index) {
-                                    return Container(
-                                      padding: const EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 10),
-                                      child: Row(
-                                        mainAxisAlignment: chatMessages[index].type == ChatMessageType.SENT
-                                            ? MainAxisAlignment.end
-                                            : MainAxisAlignment.start,
-                                        children: [
-                                          MessageCard(
-                                            message: chatMessages[index].message,
-                                            isGlobal: chatMessages[index].isGlobal,
-                                            author: chatMessages[index].author,
-                                            type: chatMessages[index].type,
-                                            teamName: chatMessages[index].teamName,
-                                            teamColor: chatMessages[index].teamColor,
-                                            dateTime: chatMessages[index].dateTime,
-                                          )
-                                        ],
-                                      ),
-                                    );
-                                  },
+              FlutterMap(
+                mapController: mapController,
+                options: MapOptions(
+                  center: LatLng(0, 0),
+                  zoom: 15.0,
+                  maxZoom: 19.3,
+                ),
+                layers: [
+                  TileLayerOptions(
+                    urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    subdomains: ['a', 'b', 'c'],
+                    tileProvider: NonCachingNetworkTileProvider(), // CachedNetworkTileProvider()
+                    maxZoom: 24.0,
+                  ),
+                  PolygonLayerOptions(polygonCulling: true, polygons: polygons.map((element) => element.polygon).toList()),
+                  MarkerLayerOptions(markers: textMarkers.map((tMarker) => tMarker.getMarker()).toList()),
+                  MarkerLayerOptions(markers: markers)
+                ],
+              ),
+              Container(
+                color: Colors.grey[900],
+                child: SafeArea(
+                  child: Column(
+                    children: [
+                      Stack(
+                        alignment: AlignmentDirectional.center,
+                        children: [
+                          Container(),
+                          Align(
+                            alignment: Alignment.topCenter,
+                            child: Container(
+                              height: hideTopMenu ? 50 : null,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[850],
+                                borderRadius: new BorderRadius.only(
+                                  bottomLeft: Radius.circular(hideTopMenu ? 0 : 20.0),
+                                  bottomRight: Radius.circular(hideTopMenu ? 0 : 20.0),
                                 ),
                               ),
+                              width: double.maxFinite,
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(8, 50, 8, 8),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    hideTopMenu
+                                        ? SizedBox.shrink()
+                                        : Row(
+                                            children: [
+                                              Expanded(
+                                                child: RaisedButton(
+                                                  padding: EdgeInsets.all(12),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.only(
+                                                      topLeft: Radius.circular(20),
+                                                    ),
+                                                  ),
+                                                  child: Text("Team chat", style: TextStyle(fontSize: 17)),
+                                                  color: Colors.blueGrey,
+                                                  textColor: Colors.white,
+                                                  disabledColor: Colors.grey[800],
+                                                  disabledTextColor: Colors.grey[700],
+                                                  onPressed: isGlobalChat
+                                                      ? () {
+                                                          setState(() {
+                                                            isGlobalChat = false;
+                                                          });
+                                                        }
+                                                      : null,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: RaisedButton(
+                                                  padding: EdgeInsets.all(12),
+                                                  child: Text("Global chat", style: TextStyle(fontSize: 17)),
+                                                  color: Colors.blueGrey,
+                                                  textColor: Colors.white,
+                                                  disabledColor: Colors.grey[800],
+                                                  disabledTextColor: Colors.grey[700],
+                                                  onPressed: !isGlobalChat
+                                                      ? () {
+                                                          setState(() {
+                                                            isGlobalChat = true;
+                                                          });
+                                                        }
+                                                      : null,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.only(
+                                                      topRight: Radius.circular(20),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                    hideTopMenu
+                                        ? SizedBox.shrink()
+                                        : Row(
+                                            children: [
+                                              Expanded(
+                                                child: RaisedButton(
+                                                  padding: EdgeInsets.all(12),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.only(
+                                                      bottomLeft: Radius.circular(20),
+                                                    ),
+                                                  ),
+                                                  child: Text("Connect", style: TextStyle(fontSize: 17)),
+                                                  color: Colors.green,
+                                                  textColor: Colors.white,
+                                                  disabledColor: Colors.grey[800],
+                                                  disabledTextColor: Colors.grey[700],
+                                                  onPressed: chatConnected || chatConnecting ? null : connectToChat,
+                                                ),
+                                              ),
+                                              hideTopMenu ? SizedBox.shrink() : SizedBox(width: 10),
+                                              Expanded(
+                                                child: RaisedButton(
+                                                  padding: EdgeInsets.all(12),
+                                                  child: Text("Disconnect", style: TextStyle(fontSize: 17)),
+                                                  color: Colors.red,
+                                                  textColor: Colors.white,
+                                                  disabledColor: Colors.grey[800],
+                                                  disabledTextColor: Colors.grey[700],
+                                                  onPressed: !chatConnected
+                                                      ? null
+                                                      : () {
+                                                          setState(() {
+                                                            chatConnected = false;
+                                                            chatChannel?.sink?.close();
+                                                          });
+                                                        },
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.only(
+                                                      bottomRight: Radius.circular(20),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 10,
+                            child: const Text(
+                              "Chat",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.white, fontSize: 25),
+                            ),
+                          ),
+                          Positioned(
+                            left: 10,
+                            top: 10,
+                            child: CircleAvatar(
+                              backgroundColor: Colors.grey[600],
+                              radius: 15,
+                              child: IconButton(
+                                padding: EdgeInsets.zero,
+                                icon: Icon(
+                                  Icons.close,
+                                  size: 20,
+                                ),
+                                color: Colors.white,
+                                onPressed: () {
+                                  setState(() {
+                                    showChat = false;
+                                    hideTopMenu = false;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            right: 10,
+                            top: 10,
+                            child: CircleAvatar(
+                              backgroundColor: Colors.grey[600],
+                              radius: 15,
+                              child: IconButton(
+                                padding: EdgeInsets.zero,
+                                tooltip: "Clear",
+                                icon: Icon(
+                                  Icons.delete_sweep,
+                                  size: 20,
+                                ),
+                                color: Colors.white,
+                                onPressed: () {
+                                  setState(() {
+                                    chatMessages = [];
+                                  });
+                                  SchedulerBinding.instance.addPostFrameCallback((_) => findMe());
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            FocusScope.of(context).unfocus();
+                          },
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: chatMessages.length,
+                            padding: const EdgeInsets.only(top: 10, bottom: 10),
+                            reverse: true,
+                            itemBuilder: (context, index) {
+                              return Container(
+                                padding: const EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 10),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      chatMessages[index].type == ChatMessageType.SENT ? MainAxisAlignment.end : MainAxisAlignment.start,
+                                  children: [
+                                    MessageCard(
+                                      message: chatMessages[index].message,
+                                      isGlobal: chatMessages[index].isGlobal,
+                                      author: chatMessages[index].author,
+                                      type: chatMessages[index].type,
+                                      teamName: chatMessages[index].teamName,
+                                      teamColor: chatMessages[index].teamColor,
+                                      dateTime: chatMessages[index].dateTime,
+                                    )
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.only(left: 10, bottom: 10, top: 10),
+                        color: Colors.grey[850],
+                        height: 60,
+                        width: double.infinity,
+                        child: Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: TextField(
+                                enabled: chatConnected,
+                                controller: chatController,
+                                focusNode: chatFocusNode,
+                                textCapitalization: TextCapitalization.sentences,
+                                style: TextStyle(color: Colors.white),
+                                decoration: InputDecoration(
+                                  hintText: "Write message...",
+                                  hintStyle: const TextStyle(color: Colors.white),
+                                  border: InputBorder.none,
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 15,
                             ),
                             Container(
-                              padding: const EdgeInsets.only(left: 10, bottom: 10, top: 10),
-                              color: Colors.grey[850],
-                              height: 60,
-                              width: double.infinity,
-                              child: Row(
-                                children: <Widget>[
-                                  Expanded(
-                                    child: TextField(
-                                      enabled: chatConnected,
-                                      controller: chatController,
-                                      focusNode: chatFocusNode,
-                                      textCapitalization: TextCapitalization.sentences,
-                                      style: TextStyle(color: Colors.white),
-                                      decoration: InputDecoration(
-                                        hintText: "Write message...",
-                                        hintStyle: const TextStyle(color: Colors.white),
-                                        border: InputBorder.none,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 15,
-                                  ),
-                                  Container(
-                                    width: 40,
-                                    height: 40,
-                                    child: FittedBox(
-                                      child: FloatingActionButton(
-                                        onPressed: !chatConnected
-                                            ? null
-                                            : () async {
-                                                var messageToSend = chatController.text;
-                                                if (messageToSend.length <= 0) return;
-                                                setState(
-                                                  () {
-                                                    chatChannel.sink.add(
-                                                      json.encode({
-                                                        "action": "message",
-                                                        "data": {
-                                                          "message": messageToSend,
-                                                          "destination": isGlobalChat ? "global" : data["teamId"]
-                                                        }
-                                                      }),
-                                                    );
+                              width: 40,
+                              height: 40,
+                              child: FittedBox(
+                                child: FloatingActionButton(
+                                  onPressed: !chatConnected
+                                      ? null
+                                      : () async {
+                                          var messageToSend = chatController.text;
+                                          if (messageToSend.length <= 0) return;
+                                          setState(
+                                            () {
+                                              chatChannel.sink.add(
+                                                json.encode({
+                                                  "action": "message",
+                                                  "data": {
+                                                    "message": messageToSend,
+                                                    "destination": isGlobalChat ? "global" : data["teamId"]
+                                                  }
+                                                }),
+                                              );
 
-                                                    var teamName = data["team"];
-                                                    if (teamName.toString().length > 13) {
-                                                      teamName = teamName.toString().substring(0, 10) + "...";
-                                                    }
+                                              var teamName = data["team"];
+                                              if (teamName.toString().length > 13) {
+                                                teamName = teamName.toString().substring(0, 10) + "...";
+                                              }
 
-                                                    chatMessages.insert(
-                                                      0,
-                                                      new ChatMessage(
-                                                        ChatMessageType.SENT,
-                                                        "$messageToSend",
-                                                        isGlobal: isGlobalChat,
-                                                        author: "You",
-                                                        teamName: teamName,
-                                                        teamColor: HexColor(data["teamColor"]),
-                                                        dateTime: DateFormat("kk:mm - dd.MM.yyyy").format(DateTime.now()),
-                                                      ),
-                                                    );
+                                              chatMessages.insert(
+                                                0,
+                                                new ChatMessage(
+                                                  ChatMessageType.SENT,
+                                                  "$messageToSend",
+                                                  isGlobal: isGlobalChat,
+                                                  author: "You",
+                                                  teamName: teamName,
+                                                  teamColor: HexColor(data["teamColor"]),
+                                                  dateTime: DateFormat("kk:mm - dd.MM.yyyy").format(DateTime.now()),
+                                                ),
+                                              );
 
-                                                    chatController.clear();
-                                                  },
-                                                );
-                                              },
-                                        child: const Icon(
-                                          Icons.send,
-                                          color: Colors.white,
-                                          size: 29,
-                                        ),
-                                        backgroundColor: Colors.blue,
-                                        elevation: 0,
-                                      ),
-                                    ),
+                                              chatController.clear();
+                                            },
+                                          );
+                                        },
+                                  child: const Icon(
+                                    Icons.send,
+                                    color: Colors.white,
+                                    size: 29,
                                   ),
-                                  SizedBox(
-                                    width: 5,
-                                  ),
-                                ],
+                                  backgroundColor: Colors.blue,
+                                  elevation: 0,
+                                ),
                               ),
+                            ),
+                            SizedBox(
+                              width: 5,
                             ),
                           ],
                         ),
                       ),
-                    ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
           floatingActionButton: !showChat
@@ -886,9 +878,6 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                       heroTag: "btn2",
                       onPressed: () {
                         setState(() {
-                          mapLocationBeforeChatOpen.latitude = mapController.center.latitude;
-                          mapLocationBeforeChatOpen.longitude = mapController.center.longitude;
-                          mapZoomBeforeChatOpen = mapController.zoom;
                           showChat = true;
                           showNewMsgDot = false;
                         });
