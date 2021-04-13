@@ -31,6 +31,7 @@ try {
     require('body-parser')
     require('fs')
     require('path')
+    require('mongodb')
     require('lowdb')
     require('readline-sync')
     require('https')
@@ -48,7 +49,7 @@ const readline = require('readline-sync')
 
 //#region Config variables
 // var adminPassword = randomFromZeroToNine() + randomFromZeroToNine() + randomFromZeroToNine() + randomFromZeroToNine() //Generate 4 random numbers
-var databaseName = "rooms"
+var mongoDatabaseConnectionUrl = "mongodb://"
 var apiPort = 5000;
 var chatPort = 5001;
 var minRequiredAppVersion = "0.0.0"
@@ -62,7 +63,7 @@ try {
     var cfg = fs.readFileSync("./config.json")
     cfg = JSON.parse(cfg)
     //adminPassword = cfg.adminPassword
-    databaseName = cfg.databaseName
+    mongoDatabaseConnectionUrl = cfg.mongoDatabaseConnectionUrl
     apiPort = cfg.apiPort
     chatPort = cfg.chatPort
     minRequiredAppVersion = cfg.minRequiredAppVersion
@@ -76,7 +77,7 @@ try {
     if (!fs.existsSync("./config.json")) {
         var data = {
             //adminPassword: adminPassword,
-            databaseName: databaseName,
+            mongoDatabaseConnectionUrl: mongoDatabaseConnectionUrl,
             apiPort: apiPort,
             chatPort: chatPort,
             minRequiredAppVersion: minRequiredAppVersion,
@@ -95,23 +96,20 @@ try {
 }
 //#endregion
 
-// Check is password set
-if(!databaseName || !apiPort) return console.log("You must set databaseName and apiPort in config.json!") 
+if(!apiPort) return console.log("You must set apiPort in config.json!") 
+if(!mongoDatabaseConnectionUrl || mongoDatabaseConnectionUrl == "mongodb://") return console.log("You must set mongoDatabaseConnectionUrl in config.json!") 
 
 const chat = require('./chat')
 
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
-const adapter = new FileSync(`${databaseName}.json`)
 const infoAdapter = new FileSync(`info.json`)
-const db = low(adapter)
 const infoDb = low(infoAdapter)
 
 // *****************************
 // *   API starts from there   *
 // *****************************
 
-db.defaults({ rooms: [] }).write() //default variables for database
 infoDb.defaults({ title: "", message: ""}).write() //default variables for database
 
 // Set up the express app
