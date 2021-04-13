@@ -43,7 +43,7 @@ var databaseName = cfg.databaseName
 //#region db settings
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync') 
-const logsAdapter = new FileSync(`${databaseName}-logs.json`)
+const logsAdapter = new FileSync(`rooms-logs.json`)
 const logsDb = low(logsAdapter)
 //#endregion
 
