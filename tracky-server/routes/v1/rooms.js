@@ -522,7 +522,7 @@ MongoClient.connect(mongoDatabaseConnectionUrl, {useNewUrlParser:true, useUnifie
                 newPlayerData.hideMe= hideMe.toString()
                 
                 await rooms.updateOne({id: id, "teams.id": list[roomId].teams[teamId].id}, {$set: {"teams.$.players.$[player]": newPlayerData}}
-                    , {arrayFilters: [{"player._id": list[roomId].teams[teamId].players[playerIndex]._id}]})
+                    , {arrayFilters: [{"player.name": list[roomId].teams[teamId].players[playerIndex].name}]})
             }
             else{
                 return res.status(404).send({

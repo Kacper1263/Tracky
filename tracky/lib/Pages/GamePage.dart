@@ -537,6 +537,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
             children: [
               FlutterMap(
                 mapController: mapController,
+                key: GlobalObjectKey("map-key"),
                 options: MapOptions(
                   center: LatLng(0, 0),
                   zoom: 15.0,
@@ -707,7 +708,9 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                   setState(() {
                                     showChat = false;
                                     hideTopMenu = false;
+                                    FocusScope.of(context).unfocus();
                                   });
+                                  //SchedulerBinding.instance.addPostFrameCallback((_) => findMe());
                                 },
                               ),
                             ),
@@ -730,7 +733,6 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                   setState(() {
                                     chatMessages = [];
                                   });
-                                  SchedulerBinding.instance.addPostFrameCallback((_) => findMe());
                                 },
                               ),
                             ),
