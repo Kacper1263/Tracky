@@ -814,13 +814,13 @@ MongoClient.connect(mongoDatabaseConnectionUrl, {useNewUrlParser:true, useUnifie
         });
 
         if(roomsToRemove.length > 0){
-            roomsToRemove.forEach( async (room) => {
+            for (const room of roomsToRemove){
                 await rooms.deleteOne({id: room.id})
-            })
+            }
         }
         
         if(playersToRemove.length > 0){
-            playersToRemove.forEach(async obj => {
+            for(const obj of playersToRemove){
                 var roomIndex = list.findIndex(room => room.id === obj.room.id);
                 
                 if(roomIndex > -1){
@@ -830,7 +830,7 @@ MongoClient.connect(mongoDatabaseConnectionUrl, {useNewUrlParser:true, useUnifie
                         await RemovePlayerFromTeam(obj.room.id, roomIndex, teamId, obj.player)
                     }           
                 }
-            })
+            }
         }
     }
 
