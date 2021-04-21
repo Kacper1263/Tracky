@@ -440,9 +440,11 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
         "teamId": data["teamId"],
       });
 
+      var r = jsonDecode(response.body);
+
       if (response.statusCode != 200) {
         Fluttertoast.showToast(
-            msg: "Error while leaving room: ${response.body}",
+            msg: "Error while leaving room: ${r["message"]}",
             toastLength: Toast.LENGTH_LONG,
             backgroundColor: Colors.red,
             textColor: Colors.white);

@@ -527,7 +527,7 @@ MongoClient.connect(mongoDatabaseConnectionUrl, {useNewUrlParser:true, useUnifie
             else{
                 return res.status(404).send({
                     success: 'false',
-                    message: 'Player not found in this team',
+                    message: 'Player not found in this team. You may have to reconnect to this room manually!',
                 });
             }
             
