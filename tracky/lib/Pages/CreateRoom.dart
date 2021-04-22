@@ -674,7 +674,14 @@ class _CreateRoomState extends State<CreateRoom> {
                       }
                     },
                     padding: EdgeInsets.all(12),
-                    child: Text(data["editRoom"] == true ? "Update room" : "Create room", style: TextStyle(fontSize: 20)),
+                    child: Column(
+                      children: [
+                        Text(data["editRoom"] == true ? "Update room" : "Create room", style: TextStyle(fontSize: 20)),
+                        data["editRoom"] == true
+                            ? Text("NOTE: Updating room will kick all players", style: TextStyle(fontSize: 14))
+                            : Container(),
+                      ],
+                    ),
                     color: Colors.lightGreen,
                     textColor: Colors.white,
                     disabledColor: Colors.grey[800],
