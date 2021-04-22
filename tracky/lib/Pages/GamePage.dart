@@ -520,6 +520,12 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     try {
       return WillPopScope(
         onWillPop: () {
+          if (showChat) {
+            showChat = false;
+            hideTopMenu = false;
+            FocusScope.of(context).unfocus();
+            return Future.value(false);
+          }
           updateTimer?.cancel();
           leaveGame();
           chatChannel?.sink?.close();
