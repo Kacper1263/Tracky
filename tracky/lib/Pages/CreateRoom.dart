@@ -36,6 +36,8 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:tracky/Classes.dart';
+import 'package:tracky/CustomWidgets/ColorPicker.dart';
 import 'package:tracky/Dialogs.dart';
 import 'package:uuid/uuid.dart';
 
@@ -95,7 +97,7 @@ class _CreateRoomState extends State<CreateRoom> {
     teams.add({
       "id": Uuid().v4().toString(),
       "name": "",
-      "color": "",
+      "color": null,
       "players": [],
       "canSeeEveryone": "false",
       "showForEveryone": "false",
@@ -108,7 +110,7 @@ class _CreateRoomState extends State<CreateRoom> {
     bool noProblems = true;
 
     teams.forEach((team) {
-      if (team["color"].toString().isEmpty) {
+      if (team["color"].toString().isEmpty || team["color"] == null) {
         noProblems = false;
         return false;
       }
@@ -360,138 +362,14 @@ class _CreateRoomState extends State<CreateRoom> {
                         ),
                       ),
                       SizedBox(height: 15),
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: 20,
-                        runSpacing: 10,
-                        children: [
-                          FloatingActionButton(
-                            heroTag: "1-$index",
-                            onPressed: () {
-                              setState(() {
-                                teams[index]["color"] = Colors.green.value.toRadixString(16);
-                              });
-                            },
-                            backgroundColor: Colors.green,
-                            shape: CircleBorder(
-                              side: teams[index]["color"] == Colors.green.value.toRadixString(16)
-                                  ? BorderSide(
-                                      color: Colors.yellow,
-                                      width: 3,
-                                      style: BorderStyle.solid,
-                                    )
-                                  : BorderSide.none,
-                            ),
-                          ),
-                          FloatingActionButton(
-                            heroTag: "2-$index",
-                            onPressed: () {
-                              setState(() {
-                                teams[index]["color"] = Colors.red.value.toRadixString(16);
-                              });
-                            },
-                            backgroundColor: Colors.red,
-                            shape: CircleBorder(
-                              side: teams[index]["color"] == Colors.red.value.toRadixString(16)
-                                  ? BorderSide(
-                                      color: Colors.yellow,
-                                      width: 3,
-                                      style: BorderStyle.solid,
-                                    )
-                                  : BorderSide.none,
-                            ),
-                          ),
-                          FloatingActionButton(
-                            heroTag: "3-$index",
-                            onPressed: () {
-                              setState(() {
-                                teams[index]["color"] = Colors.blue.value.toRadixString(16);
-                              });
-                            },
-                            backgroundColor: Colors.blue,
-                            shape: CircleBorder(
-                              side: teams[index]["color"] == Colors.blue.value.toRadixString(16)
-                                  ? BorderSide(
-                                      color: Colors.yellow,
-                                      width: 3,
-                                      style: BorderStyle.solid,
-                                    )
-                                  : BorderSide.none,
-                            ),
-                          ),
-                          FloatingActionButton(
-                            heroTag: "4-$index",
-                            onPressed: () {
-                              setState(() {
-                                teams[index]["color"] = Colors.purple.value.toRadixString(16);
-                              });
-                            },
-                            backgroundColor: Colors.purple,
-                            shape: CircleBorder(
-                              side: teams[index]["color"] == Colors.purple.value.toRadixString(16)
-                                  ? BorderSide(
-                                      color: Colors.yellow,
-                                      width: 3,
-                                      style: BorderStyle.solid,
-                                    )
-                                  : BorderSide.none,
-                            ),
-                          ),
-                          FloatingActionButton(
-                            heroTag: "5-$index",
-                            onPressed: () {
-                              setState(() {
-                                teams[index]["color"] = Colors.black.value.toRadixString(16);
-                              });
-                            },
-                            backgroundColor: Colors.black,
-                            shape: CircleBorder(
-                              side: teams[index]["color"] == Colors.black.value.toRadixString(16)
-                                  ? BorderSide(
-                                      color: Colors.yellow,
-                                      width: 3,
-                                      style: BorderStyle.solid,
-                                    )
-                                  : BorderSide.none,
-                            ),
-                          ),
-                          FloatingActionButton(
-                            heroTag: "6-$index",
-                            onPressed: () {
-                              setState(() {
-                                teams[index]["color"] = Colors.pink[300].value.toRadixString(16);
-                              });
-                            },
-                            backgroundColor: Colors.pink[300],
-                            shape: CircleBorder(
-                              side: teams[index]["color"] == Colors.pink[300].value.toRadixString(16)
-                                  ? BorderSide(
-                                      color: Colors.yellow,
-                                      width: 3,
-                                      style: BorderStyle.solid,
-                                    )
-                                  : BorderSide.none,
-                            ),
-                          ),
-                          FloatingActionButton(
-                            heroTag: "7-$index",
-                            onPressed: () {
-                              setState(() {
-                                teams[index]["color"] = Colors.yellow.value.toRadixString(16);
-                              });
-                            },
-                            backgroundColor: Colors.yellow,
-                            shape: CircleBorder(
-                              side: teams[index]["color"] == Colors.yellow.value.toRadixString(16)
-                                  ? BorderSide(
-                                      color: Colors.red,
-                                      width: 3,
-                                      style: BorderStyle.solid,
-                                    )
-                                  : BorderSide.none,
-                            ),
-                          ),
-                        ],
+                      ColorPicker(
+                        heroTagOffset: index,
+                        oldColor: teams[index]["color"] == null ? null : HexColor(teams[index]["color"]),
+                        onColorChanged: (color) {
+                          setState(() {
+                            teams[index]["color"] = color.value.toRadixString(16);
+                          });
+                        },
                       ),
                       SizedBox(height: 20),
                       RaisedButton(
@@ -521,6 +399,14 @@ class _CreateRoomState extends State<CreateRoom> {
                       if (roomNameController.text.length > 40) {
                         Fluttertoast.showToast(
                           msg: "Room name length must be lower than 41",
+                          toastLength: Toast.LENGTH_LONG,
+                          backgroundColor: Colors.red,
+                          textColor: Colors.white,
+                        );
+                        return;
+                      } else if (roomNameController.text.length <= 3) {
+                        Fluttertoast.showToast(
+                          msg: "Room name length must be higher than 3",
                           toastLength: Toast.LENGTH_LONG,
                           backgroundColor: Colors.red,
                           textColor: Colors.white,

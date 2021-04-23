@@ -37,6 +37,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import "package:latlong/latlong.dart";
 import 'package:screen/screen.dart';
+import 'package:tracky/CustomWidgets/ColorPicker.dart';
 import 'package:tracky/Dialogs.dart';
 
 import '../Classes.dart';
@@ -722,140 +723,14 @@ class _EditMapState extends State<EditMap> {
         ),
         SizedBox(height: 10),
         StatefulBuilder(
-          builder: (context, setState) => Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 20,
-            runSpacing: 10,
-            children: [
-              FloatingActionButton(
-                heroTag: "1-Color",
-                onPressed: () {
-                  setState(() {
-                    newPolygon.color = Colors.green;
-                  });
-                },
-                backgroundColor: Colors.green,
-                shape: CircleBorder(
-                  side: newPolygon.color == Colors.green || newPolygon.color == HexColor(Colors.green.value.toRadixString(16))
-                      ? BorderSide(
-                          color: Colors.yellow,
-                          width: 3,
-                          style: BorderStyle.solid,
-                        )
-                      : BorderSide.none,
-                ),
-              ),
-              FloatingActionButton(
-                heroTag: "2-Color",
-                onPressed: () {
-                  setState(() {
-                    newPolygon.color = Colors.red;
-                  });
-                },
-                backgroundColor: Colors.red,
-                shape: CircleBorder(
-                  side: newPolygon.color == Colors.red || newPolygon.color == HexColor(Colors.red.value.toRadixString(16))
-                      ? BorderSide(
-                          color: Colors.yellow,
-                          width: 3,
-                          style: BorderStyle.solid,
-                        )
-                      : BorderSide.none,
-                ),
-              ),
-              FloatingActionButton(
-                heroTag: "3-Color",
-                onPressed: () {
-                  setState(() {
-                    newPolygon.color = Colors.blue;
-                  });
-                },
-                backgroundColor: Colors.blue,
-                shape: CircleBorder(
-                  side: newPolygon.color == Colors.blue || newPolygon.color == HexColor(Colors.blue.value.toRadixString(16))
-                      ? BorderSide(
-                          color: Colors.yellow,
-                          width: 3,
-                          style: BorderStyle.solid,
-                        )
-                      : BorderSide.none,
-                ),
-              ),
-              FloatingActionButton(
-                heroTag: "4-Color",
-                onPressed: () {
-                  setState(() {
-                    newPolygon.color = Colors.purple;
-                  });
-                },
-                backgroundColor: Colors.purple,
-                shape: CircleBorder(
-                  side: newPolygon.color == Colors.purple || newPolygon.color == HexColor(Colors.purple.value.toRadixString(16))
-                      ? BorderSide(
-                          color: Colors.yellow,
-                          width: 3,
-                          style: BorderStyle.solid,
-                        )
-                      : BorderSide.none,
-                ),
-              ),
-              FloatingActionButton(
-                heroTag: "5-Color",
-                onPressed: () {
-                  setState(() {
-                    newPolygon.color = Colors.black;
-                  });
-                },
-                backgroundColor: Colors.black,
-                shape: CircleBorder(
-                  side: newPolygon.color == Colors.black || newPolygon.color == HexColor(Colors.black.value.toRadixString(16))
-                      ? BorderSide(
-                          color: Colors.yellow,
-                          width: 3,
-                          style: BorderStyle.solid,
-                        )
-                      : BorderSide.none,
-                ),
-              ),
-              FloatingActionButton(
-                heroTag: "6-Color",
-                onPressed: () {
-                  setState(() {
-                    newPolygon.color = Colors.pink[300];
-                  });
-                },
-                backgroundColor: Colors.pink[300],
-                shape: CircleBorder(
-                  side: newPolygon.color == Colors.pink[300] || newPolygon.color == HexColor(Colors.pink[300].value.toRadixString(16))
-                      ? BorderSide(
-                          color: Colors.yellow,
-                          width: 3,
-                          style: BorderStyle.solid,
-                        )
-                      : BorderSide.none,
-                ),
-              ),
-              FloatingActionButton(
-                heroTag: "7-Color",
-                onPressed: () {
-                  setState(() {
-                    newPolygon.color = Colors.yellow;
-                  });
-                },
-                backgroundColor: Colors.yellow,
-                shape: CircleBorder(
-                  side: newPolygon.color == Colors.yellow || newPolygon.color == HexColor(Colors.yellow.value.toRadixString(16))
-                      ? BorderSide(
-                          color: Colors.red,
-                          width: 3,
-                          style: BorderStyle.solid,
-                        )
-                      : BorderSide.none,
-                ),
-              ),
-            ],
-          ),
-        ),
+            builder: (context, setState) => ColorPicker(
+                  oldColor: newPolygon.color,
+                  onColorChanged: (color) {
+                    setState(() {
+                      newPolygon.color = color;
+                    });
+                  },
+                )),
         Padding(
           padding: EdgeInsets.fromLTRB(0, 10, 0, 5),
           child: RaisedButton(
