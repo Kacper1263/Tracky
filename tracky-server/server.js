@@ -90,7 +90,7 @@ try {
         console.log("Config file created, you can now edit it")
         return readline.keyInPause("\nProgram ended...")
     } else {
-        console.log("Error occurred: " + e + "\n\nYou can try to delete config file")
+        console.log("Error occurred: " + e + "\n\nYou can try to delete config file if you can't fix this error")
         return readline.keyInPause("\nProgram ended...")
     }
 }
