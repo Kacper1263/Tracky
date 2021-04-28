@@ -66,8 +66,6 @@ class _HomePageState extends State<HomePage> {
       StaticVariables.autoChatConnect = sharedPreferences.getBool("autoChatConnect") ?? true;
     });
 
-    lanServerIpController.text = StaticVariables.lanServerIp;
-
     // Check server status
     checkServerStatus();
 
@@ -118,6 +116,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
               applicationIcon: GestureDetector(
                 onLongPress: () async {
                   String hardwareID = await FlutterUdid.udid;
+                  lanServerIpController.text = StaticVariables.lanServerIp;
                   Dialogs.infoDialogWithWidgetBody(
                     context,
                     titleText: "Developer options",
@@ -162,6 +161,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
                     okBtnText: "Close",
                     onOkBtn: () {
                       // Update lan server ip
+                      print(lanServerIpController.text.isEmpty);
                       if (lanServerIpController.text.isEmpty) {
                         StaticVariables.lanServerIp = "192.168.1.50";
                       } else {
