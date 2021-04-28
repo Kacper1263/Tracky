@@ -36,11 +36,13 @@ import 'package:http/http.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import "package:latlong/latlong.dart";
+import 'package:permission_handler/permission_handler.dart';
 import 'package:screen/screen.dart';
 import 'package:tracky/CustomWidgets/ColorPicker.dart';
 import 'package:tracky/Dialogs.dart';
 
 import '../Classes.dart';
+import '../StaticVariables.dart';
 
 class EditMap extends StatefulWidget {
   EditMap({Key key, this.title, this.arguments}) : super(key: key);
@@ -90,28 +92,29 @@ class _EditMapState extends State<EditMap> {
         descriptionText:
             'Now you should see a window asking for location permissions. These permissions are needed to run the application. It is possible that you will be able to choose between "Allow only while using the app" and "Allow all the time", We RECOMMEND to choose "Allow all the time" because it will allow your location to be updated also when you lock the phone, go to the home screen or change the application to another. We will download your location ONLY if you are in a room on the server and the app is running in the background. When you close the app or leave the room, we will not use your location. If you want, you can choose to share your location only while using the app, but it can make your location update only when the screen is unlocked. While the application will be using your location, you will be informed about it by a notification on the bar. \n\nThis setting can be changed later in the system settings.',
         okBtnText: "Ok",
-        onOkBtn: () {
+        onOkBtn: () async {
           Navigator.pop(context);
-          BackgroundLocation.getPermissions(
-            onGranted: () {
+          var permission = await Permission.locationAlways.request();
+          if (permission.isGranted) {
+            permissionDenied = false;
+            startEditor();
+          } else {
+            if (await Permission.location.isGranted) {
               permissionDenied = false;
-              startEditor();
-            },
-            onDenied: () {
+            } else {
               permissionDenied = true;
-              if (permissionDenied) {
-                Fluttertoast.showToast(
-                  msg: "Without permission enabled your location will not be updated!",
-                  toastLength: Toast.LENGTH_LONG,
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
-                  gravity: ToastGravity.BOTTOM,
-                  fontSize: 14,
-                );
-              }
-              startEditor();
-            },
-          );
+              Fluttertoast.showToast(
+                msg: "Without permission enabled your location will not be updated!",
+                toastLength: Toast.LENGTH_LONG,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
+                gravity: ToastGravity.BOTTOM,
+                fontSize: 14,
+              );
+            }
+
+            startEditor();
+          }
         },
       );
     } else if (permissionStatus.toString() == "PermissionStatus.denied") {
@@ -546,7 +549,7 @@ class _EditMapState extends State<EditMap> {
     );
     String url;
     if (data["serverInLan"])
-      url = "http://192.168.1.50:5050/api/v1/room/${data["roomID"]}";
+      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/${data["roomID"]}";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomID"]}";
 
@@ -618,7 +621,7 @@ class _EditMapState extends State<EditMap> {
     Dialogs.loadingDialog(context, titleText: "Updating map", descriptionText: "Updating map on server. Please wait...");
     String url;
     if (data["serverInLan"])
-      url = "http://192.168.1.50:5050/api/v1/room/map/${data["roomID"]}";
+      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/map/${data["roomID"]}";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/map/${data["roomID"]}";
 
@@ -766,7 +769,16 @@ class _EditMapState extends State<EditMap> {
                   polygons[index].name =
                       _newTextController.text.length > 0 ? _newTextController.text : "Polygon " + DateTime.now().toString();
                   polygons[index].color = newPolygon.color;
-                  polygons[index].polygon.color = newPolygon.color.withOpacity(0.5);
+                  Polygon newPolyObject = new Polygon(
+                    borderColor: polygons[index].polygon.borderColor,
+                    borderStrokeWidth: polygons[index].polygon.borderStrokeWidth,
+                    color: newPolygon.color.withOpacity(0.5), // New value
+                    disableHolesBorder: polygons[index].polygon.disableHolesBorder,
+                    holePointsList: polygons[index].polygon.holePointsList,
+                    isDotted: polygons[index].polygon.isDotted,
+                    points: polygons[index].polygon.points,
+                  );
+                  polygons[index].polygon = newPolyObject;
                 });
               }
             },

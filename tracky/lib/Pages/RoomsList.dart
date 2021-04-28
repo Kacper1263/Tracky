@@ -375,7 +375,7 @@ class _RoomsListState extends State<RoomsList> {
     String url;
     String hardwareID = await FlutterUdid.udid;
     if (data["serverInLan"])
-      url = "http://192.168.1.50:5050/api/v1/room/all?hardwareID=$hardwareID";
+      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/all?hardwareID=$hardwareID";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/all?hardwareID=$hardwareID";
 
@@ -408,7 +408,7 @@ class _RoomsListState extends State<RoomsList> {
   Future<bool> joinRoom(int id, String team, String password) async {
     String url;
     if (data["serverInLan"])
-      url = "http://192.168.1.50:5050/api/v1/room/join/$id";
+      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/join/$id";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/join/$id";
 
@@ -446,7 +446,7 @@ class _RoomsListState extends State<RoomsList> {
   Future<bool> refreshRoomTime(int id, int indexOfRoom, String timeBefore) async {
     String url;
     if (data["serverInLan"])
-      url = "http://192.168.1.50:5050/api/v1/room/refresh/$id";
+      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/refresh/$id";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/refresh/$id";
 

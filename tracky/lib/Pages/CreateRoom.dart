@@ -41,6 +41,8 @@ import 'package:tracky/CustomWidgets/ColorPicker.dart';
 import 'package:tracky/Dialogs.dart';
 import 'package:uuid/uuid.dart';
 
+import '../StaticVariables.dart';
+
 class CreateRoom extends StatefulWidget {
   final Object arguments;
 
@@ -417,8 +419,8 @@ class _CreateRoomState extends State<CreateRoom> {
                       String url;
                       if (data["serverInLan"])
                         url = data["editRoom"] == true
-                            ? "http://192.168.1.50:5050/api/v1/room/update"
-                            : "http://192.168.1.50:5050/api/v1/room/create";
+                            ? "http://${StaticVariables.lanServerIp}:5050/api/v1/room/update"
+                            : "http://${StaticVariables.lanServerIp}:5050/api/v1/room/create";
                       else
                         url = data["editRoom"] == true
                             ? "https://kacpermarcinkiewicz.com:5050/api/v1/room/update"
@@ -591,7 +593,8 @@ class _CreateRoomState extends State<CreateRoom> {
                             );
                             String url;
                             if (data["serverInLan"])
-                              url = "http://192.168.1.50:5050/api/v1/room/${data["roomID"]}?hardwareID=${data["hardwareID"]}";
+                              url =
+                                  "http://${StaticVariables.lanServerIp}:5050/api/v1/room/${data["roomID"]}?hardwareID=${data["hardwareID"]}";
                             else
                               url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomID"]}?hardwareID=${data["hardwareID"]}";
 
@@ -659,7 +662,7 @@ class _CreateRoomState extends State<CreateRoom> {
   exportRoom() async {
     String url;
     if (data["serverInLan"])
-      url = "http://192.168.1.50:5050/api/v1/room/export/${data["roomID"]}";
+      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/export/${data["roomID"]}";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/export/${data["roomID"]}";
 
@@ -794,7 +797,7 @@ class _CreateRoomState extends State<CreateRoom> {
 
     String url;
     if (data["serverInLan"])
-      url = "http://192.168.1.50:5050/api/v1/room/import/new";
+      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/import/new";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/import/new";
 

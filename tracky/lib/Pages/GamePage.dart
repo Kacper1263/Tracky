@@ -262,7 +262,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   void updateAndFetchDataFromServer() {
     String url;
     if (data["serverInLan"])
-      url = "http://192.168.1.50:5050/api/v1/room/${data["roomId"]}";
+      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/${data["roomId"]}";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomId"]}";
     post(
@@ -430,7 +430,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   void leaveGame() async {
     String url;
     if (data["serverInLan"])
-      url = "http://192.168.1.50:5050/api/v1/room/leave/${data["roomId"]}";
+      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/leave/${data["roomId"]}";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/leave/${data["roomId"]}";
 
@@ -521,8 +521,10 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       return WillPopScope(
         onWillPop: () {
           if (showChat) {
-            showChat = false;
-            hideTopMenu = false;
+            setState(() {
+              showChat = false;
+              hideTopMenu = false;
+            });
             FocusScope.of(context).unfocus();
             return Future.value(false);
           }
@@ -941,7 +943,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     setState(() => chatConnecting = true);
     var url;
     if (data["serverInLan"])
-      url = "ws://192.168.1.50:5051";
+      url = "ws://${StaticVariables.lanServerIp}:5051";
     else
       url = "wss://kacpermarcinkiewicz.com:5051";
 

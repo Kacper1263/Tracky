@@ -1,6 +1,7 @@
 class StaticVariables {
   static Version version = Version();
   static bool autoChatConnect = true;
+  static String lanServerIp = "192.168.1.50";
 }
 
 class Version {

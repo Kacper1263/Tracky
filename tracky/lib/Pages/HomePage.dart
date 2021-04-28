@@ -56,12 +56,17 @@ class _HomePageState extends State<HomePage> {
 
   SharedPreferences sharedPreferences;
 
+  TextEditingController nicknameController = new TextEditingController();
+  TextEditingController lanServerIpController = new TextEditingController();
+
   @override
   void initState() {
     SharedPreferences.getInstance().then((value) {
       sharedPreferences = value;
       StaticVariables.autoChatConnect = sharedPreferences.getBool("autoChatConnect") ?? true;
     });
+
+    lanServerIpController.text = StaticVariables.lanServerIp;
 
     // Check server status
     checkServerStatus();
@@ -89,8 +94,6 @@ By clicking agree and using this app you agree to privacy policy available on Go
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController nicknameController = new TextEditingController();
-
     return Scaffold(
       appBar: AppBar(
         title: Text("Tracky"),
@@ -121,6 +124,21 @@ By clicking agree and using this app you agree to privacy policy available on Go
                     descriptionWidgets: <Widget>[
                       SelectableText("Your hardware ID: $hardwareID", style: TextStyle(color: Colors.white)),
                       SizedBox(height: 20),
+                      Text("Lan server IP", style: TextStyle(color: Colors.white)),
+                      TextField(
+                        keyboardType: TextInputType.text,
+                        textCapitalization: TextCapitalization.none,
+                        style: TextStyle(color: Colors.white),
+                        controller: lanServerIpController,
+                        decoration: InputDecoration(
+                          counterStyle: TextStyle(fontSize: 0),
+                          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
+                          border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+                          hintText: 'Enter lan server ip',
+                          hintStyle: TextStyle(color: Colors.grey[500]),
+                        ),
+                      ),
                       // Wrap(
                       //   crossAxisAlignment: WrapCrossAlignment.center,
                       //   children: [
@@ -142,7 +160,15 @@ By clicking agree and using this app you agree to privacy policy available on Go
                       // )
                     ],
                     okBtnText: "Close",
-                    onOkBtn: () => Navigator.pop(context),
+                    onOkBtn: () {
+                      // Update lan server ip
+                      if (lanServerIpController.text.isEmpty) {
+                        StaticVariables.lanServerIp = "192.168.1.50";
+                      } else {
+                        StaticVariables.lanServerIp = lanServerIpController.text;
+                      }
+                      Navigator.pop(context);
+                    },
                   );
                 },
                 child: Image.asset(
@@ -324,7 +350,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
             textColor: Colors.white);
       }
       get(
-        "http://192.168.1.50:5050/ping",
+        "http://${StaticVariables.lanServerIp}:5050/ping",
       ).timeout(Duration(seconds: 10)).then((r) {
         setState(() {
           if (r.statusCode == 200) {
