@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import "package:latlong/latlong.dart";
@@ -8,6 +10,7 @@ class Player {
   String name;
   Color color;
   String icon;
+  double iconRotation;
   LatLng location;
   bool isHidden;
 
@@ -15,6 +18,7 @@ class Player {
     this.name,
     this.color,
     this.icon,
+    this.iconRotation = 0,
     this.location,
     this.isHidden = false,
   });
@@ -30,10 +34,16 @@ class Player {
             Container(
               child: OutlineText(this.name),
             ),
-            Icon(
-              isHidden ? NamedIcons.getIconByName("hidden") : NamedIcons.getIconByName(this.icon),
-              color: this.color,
-              size: 35,
+            Transform.rotate(
+              angle: 180 * pi / 180,
+              child: Transform.rotate(
+                angle: this.iconRotation * pi / 180,
+                child: Icon(
+                  isHidden ? NamedIcons.getIconByName("hidden") : NamedIcons.getIconByName(this.icon),
+                  color: this.color,
+                  size: 35,
+                ),
+              ),
             ),
           ],
         ),
@@ -104,7 +114,7 @@ class ServerTeam {}
 
 class NamedIcons {
   static var icons = <String, IconData>{
-    "thisPlayer": Icons.arrow_drop_down_circle,
+    "thisPlayer": Icons.arrow_drop_down_circle_rounded,
     "normal": Icons.radio_button_checked,
     "enemy": Icons.radio_button_unchecked,
     "dead": Icons.sentiment_very_dissatisfied,

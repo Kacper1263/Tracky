@@ -27,8 +27,8 @@ SOFTWARE.
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
+import 'package:flutter_compass/flutter_compass.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:location/location.dart' as loc;
 import 'package:background_location/background_location.dart';
 import 'package:http/http.dart';
@@ -77,11 +77,12 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   // Player settings
   bool hidePlayerOnMap = false;
 
-  //Location variables
+  //Location/rotation variables
   Location _locationData = null;
   int lastUpdate = 0;
   bool permissionDenied = false;
   bool firstTimeZoomedBefore = false; // change this to true after first time finding GPS location
+  Timer compassTimer;
 
   // Chat
   bool showChat = false;
@@ -222,6 +223,15 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
 
     WidgetsBinding.instance.addObserver(this);
 
+    // Update device rotation
+    var rotation;
+    compassTimer = Timer.periodic(Duration(seconds: 1), (timer) async {
+      rotation = await FlutterCompass.events.first;
+      setState(() {
+        thisPlayer?.iconRotation = rotation;
+      });
+    });
+
     super.initState();
   }
 
@@ -241,6 +251,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     Screen.keepOn(false);
     WidgetsBinding.instance.removeObserver(this);
     chatFocusNode.dispose();
+    compassTimer.cancel();
     super.dispose();
   }
 
@@ -988,14 +999,23 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
         },
         cancelOnError: false,
         onDone: () {
-          setState(() {
+          void onDoneAction() {
             chatConnected = false;
             chatConnecting = false;
             chatMessages.insert(
               0,
               new ChatMessage(ChatMessageType.INFO_DISCONNECTED_OR_ERROR, "[DISCONNECTED]"),
             );
-          });
+          }
+
+          // To prevent memory leaks
+          if (mounted) {
+            setState(() {
+              onDoneAction();
+            });
+          } else {
+            onDoneAction();
+          }
         },
         onError: (e) {
           setState(() {
