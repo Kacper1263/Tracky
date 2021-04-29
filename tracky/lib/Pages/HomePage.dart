@@ -254,6 +254,8 @@ By clicking agree and using this app you agree to privacy policy available on Go
                               "hardwareID": hardwareID,
                             },
                           );
+                        }).catchError((err) {
+                          showErrorToast(err.toString());
                         });
                       } else {
                         showErrorToast(
