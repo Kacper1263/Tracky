@@ -31,7 +31,6 @@ import 'package:intl/intl.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:location/location.dart' as loc;
 import 'package:background_location/background_location.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -39,6 +38,7 @@ import "package:latlong/latlong.dart";
 import 'package:permission_handler/permission_handler.dart';
 import 'package:screen/screen.dart';
 import 'package:tracky/Dialogs.dart';
+import 'package:tracky/GlobalFunctions.dart';
 import 'package:tracky/StaticVariables.dart';
 import 'package:web_socket_channel/io.dart';
 
@@ -117,13 +117,8 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
               permissionDenied = false;
             } else {
               permissionDenied = true;
-              Fluttertoast.showToast(
-                msg: "Without permission enabled your location will not be updated!",
-                toastLength: Toast.LENGTH_LONG,
-                backgroundColor: Colors.red,
-                textColor: Colors.white,
-                gravity: ToastGravity.BOTTOM,
-                fontSize: 14,
+              showErrorToast(
+                "Without permission enabled your location will not be updated!",
               );
             }
 
@@ -133,13 +128,8 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       );
     } else if (permissionStatus.toString() == "PermissionStatus.denied") {
       permissionDenied = true;
-      Fluttertoast.showToast(
-        msg: "Without permission enabled your location will not be updated!",
-        toastLength: Toast.LENGTH_LONG,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        gravity: ToastGravity.BOTTOM,
-        fontSize: 14,
+      showErrorToast(
+        "Without permission enabled your location will not be updated!",
       );
       startGame();
     } else if (permissionStatus.toString() == "PermissionStatus.granted") {
@@ -160,13 +150,8 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     if (!gpsEnabled) {
       gpsEnabled = await _location.requestService();
       if (!gpsEnabled) {
-        Fluttertoast.showToast(
-          msg: "Without GPS enabled your location will not be updated and you will be connected to server only every 20s!",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          gravity: ToastGravity.BOTTOM,
-          fontSize: 14,
+        showErrorToast(
+          "Without GPS enabled your location will not be updated and you will be connected to server only every 20s!",
         );
       }
     }
@@ -277,35 +262,20 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     ).timeout(Duration(seconds: 20)).then((res) {
       if (connectionLost) {
         connectionLost = false;
-        Fluttertoast.showToast(
-          msg: "Reconnected",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.lightGreen,
-          textColor: Colors.white,
-          gravity: ToastGravity.BOTTOM,
-          fontSize: 14,
+        showSuccessToast(
+          "Reconnected",
         );
       }
 
       if (res.statusCode != 200) {
         try {
           var response = jsonDecode(res.body);
-          Fluttertoast.showToast(
-            msg: "Error while updating position. ${response["message"]}",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            gravity: ToastGravity.BOTTOM,
-            fontSize: 12,
+          showErrorToast(
+            "Error while updating position. ${response["message"]}",
           );
         } catch (e) {
-          Fluttertoast.showToast(
-            msg: "Error while updating position. Server returned code ${res.statusCode}",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            gravity: ToastGravity.BOTTOM,
-            fontSize: 12,
+          showErrorToast(
+            "Error while updating position. Server returned code ${res.statusCode}",
           );
         }
 
@@ -373,31 +343,16 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     }).catchError((e) {
       if (e.toString().contains("TimeoutException")) {
         connectionLost = true;
-        Fluttertoast.showToast(
-          msg: "Connection to server lost. Trying to reconnect",
-          toastLength: Toast.LENGTH_SHORT,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          gravity: ToastGravity.BOTTOM,
-          fontSize: 12,
+        showErrorToast(
+          "Connection to server lost. Trying to reconnect",
         );
       } else if (e.toString().contains("Network is unreachable")) {
-        Fluttertoast.showToast(
-          msg: "No internet connection!",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          gravity: ToastGravity.BOTTOM,
-          fontSize: 14,
+        showErrorToast(
+          "No internet connection!",
         );
       } else {
-        Fluttertoast.showToast(
-          msg: "Error: $e",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          gravity: ToastGravity.BOTTOM,
-          fontSize: 12,
+        showErrorToast(
+          "Error: $e",
         );
       }
     });
@@ -443,18 +398,17 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       var r = jsonDecode(response.body);
 
       if (response.statusCode != 200) {
-        Fluttertoast.showToast(
-            msg: "Error while leaving room: ${r["message"]}",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white);
+        showErrorToast(
+          "Error while leaving room: ${r["message"]}",
+        );
         return;
       }
 
       return;
     } catch (e) {
-      Fluttertoast.showToast(
-          msg: "Error while leaving room: $e", toastLength: Toast.LENGTH_LONG, backgroundColor: Colors.red, textColor: Colors.white);
+      showErrorToast(
+        "Error while leaving room: $e",
+      );
       return;
     }
   }
@@ -928,13 +882,9 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
         ),
       );
     } catch (e) {
-      Fluttertoast.showToast(
-          msg: "View error: $e",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          gravity: ToastGravity.BOTTOM,
-          fontSize: 12);
+      showErrorToast(
+        "View error: $e",
+      );
     }
   }
 

@@ -29,10 +29,9 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_udid/flutter_udid.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
-import 'package:tracky/Classes.dart';
 import 'package:tracky/Dialogs.dart';
+import 'package:tracky/GlobalFunctions.dart';
 import 'package:tracky/StaticVariables.dart';
 
 class RoomsList extends StatefulWidget {
@@ -313,11 +312,8 @@ class _RoomsListState extends State<RoomsList> {
                                                       joined = await joinRoom(
                                                           rooms[index]["id"], rooms[index]["teams"][i]["id"], _password.text);
                                                     } catch (e) {
-                                                      Fluttertoast.showToast(
-                                                        msg: "Error while joining team: $e",
-                                                        toastLength: Toast.LENGTH_LONG,
-                                                        backgroundColor: Colors.red,
-                                                        textColor: Colors.white,
+                                                      showErrorToast(
+                                                        "Error while joining team: $e",
                                                       );
                                                       return;
                                                     }
@@ -385,11 +381,9 @@ class _RoomsListState extends State<RoomsList> {
       var json = jsonDecode(response.body);
 
       if (response.statusCode != 200) {
-        Fluttertoast.showToast(
-            msg: "Error while loading rooms: ${response.body}",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white);
+        showErrorToast(
+          "Error while loading rooms: ${response.body}",
+        );
         return null;
       }
 
@@ -399,8 +393,9 @@ class _RoomsListState extends State<RoomsList> {
       return rooms;
     } catch (e) {
       setState(() => errorWhileLoading = true);
-      Fluttertoast.showToast(
-          msg: "Error while loading rooms: $e", toastLength: Toast.LENGTH_LONG, backgroundColor: Colors.red, textColor: Colors.white);
+      showErrorToast(
+        "Error while loading rooms: $e",
+      );
       return null;
     }
   }
@@ -413,11 +408,8 @@ class _RoomsListState extends State<RoomsList> {
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/join/$id";
 
     try {
-      Fluttertoast.showToast(
-        msg: "Joining team. Please wait",
-        toastLength: Toast.LENGTH_SHORT,
-        backgroundColor: Colors.grey[700],
-        textColor: Colors.white,
+      showInfoToast(
+        "Joining team. Please wait",
       );
 
       var response = await post(url, body: {
@@ -429,16 +421,15 @@ class _RoomsListState extends State<RoomsList> {
       if (response.statusCode == 200) {
         return true;
       } else {
-        Fluttertoast.showToast(
-            msg: "Error while joining team: ${jsonDecode(response.body)["message"]}",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white);
+        showErrorToast(
+          "Error while joining team: ${jsonDecode(response.body)["message"]}",
+        );
         return false;
       }
     } catch (e) {
-      Fluttertoast.showToast(
-          msg: "Error while joining team: $e", toastLength: Toast.LENGTH_LONG, backgroundColor: Colors.red, textColor: Colors.white);
+      showErrorToast(
+        "Error while joining team: $e",
+      );
       return false;
     }
   }
@@ -450,33 +441,24 @@ class _RoomsListState extends State<RoomsList> {
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/refresh/$id";
 
-    Fluttertoast.showToast(
-      msg: "Refreshing room time. Please wait",
-      toastLength: Toast.LENGTH_LONG,
-      backgroundColor: Colors.grey[700],
-      textColor: Colors.white,
+    showInfoToast(
+      "Refreshing room time. Please wait",
     );
 
     try {
       var response = await post(url).timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        Fluttertoast.showToast(
-          msg: "Room expiry time refreshed!",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
+        showSuccessToast(
+          "Room expiry time refreshed!",
         );
         setState(() {
           rooms[indexOfRoom]["expiresIn"] = "48";
         });
         return true;
       } else {
-        Fluttertoast.showToast(
-          msg: "Error while refreshing room time: ${response.body}",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
+        showErrorToast(
+          "Error while refreshing room time: ${response.body}",
         );
         setState(() {
           rooms[indexOfRoom]["expiresIn"] = timeBefore;
@@ -484,11 +466,8 @@ class _RoomsListState extends State<RoomsList> {
         return false;
       }
     } catch (e) {
-      Fluttertoast.showToast(
-        msg: "Error while refreshing room time: $e",
-        toastLength: Toast.LENGTH_LONG,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
+      showErrorToast(
+        "Error while refreshing room time: $e",
       );
       setState(() {
         rooms[indexOfRoom]["expiresIn"] = timeBefore;

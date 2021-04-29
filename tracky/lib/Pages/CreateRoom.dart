@@ -33,12 +33,12 @@ import 'package:dio/dio.dart' as dio;
 import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:tracky/Classes.dart';
 import 'package:tracky/CustomWidgets/ColorPicker.dart';
 import 'package:tracky/Dialogs.dart';
+import 'package:tracky/GlobalFunctions.dart';
 import 'package:uuid/uuid.dart';
 
 import '../StaticVariables.dart';
@@ -81,11 +81,8 @@ class _CreateRoomState extends State<CreateRoom> {
             "teamPassword": "",
           });
         } catch (e) {
-          Fluttertoast.showToast(
-            msg: "Error while loading team data: $e",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
+          showErrorToast(
+            "Error while loading team data: $e",
           );
         }
       }
@@ -399,19 +396,13 @@ class _CreateRoomState extends State<CreateRoom> {
                 : RaisedButton(
                     onPressed: () async {
                       if (roomNameController.text.length > 40) {
-                        Fluttertoast.showToast(
-                          msg: "Room name length must be lower than 41",
-                          toastLength: Toast.LENGTH_LONG,
-                          backgroundColor: Colors.red,
-                          textColor: Colors.white,
+                        showErrorToast(
+                          "Room name length must be lower than 41",
                         );
                         return;
                       } else if (roomNameController.text.length <= 3) {
-                        Fluttertoast.showToast(
-                          msg: "Room name length must be higher than 3",
-                          toastLength: Toast.LENGTH_LONG,
-                          backgroundColor: Colors.red,
-                          textColor: Colors.white,
+                        showErrorToast(
+                          "Room name length must be higher than 3",
                         );
                         return;
                       }
@@ -427,47 +418,32 @@ class _CreateRoomState extends State<CreateRoom> {
                             : "https://kacpermarcinkiewicz.com:5050/api/v1/room/create";
 
                       if (teams.length <= 0) {
-                        Fluttertoast.showToast(
-                          msg: "You need to create one or more teams",
-                          toastLength: Toast.LENGTH_LONG,
-                          backgroundColor: Colors.red,
-                          textColor: Colors.white,
+                        showErrorToast(
+                          "You need to create one or more teams",
                         );
                         setState(() => sending = false);
                         return;
                       } else if (!validateTeamNameNotEmpty()) {
-                        Fluttertoast.showToast(
-                          msg: "One or more teams have empty name",
-                          toastLength: Toast.LENGTH_LONG,
-                          backgroundColor: Colors.red,
-                          textColor: Colors.white,
+                        showErrorToast(
+                          "One or more teams have empty name",
                         );
                         setState(() => sending = false);
                         return;
                       } else if (!validateTeamNamesLength()) {
-                        Fluttertoast.showToast(
-                          msg: "One or more teams have name longer than 35",
-                          toastLength: Toast.LENGTH_LONG,
-                          backgroundColor: Colors.red,
-                          textColor: Colors.white,
+                        showErrorToast(
+                          "One or more teams have name longer than 35",
                         );
                         setState(() => sending = false);
                         return;
                       } else if (!validateTeamColors()) {
-                        Fluttertoast.showToast(
-                          msg: "One or more teams have unselected color",
-                          toastLength: Toast.LENGTH_LONG,
-                          backgroundColor: Colors.red,
-                          textColor: Colors.white,
+                        showErrorToast(
+                          "One or more teams have unselected color",
                         );
                         setState(() => sending = false);
                         return;
                       } else {
-                        Fluttertoast.showToast(
-                          msg: data["editRoom"] == true ? "Updating room. Please wait" : "Creating room. Please wait",
-                          toastLength: Toast.LENGTH_LONG,
-                          backgroundColor: Colors.grey[700],
-                          textColor: Colors.white,
+                        showInfoToast(
+                          data["editRoom"] == true ? "Updating room. Please wait" : "Creating room. Please wait",
                         );
 
                         // Hash passwords before sending if needed
@@ -484,13 +460,8 @@ class _CreateRoomState extends State<CreateRoom> {
                             }
                           });
                         } catch (e) {
-                          Fluttertoast.showToast(
-                            msg: "Error while hashing team password. $e",
-                            toastLength: Toast.LENGTH_LONG,
-                            backgroundColor: Colors.red,
-                            textColor: Colors.white,
-                            gravity: ToastGravity.BOTTOM,
-                            fontSize: 12,
+                          showErrorToast(
+                            "Error while hashing team password. $e",
                           );
                           setState(() => sending = false);
                           return;
@@ -518,11 +489,8 @@ class _CreateRoomState extends State<CreateRoom> {
                           if (response.statusCode == 200) {
                             var json = jsonDecode(response.body);
 
-                            Fluttertoast.showToast(
-                              msg: data["editRoom"] == true ? "Room updated!" : "Room created!",
-                              toastLength: Toast.LENGTH_LONG,
-                              backgroundColor: Colors.green,
-                              textColor: Colors.white,
+                            showSuccessToast(
+                              data["editRoom"] == true ? "Room updated!" : "Room created!",
                             );
                             Navigator.pop(context);
                             Navigator.pushReplacementNamed(
@@ -540,22 +508,18 @@ class _CreateRoomState extends State<CreateRoom> {
                             );
                             return;
                           } else {
-                            Fluttertoast.showToast(
-                                msg: data["editRoom"] == true
-                                    ? "Error while updating room: ${jsonDecode(response.body)["message"]}"
-                                    : "Error while creating room: ${jsonDecode(response.body)["message"]}",
-                                toastLength: Toast.LENGTH_LONG,
-                                backgroundColor: Colors.red,
-                                textColor: Colors.white);
+                            showErrorToast(
+                              data["editRoom"] == true
+                                  ? "Error while updating room: ${jsonDecode(response.body)["message"]}"
+                                  : "Error while creating room: ${jsonDecode(response.body)["message"]}",
+                            );
                             setState(() => sending = false);
                             return;
                           }
                         } catch (e) {
-                          Fluttertoast.showToast(
-                              msg: data["editRoom"] == true ? "Error while updating room: $e" : "Error while creating room: $e",
-                              toastLength: Toast.LENGTH_LONG,
-                              backgroundColor: Colors.red,
-                              textColor: Colors.white);
+                          showErrorToast(
+                            data["editRoom"] == true ? "Error while updating room: $e" : "Error while creating room: $e",
+                          );
                           setState(() => sending = false);
                           return;
                         }
@@ -602,28 +566,19 @@ class _CreateRoomState extends State<CreateRoom> {
 
                             if (response.statusCode == 200) {
                               Navigator.pop(context); // Pop loading
-                              Fluttertoast.showToast(
-                                msg: "Room deleted!",
-                                toastLength: Toast.LENGTH_LONG,
-                                backgroundColor: Colors.green,
-                                textColor: Colors.white,
+                              showSuccessToast(
+                                "Room deleted!",
                               );
                             } else {
                               Navigator.pop(context); // Pop loading
-                              Fluttertoast.showToast(
-                                msg: "Error while deleting room: ${jsonDecode(response.body)["message"]}",
-                                toastLength: Toast.LENGTH_LONG,
-                                backgroundColor: Colors.red,
-                                textColor: Colors.white,
+                              showErrorToast(
+                                "Error while deleting room: ${jsonDecode(response.body)["message"]}",
                               );
                             }
                           } catch (e) {
                             Navigator.pop(context); // Pop loading
-                            Fluttertoast.showToast(
-                              msg: "Error while deleting room: $e",
-                              toastLength: Toast.LENGTH_LONG,
-                              backgroundColor: Colors.red,
-                              textColor: Colors.white,
+                            showErrorToast(
+                              "Error while deleting room: $e",
                             );
                           }
                           Navigator.pop(context);
@@ -686,11 +641,8 @@ class _CreateRoomState extends State<CreateRoom> {
           await Permission.storage.request();
           status = await Permission.storage.status;
           if (!status.isGranted) {
-            Fluttertoast.showToast(
-              msg: "Cannot save file without permission!",
-              toastLength: Toast.LENGTH_LONG,
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
+            showErrorToast(
+              "Cannot save file without permission!",
             );
             return;
           }
@@ -714,11 +666,8 @@ class _CreateRoomState extends State<CreateRoom> {
 
         var binDataToSave = binaryCodec.encode(encodedJson);
         if (encodedJson.toString() != binaryCodec.decode(binDataToSave).toString()) {
-          Fluttertoast.showToast(
-            msg: "Error while creating save file. Data mismatch",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
+          showErrorToast(
+            "Error while creating save file. Data mismatch",
           );
         }
 
@@ -736,30 +685,21 @@ class _CreateRoomState extends State<CreateRoom> {
             "searchBarText": "ID " + data["roomID"].toString() + ": " + data["roomName"].toString()
           },
         );
-        Fluttertoast.showToast(
-          msg: "Room exported to: " + path,
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.lightGreen,
-          textColor: Colors.white,
+        showSuccessToast(
+          "Room exported to: " + path,
         );
         return;
       } else {
         Navigator.pop(context); // Pop loading
-        Fluttertoast.showToast(
-          msg: "Error while creating room: ${jsonDecode(response.body)["message"]}",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
+        showErrorToast(
+          "Error while creating room: ${jsonDecode(response.body)["message"]}",
         );
         return;
       }
     } catch (e) {
       Navigator.pop(context); // Pop loading
-      Fluttertoast.showToast(
-        msg: "Error while creating room: $e",
-        toastLength: Toast.LENGTH_LONG,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
+      showErrorToast(
+        "Error while creating room: $e",
       );
       return;
     }
@@ -773,11 +713,8 @@ class _CreateRoomState extends State<CreateRoom> {
       await Permission.storage.request();
       status = await Permission.storage.status;
       if (!status.isGranted) {
-        Fluttertoast.showToast(
-          msg: "Cannot save file without permission!",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
+        showErrorToast(
+          "Cannot save file without permission!",
         );
         return;
       }
@@ -823,11 +760,8 @@ class _CreateRoomState extends State<CreateRoom> {
           ),
         );
       } catch (e) {
-        Fluttertoast.showToast(
-          msg: "Error. This file is not valid room save",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
+        showErrorToast(
+          "Error. This file is not valid room save",
         );
         Navigator.pop(context); // pop loading
         return;
@@ -843,11 +777,8 @@ class _CreateRoomState extends State<CreateRoom> {
         var json = response.data;
 
         Navigator.pop(context); // Pop loading
-        Fluttertoast.showToast(
-          msg: "Room created!",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
+        showSuccessToast(
+          "Room created!",
         );
         Navigator.pop(context);
         Navigator.pushReplacementNamed(
@@ -863,20 +794,15 @@ class _CreateRoomState extends State<CreateRoom> {
         return;
       } else {
         Navigator.pop(context); // Pop loading
-        Fluttertoast.showToast(
-            msg: "Error while creating room: ${jsonDecode(response.data)["message"]}",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white);
+        showErrorToast(
+          "Error while creating room: ${jsonDecode(response.data)["message"]}",
+        );
         return;
       }
     } catch (e) {
       Navigator.pop(context); // Pop loading
-      Fluttertoast.showToast(
-        msg: "Error while creating room: $e",
-        toastLength: Toast.LENGTH_LONG,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
+      showErrorToast(
+        "Error while creating room: $e",
       );
       return;
     }

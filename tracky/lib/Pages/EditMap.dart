@@ -30,7 +30,6 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_map/plugin_api.dart';
 import 'package:location/location.dart' as loc;
 import 'package:background_location/background_location.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geodesy/geodesy.dart';
 import 'package:http/http.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +39,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:screen/screen.dart';
 import 'package:tracky/CustomWidgets/ColorPicker.dart';
 import 'package:tracky/Dialogs.dart';
+import 'package:tracky/GlobalFunctions.dart';
 
 import '../Classes.dart';
 import '../StaticVariables.dart';
@@ -103,13 +103,8 @@ class _EditMapState extends State<EditMap> {
               permissionDenied = false;
             } else {
               permissionDenied = true;
-              Fluttertoast.showToast(
-                msg: "Without permission enabled your location will not be updated!",
-                toastLength: Toast.LENGTH_LONG,
-                backgroundColor: Colors.red,
-                textColor: Colors.white,
-                gravity: ToastGravity.BOTTOM,
-                fontSize: 14,
+              showErrorToast(
+                "Without permission enabled your location will not be updated!",
               );
             }
 
@@ -120,13 +115,8 @@ class _EditMapState extends State<EditMap> {
     } else if (permissionStatus.toString() == "PermissionStatus.denied") {
       permissionDenied = true;
       if (permissionDenied) {
-        Fluttertoast.showToast(
-          msg: "Without permission enabled your location will not be updated!",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          gravity: ToastGravity.BOTTOM,
-          fontSize: 14,
+        showErrorToast(
+          "Without permission enabled your location will not be updated!",
         );
       }
       startEditor();
@@ -145,13 +135,8 @@ class _EditMapState extends State<EditMap> {
     if (!gpsEnabled) {
       gpsEnabled = await _location.requestService();
       if (!gpsEnabled) {
-        Fluttertoast.showToast(
-          msg: "Without GPS enabled your location will not be updated!",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          gravity: ToastGravity.BOTTOM,
-          fontSize: 14,
+        showErrorToast(
+          "Without GPS enabled your location will not be updated!",
         );
       }
     }
@@ -530,13 +515,9 @@ class _EditMapState extends State<EditMap> {
             )),
       );
     } catch (e) {
-      Fluttertoast.showToast(
-          msg: "View error: $e",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          gravity: ToastGravity.BOTTOM,
-          fontSize: 12);
+      showErrorToast(
+        "View error: $e",
+      );
     }
   }
 
@@ -583,20 +564,14 @@ class _EditMapState extends State<EditMap> {
 
         setState(() {});
 
-        Fluttertoast.showToast(
-          msg: "Map data loaded!",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
+        showSuccessToast(
+          "Map data loaded!",
         );
         Navigator.pop(context); // Pop loading
         return;
       } else {
-        Fluttertoast.showToast(
-          msg: "Error while loading map data: ${jsonDecode(response.body)["message"]}",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
+        showErrorToast(
+          "Error while loading map data: ${jsonDecode(response.body)["message"]}",
         );
         BackgroundLocation.stopLocationService();
         Navigator.pop(context); // Pop loading
@@ -604,11 +579,8 @@ class _EditMapState extends State<EditMap> {
         return;
       }
     } catch (e) {
-      Fluttertoast.showToast(
-        msg: "Error while loading map data: $e",
-        toastLength: Toast.LENGTH_LONG,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
+      showErrorToast(
+        "Error while loading map data: $e",
       );
       BackgroundLocation.stopLocationService();
       Navigator.pop(context); // Pop loading
@@ -660,11 +632,8 @@ class _EditMapState extends State<EditMap> {
       if (response.statusCode == 200) {
         var json = jsonDecode(response.body);
 
-        Fluttertoast.showToast(
-          msg: "Map data updated!",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
+        showSuccessToast(
+          "Map data updated!",
         );
         Navigator.pop(context); // Pop loading
         Navigator.pop(context); // Pop map
@@ -681,17 +650,16 @@ class _EditMapState extends State<EditMap> {
         );
         return;
       } else {
-        Fluttertoast.showToast(
-            msg: "Error while updating data: ${jsonDecode(response.body)["message"]}",
-            toastLength: Toast.LENGTH_LONG,
-            backgroundColor: Colors.red,
-            textColor: Colors.white);
+        showErrorToast(
+          "Error while updating data: ${jsonDecode(response.body)["message"]}",
+        );
         Navigator.pop(context);
         return;
       }
     } catch (e) {
-      Fluttertoast.showToast(
-          msg: "Error while updating data: $e", toastLength: Toast.LENGTH_LONG, backgroundColor: Colors.red, textColor: Colors.white);
+      showErrorToast(
+        "Error while updating data: $e",
+      );
       Navigator.pop(context);
       return;
     }
@@ -739,13 +707,8 @@ class _EditMapState extends State<EditMap> {
           child: RaisedButton(
             onPressed: () {
               if (newPolygon.color == null) {
-                Fluttertoast.showToast(
-                  msg: "You need to set color",
-                  toastLength: Toast.LENGTH_LONG,
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
-                  gravity: ToastGravity.BOTTOM,
-                  fontSize: 12,
+                showErrorToast(
+                  "You need to set color",
                 );
                 return;
               }
@@ -753,13 +716,8 @@ class _EditMapState extends State<EditMap> {
               Navigator.pop(context);
 
               if (oldPolygon == null) {
-                Fluttertoast.showToast(
-                  msg: "Tap on map to add polygon points, then click save",
-                  toastLength: Toast.LENGTH_LONG,
-                  backgroundColor: Colors.grey,
-                  textColor: Colors.white,
-                  gravity: ToastGravity.BOTTOM,
-                  fontSize: 12,
+                showInfoToast(
+                  "Tap on map to add polygon points, then click save",
                 );
 
                 newPolygon.name = _newTextController.text.length > 0 ? _newTextController.text : "Polygon " + DateTime.now().toString();
@@ -859,35 +817,22 @@ class _EditMapState extends State<EditMap> {
           child: RaisedButton(
             onPressed: () {
               if (_newTextController.text.length <= 0) {
-                Fluttertoast.showToast(
-                  msg: "Text must have 1 or more characters",
-                  toastLength: Toast.LENGTH_LONG,
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
-                  gravity: ToastGravity.BOTTOM,
-                  fontSize: 12,
+                showErrorToast(
+                  "Text must have 1 or more characters",
                 );
                 return;
               }
               if (_newTextController.text.length > 40) {
-                Fluttertoast.showToast(
-                  msg: "Content length must be lower than 40",
-                  toastLength: Toast.LENGTH_LONG,
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
+                showErrorToast(
+                  "Content length must be lower than 40",
                 );
                 return;
               }
 
               newTextMarker.text = _newTextController.text;
 
-              Fluttertoast.showToast(
-                msg: "Tap on place where you want to add this text",
-                toastLength: Toast.LENGTH_LONG,
-                backgroundColor: Colors.grey,
-                textColor: Colors.white,
-                gravity: ToastGravity.BOTTOM,
-                fontSize: 12,
+              showInfoToast(
+                "Tap on place where you want to add this text",
               );
 
               Navigator.pop(context);
@@ -942,22 +887,14 @@ class _EditMapState extends State<EditMap> {
           child: RaisedButton(
             onPressed: () {
               if (_newTextController.text.length > 40) {
-                Fluttertoast.showToast(
-                  msg: "Content length must be lower than 40",
-                  toastLength: Toast.LENGTH_LONG,
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
+                showErrorToast(
+                  "Content length must be lower than 40",
                 );
                 return;
               }
               if (_newTextController.text.length <= 0) {
-                Fluttertoast.showToast(
-                  msg: "Text must have 1 or more characters",
-                  toastLength: Toast.LENGTH_LONG,
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
-                  gravity: ToastGravity.BOTTOM,
-                  fontSize: 12,
+                showErrorToast(
+                  "Text must have 1 or more characters",
                 );
               } else {
                 setState(() {

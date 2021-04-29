@@ -31,6 +31,7 @@ import 'package:flutter_udid/flutter_udid.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tracky/GlobalFunctions.dart';
 import 'package:tracky/StaticVariables.dart';
 
 import '../Dialogs.dart';
@@ -161,7 +162,6 @@ By clicking agree and using this app you agree to privacy policy available on Go
                     okBtnText: "Close",
                     onOkBtn: () {
                       // Update lan server ip
-                      print(lanServerIpController.text.isEmpty);
                       if (lanServerIpController.text.isEmpty) {
                         StaticVariables.lanServerIp = "192.168.1.50";
                       } else {
@@ -236,12 +236,9 @@ By clicking agree and using this app you agree to privacy policy available on Go
                   ? null
                   : () {
                       if (nicknameController.text.length > 25) {
-                        Fluttertoast.showToast(
-                            msg: "Nickname must contains less than 26 characters",
-                            toastLength: Toast.LENGTH_LONG,
-                            fontSize: 16,
-                            backgroundColor: Colors.red,
-                            textColor: Colors.white);
+                        showErrorToast(
+                          "Nickname must contains less than 26 characters",
+                        );
 
                         return;
                       }
@@ -259,12 +256,9 @@ By clicking agree and using this app you agree to privacy policy available on Go
                           );
                         });
                       } else {
-                        Fluttertoast.showToast(
-                            msg: "Nickname must contains more than 2 characters",
-                            toastLength: Toast.LENGTH_LONG,
-                            fontSize: 16,
-                            backgroundColor: Colors.red,
-                            textColor: Colors.white);
+                        showErrorToast(
+                          "Nickname must contains more than 2 characters",
+                        );
                       }
                     },
               padding: EdgeInsets.all(12),
@@ -342,12 +336,9 @@ By clicking agree and using this app you agree to privacy policy available on Go
     }).catchError((e) {
       print(e);
       if (e.toString().contains("WRONG_VERSION_NUMBER")) {
-        Fluttertoast.showToast(
-            msg: "Cannot connect to the server. Probably the SSL certificate has expired. Please contact us at slowcast.dev@gmail.com.",
-            toastLength: Toast.LENGTH_LONG,
-            fontSize: 16,
-            backgroundColor: Colors.red,
-            textColor: Colors.white);
+        showErrorToast(
+          "Cannot connect to the server. Probably the SSL certificate has expired. Please contact us at slowcast.dev@gmail.com.",
+        );
       }
       get(
         "http://${StaticVariables.lanServerIp}:5050/ping",
