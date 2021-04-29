@@ -501,23 +501,24 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
             children: [
               FlutterMap(
                 mapController: mapController,
-                key: GlobalObjectKey("map-key"),
-                options: MapOptions(
-                  center: LatLng(0, 0),
-                  zoom: 15.0,
-                  maxZoom: 19.3,
-                ),
                 layers: [
                   TileLayerOptions(
                     urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                     subdomains: ['a', 'b', 'c'],
-                    tileProvider: NonCachingNetworkTileProvider(), // CachedNetworkTileProvider()
+                    //tileProvider: NonCachingNetworkTileProvider(),
                     maxZoom: 24.0,
                   ),
                   PolygonLayerOptions(polygonCulling: true, polygons: polygons.map((element) => element.polygon).toList()),
                   MarkerLayerOptions(markers: textMarkers.map((tMarker) => tMarker.getMarker()).toList()),
                   MarkerLayerOptions(markers: markers)
                 ],
+                key: GlobalObjectKey("map-key"),
+                options: MapOptions(
+                  interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                  center: LatLng(0, 0),
+                  zoom: 15.0,
+                  maxZoom: 19.3,
+                ),
               ),
               Container(
                 color: Colors.grey[900],
