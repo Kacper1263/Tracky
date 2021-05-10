@@ -30,7 +30,7 @@ import 'dart:typed_data';
 import 'package:binary_codec/binary_codec.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart' as dio;
-import 'package:filesystem_picker/filesystem_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
@@ -648,16 +648,19 @@ class _CreateRoomState extends State<CreateRoom> {
           }
         }
 
-        String path = await FilesystemPicker.open(
-          title: 'Save to folder',
-          context: context,
-          rootDirectory: Directory("/storage/emulated/0/"),
-          fsType: FilesystemType.folder,
-          pickText: 'Save file to this folder',
-          folderIconColor: Colors.teal,
-        );
+        String path = await FilePicker.platform.getDirectoryPath();
+        // await FilesystemPicker.open(
+        //   title: 'Save to folder',
+        //   context: context,
+        //   rootDirectory: Directory((await getApplicationDocumentsDirectory()).toString()),
+        //   //rootDirectory: Directory("/storage/emulated/0/"),
+        //   fsType: FilesystemType.folder,
+        //   pickText: 'Save file to this folder',
+        //   folderIconColor: Colors.teal,
+        // );
+        if (path == null) return;
 
-        path = path + "${json["room"]["name"]} ${DateTime.now().millisecondsSinceEpoch}.trd"; //? trd - Tracky Room Data :)
+        path = path + "/${json["room"]["name"]} ${DateTime.now().millisecondsSinceEpoch}.trd"; //? trd - Tracky Room Data :)
 
         const JsonEncoder encoder = JsonEncoder.withIndent('  ');
         var dataToSave = {};
@@ -720,15 +723,18 @@ class _CreateRoomState extends State<CreateRoom> {
       }
     }
 
-    String path = await FilesystemPicker.open(
-      title: 'Open file',
-      context: context,
-      rootDirectory: Directory("/storage/emulated/0/"),
-      fsType: FilesystemType.file,
-      folderIconColor: Colors.teal,
-      allowedExtensions: ['.trd'],
-      fileTileSelectMode: FileTileSelectMode.wholeTile,
-    );
+    String path =
+        (await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['trd', 'txt', 'bin']))?.files?.single?.path;
+    // await FilesystemPicker.open(
+    //   title: 'Open file',
+    //   context: context,
+    //   rootDirectory: Directory((await getExternalStorageDirectory()).toString()),
+    //   // rootDirectory: Directory("/storage/emulated/0/Download/"),
+    //   fsType: FilesystemType.file,
+    //   folderIconColor: Colors.teal,
+    //   allowedExtensions: ['.trd'],
+    //   fileTileSelectMode: FileTileSelectMode.wholeTile,
+    // );
 
     if (path == null) return;
 
