@@ -648,20 +648,6 @@ class _CreateRoomState extends State<CreateRoom> {
           }
         }
 
-        String path = await FilePicker.platform.getDirectoryPath();
-        // await FilesystemPicker.open(
-        //   title: 'Save to folder',
-        //   context: context,
-        //   rootDirectory: Directory((await getApplicationDocumentsDirectory()).toString()),
-        //   //rootDirectory: Directory("/storage/emulated/0/"),
-        //   fsType: FilesystemType.folder,
-        //   pickText: 'Save file to this folder',
-        //   folderIconColor: Colors.teal,
-        // );
-        if (path == null) return;
-
-        path = path + "/${json["room"]["name"]} ${DateTime.now().millisecondsSinceEpoch}.trd"; //? trd - Tracky Room Data :)
-
         const JsonEncoder encoder = JsonEncoder.withIndent('  ');
         var dataToSave = {};
         dataToSave["room"] = json["room"];
@@ -674,8 +660,20 @@ class _CreateRoomState extends State<CreateRoom> {
           );
         }
 
-        File file = File(path);
-        await file.writeAsString(binDataToSave.toString());
+        const platform = const MethodChannel('tracky.kacpermarcinkiewicz.com/files');
+        try {
+          bool result = await platform.invokeMethod('saveFile', {
+            "bytes": utf8.encode(binDataToSave.toString()), // utf8.encode - this will convert string to bytes array
+            "name": "${json["room"]["name"]} ${DateTime.now().millisecondsSinceEpoch}.trd" //? trd - tracky room data :)
+          });
+          if (result != true) {
+            showErrorToast("Error while exporting room! ");
+            return;
+          }
+        } catch (e) {
+          showErrorToast("Error while exporting room! " + e.message);
+          return;
+        }
 
         Navigator.pop(context);
         Navigator.pushReplacementNamed(
@@ -689,20 +687,20 @@ class _CreateRoomState extends State<CreateRoom> {
           },
         );
         showSuccessToast(
-          "Room exported to: " + path,
+          "Room exported ",
         );
         return;
       } else {
         Navigator.pop(context); // Pop loading
         showErrorToast(
-          "Error while creating room: ${jsonDecode(response.body)["message"]}",
+          "Error while exporting room: ${jsonDecode(response.body)["message"]}",
         );
         return;
       }
     } catch (e) {
       Navigator.pop(context); // Pop loading
       showErrorToast(
-        "Error while creating room: $e",
+        "Error while exporting room: ${e.message != null ? e.message : e}",
       );
       return;
     }
@@ -717,26 +715,11 @@ class _CreateRoomState extends State<CreateRoom> {
       status = await Permission.storage.status;
       if (!status.isGranted) {
         showErrorToast(
-          "Cannot save file without permission!",
+          "Cannot load file without permission!",
         );
         return;
       }
     }
-
-    String path =
-        (await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['trd', 'txt', 'bin']))?.files?.single?.path;
-    // await FilesystemPicker.open(
-    //   title: 'Open file',
-    //   context: context,
-    //   rootDirectory: Directory((await getExternalStorageDirectory()).toString()),
-    //   // rootDirectory: Directory("/storage/emulated/0/Download/"),
-    //   fsType: FilesystemType.file,
-    //   folderIconColor: Colors.teal,
-    //   allowedExtensions: ['.trd'],
-    //   fileTileSelectMode: FileTileSelectMode.wholeTile,
-    // );
-
-    if (path == null) return;
 
     String url;
     if (data["serverInLan"])
@@ -747,12 +730,12 @@ class _CreateRoomState extends State<CreateRoom> {
     Dialogs.loadingDialog(
       context,
       titleText: "Import room",
-      descriptionText: "Sending room data. Please wait...",
+      descriptionText: "Importing room data. Please wait...",
     );
 
     try {
-      File file = File(path);
-      dynamic fileString = await file.readAsString();
+      const platform = const MethodChannel('tracky.kacpermarcinkiewicz.com/files');
+      dynamic fileString = await platform.invokeMethod("readFile");
 
       var fileContent;
       try {
@@ -801,14 +784,14 @@ class _CreateRoomState extends State<CreateRoom> {
       } else {
         Navigator.pop(context); // Pop loading
         showErrorToast(
-          "Error while creating room: ${jsonDecode(response.data)["message"]}",
+          "Error while importing room: ${jsonDecode(response.data)["message"]}",
         );
         return;
       }
     } catch (e) {
       Navigator.pop(context); // Pop loading
       showErrorToast(
-        "Error while creating room: $e",
+        "Error while importing room: ${e.message != null ? e.message : e}",
       );
       return;
     }

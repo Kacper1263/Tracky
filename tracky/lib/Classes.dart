@@ -24,6 +24,7 @@ class Player {
   });
 
   Marker getMarker() {
+    if (iconRotation == null) iconRotation = 0;
     return Marker(
       width: 350.0,
       height: 80.0,
