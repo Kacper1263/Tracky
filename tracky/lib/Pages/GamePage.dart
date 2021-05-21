@@ -83,6 +83,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   bool permissionDenied = false;
   bool firstTimeZoomedBefore = false; // change this to true after first time finding GPS location
   Timer compassTimer;
+  bool lockMapToPlayer = false;
 
   // Chat
   bool showChat = false;
@@ -375,6 +376,10 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
         try {
           thisPlayer.getMarker().point.latitude = _locationData.latitude;
           thisPlayer.getMarker().point.longitude = _locationData.longitude;
+
+          if (lockMapToPlayer) {
+            mapController.move(LatLng(_locationData.latitude, _locationData.longitude), mapController.zoom);
+          }
         } catch (e) {
           print(e);
         }
@@ -383,6 +388,10 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   }
 
   void findMe() {
+    setState(() {
+      lockMapToPlayer = !lockMapToPlayer;
+    });
+
     try {
       mapController.move(
         LatLng(_locationData != null ? _locationData.latitude : 0, _locationData != null ? _locationData.longitude : 0),
@@ -529,6 +538,13 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                   center: LatLng(0, 0),
                   zoom: 15.0,
                   maxZoom: 19.3,
+                  onPositionChanged: (position, hasGesture) {
+                    if (hasGesture == true && lockMapToPlayer == true) {
+                      setState(() {
+                        lockMapToPlayer = false;
+                      });
+                    }
+                  },
                 ),
               ),
               Container(
@@ -879,6 +895,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                     ),
                     SizedBox(height: 10),
                     FloatingActionButton(
+                      backgroundColor: lockMapToPlayer ? null : Colors.grey[800],
                       heroTag: "btn3",
                       onPressed: () {
                         setState(() {

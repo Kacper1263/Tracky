@@ -58,7 +58,7 @@ class Dialogs {
             ),
             actions: <Widget>[
               FlatButton(
-                child: Text(cancelText),
+                child: Text(cancelText, style: TextStyle(color: Colors.white)),
                 onPressed: onCancel,
               ),
               FlatButton(
@@ -92,7 +92,10 @@ class Dialogs {
           ),
           actions: <Widget>[
             FlatButton(
-              child: Text("No"),
+              child: Text(
+                "No",
+                style: TextStyle(color: Colors.white),
+              ),
               onPressed: onCancel,
             ),
             FlatButton(
