@@ -27,7 +27,9 @@ SOFTWARE.
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_compass/flutter_compass.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:intl/intl.dart';
 import 'package:location/location.dart' as loc;
 import 'package:background_location/background_location.dart';
@@ -222,8 +224,6 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
 
     if (StaticVariables.autoChatConnect) connectToChat();
 
-    WidgetsBinding.instance.addObserver(this);
-
     // Update device rotation
     var rotation;
     compassTimer = Timer.periodic(Duration(seconds: 1), (timer) async {
@@ -233,16 +233,21 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       });
     });
 
-    super.initState();
-  }
-
-  @override
-  void didChangeMetrics() {
-    super.didChangeMetrics();
-    final value = WidgetsBinding.instance.window.viewInsets.bottom;
-    if (value == 0 && showChat) {
-      chatFocusNode.unfocus();
+    // Check is keyboard visible (for chat text field unfocus)
+    try {
+      var keyboardVisibilityController = KeyboardVisibilityController();
+      keyboardVisibilityController.onChange.listen((bool visible) {
+        try {
+          if (!visible) chatFocusNode.unfocus();
+        } catch (er) {
+          print("Error while checking keyboard visibility! " + er);
+        }
+      });
+    } catch (e) {
+      print("Error while subscribing to keyboard visibility listener! " + e);
     }
+
+    super.initState();
   }
 
   @override
@@ -250,7 +255,6 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     updateTimer?.cancel();
     BackgroundLocation.stopLocationService();
     Screen.keepOn(false);
-    WidgetsBinding.instance.removeObserver(this);
     chatFocusNode.dispose();
     compassTimer.cancel();
     super.dispose();
