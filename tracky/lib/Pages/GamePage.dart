@@ -73,6 +73,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
 
   var otherPlayers = <Player>[];
 
+  StreamSubscription keyboardVisibilityListener;
   MapController mapController;
   Timer updateTimer;
 
@@ -236,7 +237,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     // Check is keyboard visible (for chat text field unfocus)
     try {
       var keyboardVisibilityController = KeyboardVisibilityController();
-      keyboardVisibilityController.onChange.listen((bool visible) {
+      keyboardVisibilityListener = keyboardVisibilityController.onChange.listen((bool visible) {
         try {
           if (!visible) chatFocusNode.unfocus();
         } catch (er) {
@@ -257,6 +258,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     Screen.keepOn(false);
     chatFocusNode.dispose();
     compassTimer.cancel();
+    keyboardVisibilityListener?.cancel();
     super.dispose();
   }
 
