@@ -36,7 +36,7 @@ import 'package:background_location/background_location.dart';
 import 'package:http/http.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import "package:latlong/latlong.dart";
+import "package:latlong2/latlong.dart";
 import 'package:permission_handler/permission_handler.dart';
 import 'package:screen/screen.dart';
 import 'package:tracky/Dialogs.dart';
@@ -102,7 +102,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
 
   /// Run it only on start
   Future<bool> getLocation() async {
-    var permissionStatus = await BackgroundLocation.checkPermissions();
+    var permissionStatus = await Permission.locationAlways.status;
     print(permissionStatus);
     if (permissionStatus.toString() == "PermissionStatus.undetermined" || permissionStatus.toString() == "PermissionStatus.denied") {
       await Dialogs.infoDialog(
@@ -226,11 +226,11 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     if (StaticVariables.autoChatConnect) connectToChat();
 
     // Update device rotation
-    var rotation;
+    CompassEvent rotation;
     compassTimer = Timer.periodic(Duration(seconds: 1), (timer) async {
       rotation = await FlutterCompass.events.first;
       setState(() {
-        thisPlayer?.iconRotation = rotation;
+        thisPlayer?.iconRotation = rotation.heading;
       });
     });
 
@@ -257,7 +257,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     BackgroundLocation.stopLocationService();
     Screen.keepOn(false);
     chatFocusNode.dispose();
-    compassTimer.cancel();
+    compassTimer?.cancel();
     keyboardVisibilityListener?.cancel();
     super.dispose();
   }
@@ -265,11 +265,11 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   void updateAndFetchDataFromServer() {
     String url;
     if (data["serverInLan"])
-      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/${data["roomId"]}";
+      url = "${StaticVariables.lanServerIp}:5050/api/v1/room/${data["roomId"]}";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomId"]}";
     post(
-      url,
+      Uri.parse(url),
       body: {
         "teamId": data["teamId"],
         "playerName": data["nickname"],
@@ -411,12 +411,12 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   void leaveGame() async {
     String url;
     if (data["serverInLan"])
-      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/leave/${data["roomId"]}";
+      url = "${StaticVariables.lanServerIp}:5050/api/v1/room/leave/${data["roomId"]}";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/leave/${data["roomId"]}";
 
     try {
-      var response = await post(url, body: {
+      var response = await post(Uri.parse(url), body: {
         "playerName": data["nickname"],
         "teamId": data["teamId"],
       });
@@ -928,7 +928,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     setState(() => chatConnecting = true);
     var url;
     if (data["serverInLan"])
-      url = "ws://${StaticVariables.lanServerIp}:5051";
+      url = "${StaticVariables.lanServerIp.replaceAll("http://", "ws://").replaceAll("https://", "ws://")}:5051";
     else
       url = "wss://kacpermarcinkiewicz.com:5051";
 

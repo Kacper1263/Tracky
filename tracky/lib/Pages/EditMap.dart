@@ -27,6 +27,7 @@ SOFTWARE.
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_map/plugin_api.dart';
 import 'package:location/location.dart' as loc;
 import 'package:background_location/background_location.dart';
@@ -34,12 +35,12 @@ import 'package:geodesy/geodesy.dart';
 import 'package:http/http.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import "package:latlong/latlong.dart";
 import 'package:permission_handler/permission_handler.dart';
 import 'package:screen/screen.dart';
 import 'package:tracky/CustomWidgets/ColorPicker.dart';
 import 'package:tracky/Dialogs.dart';
 import 'package:tracky/GlobalFunctions.dart';
+import "package:latlong2/latlong.dart";
 
 import '../Classes.dart';
 import '../StaticVariables.dart';
@@ -56,6 +57,7 @@ class EditMap extends StatefulWidget {
 
 class _EditMapState extends State<EditMap> {
   Map data;
+  Timer compassTimer;
 
   var thisPlayer = new Player(
     name: "You",
@@ -83,7 +85,7 @@ class _EditMapState extends State<EditMap> {
 
   /// Run it only on start
   Future<bool> getLocation() async {
-    var permissionStatus = await BackgroundLocation.checkPermissions();
+    var permissionStatus = await Permission.locationAlways.status;
     print(permissionStatus);
     if (permissionStatus.toString() == "PermissionStatus.undetermined" || permissionStatus.toString() == "PermissionStatus.denied") {
       await Dialogs.infoDialog(
@@ -175,6 +177,15 @@ class _EditMapState extends State<EditMap> {
 
     mapController = MapController();
 
+    // Update device rotation
+    CompassEvent rotation;
+    compassTimer = Timer.periodic(Duration(seconds: 1), (timer) async {
+      rotation = await FlutterCompass.events.first;
+      setState(() {
+        thisPlayer?.iconRotation = rotation.heading;
+      });
+    });
+
     getLocation();
 
     super.initState();
@@ -183,6 +194,7 @@ class _EditMapState extends State<EditMap> {
   @override
   void dispose() {
     Screen.keepOn(false);
+    compassTimer?.cancel();
     super.dispose();
   }
 
@@ -530,14 +542,14 @@ class _EditMapState extends State<EditMap> {
     );
     String url;
     if (data["serverInLan"])
-      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/${data["roomID"]}";
+      url = "${StaticVariables.lanServerIp}:5050/api/v1/room/${data["roomID"]}";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomID"]}";
 
     try {
       Response response;
 
-      response = await get(url).timeout(Duration(seconds: 10));
+      response = await get(Uri.parse(url)).timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         var json = jsonDecode(response.body);
@@ -593,7 +605,7 @@ class _EditMapState extends State<EditMap> {
     Dialogs.loadingDialog(context, titleText: "Updating map", descriptionText: "Updating map on server. Please wait...");
     String url;
     if (data["serverInLan"])
-      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/map/${data["roomID"]}";
+      url = "${StaticVariables.lanServerIp}:5050/api/v1/room/map/${data["roomID"]}";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/map/${data["roomID"]}";
 
@@ -621,7 +633,7 @@ class _EditMapState extends State<EditMap> {
       });
 
       response = await post(
-        url,
+        Uri.parse(url),
         body: {
           "hardwareID": data["hardwareID"],
           "textMarkers": json.encode(textMarkersForServer),

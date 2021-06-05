@@ -371,12 +371,12 @@ class _RoomsListState extends State<RoomsList> {
     String url;
     String hardwareID = await FlutterUdid.udid;
     if (data["serverInLan"])
-      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/all?hardwareID=$hardwareID";
+      url = "${StaticVariables.lanServerIp}:5050/api/v1/room/all?hardwareID=$hardwareID";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/all?hardwareID=$hardwareID";
 
     try {
-      var response = await get(url).timeout(Duration(seconds: 20));
+      var response = await get(Uri.parse(url)).timeout(Duration(seconds: 20));
 
       var json = jsonDecode(response.body);
 
@@ -403,7 +403,7 @@ class _RoomsListState extends State<RoomsList> {
   Future<bool> joinRoom(int id, String team, String password) async {
     String url;
     if (data["serverInLan"])
-      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/join/$id";
+      url = "${StaticVariables.lanServerIp}:5050/api/v1/room/join/$id";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/join/$id";
 
@@ -412,7 +412,7 @@ class _RoomsListState extends State<RoomsList> {
         "Joining team. Please wait",
       );
 
-      var response = await post(url, body: {
+      var response = await post(Uri.parse(url), body: {
         "playerName": data["nickname"],
         "teamId": team,
         "teamPassword": sha256.convert(utf8.encode(password)).toString(),
@@ -437,7 +437,7 @@ class _RoomsListState extends State<RoomsList> {
   Future<bool> refreshRoomTime(int id, int indexOfRoom, String timeBefore) async {
     String url;
     if (data["serverInLan"])
-      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/refresh/$id";
+      url = "${StaticVariables.lanServerIp}:5050/api/v1/room/refresh/$id";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/refresh/$id";
 
@@ -446,7 +446,7 @@ class _RoomsListState extends State<RoomsList> {
     );
 
     try {
-      var response = await post(url).timeout(Duration(seconds: 10));
+      var response = await post(Uri.parse(url)).timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         showSuccessToast(

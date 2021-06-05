@@ -163,7 +163,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
                     onOkBtn: () {
                       // Update lan server ip
                       if (lanServerIpController.text.isEmpty) {
-                        StaticVariables.lanServerIp = "192.168.1.50";
+                        StaticVariables.lanServerIp = "http://192.168.1.50";
                       } else {
                         StaticVariables.lanServerIp = lanServerIpController.text;
                       }
@@ -322,7 +322,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
     });
 
     get(
-      "https://kacpermarcinkiewicz.com:5050/ping",
+      Uri.parse("https://kacpermarcinkiewicz.com:5050/ping"),
     ).timeout(Duration(seconds: 10)).then((response) {
       setState(() {
         if (response.statusCode == 200) {
@@ -343,7 +343,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
         );
       }
       get(
-        "http://${StaticVariables.lanServerIp}:5050/ping",
+        Uri.parse("${StaticVariables.lanServerIp}:5050/ping"),
       ).timeout(Duration(seconds: 10)).then((r) {
         setState(() {
           if (r.statusCode == 200) {

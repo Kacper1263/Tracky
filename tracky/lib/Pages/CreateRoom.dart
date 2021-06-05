@@ -409,8 +409,8 @@ class _CreateRoomState extends State<CreateRoom> {
                       String url;
                       if (data["serverInLan"])
                         url = data["editRoom"] == true
-                            ? "http://${StaticVariables.lanServerIp}:5050/api/v1/room/update"
-                            : "http://${StaticVariables.lanServerIp}:5050/api/v1/room/create";
+                            ? "${StaticVariables.lanServerIp}:5050/api/v1/room/update"
+                            : "${StaticVariables.lanServerIp}:5050/api/v1/room/create";
                       else
                         url = data["editRoom"] == true
                             ? "https://kacpermarcinkiewicz.com:5050/api/v1/room/update"
@@ -469,7 +469,7 @@ class _CreateRoomState extends State<CreateRoom> {
                         try {
                           Response response;
                           if (data["editRoom"] == true) {
-                            response = await patch(url, body: {
+                            response = await patch(Uri.parse(url), body: {
                               "roomID": data["roomID"].toString(),
                               "roomName": roomNameController.text,
                               "showEnemyTeam": showEnemyTeam.toString(),
@@ -477,7 +477,7 @@ class _CreateRoomState extends State<CreateRoom> {
                               "hardwareID": data["hardwareID"]
                             }).timeout(Duration(seconds: 10));
                           } else {
-                            response = await post(url, body: {
+                            response = await post(Uri.parse(url), body: {
                               "roomName": roomNameController.text,
                               "showEnemyTeam": showEnemyTeam.toString(),
                               "ownerHardwareID": data["hardwareID"],
@@ -556,12 +556,11 @@ class _CreateRoomState extends State<CreateRoom> {
                             );
                             String url;
                             if (data["serverInLan"])
-                              url =
-                                  "http://${StaticVariables.lanServerIp}:5050/api/v1/room/${data["roomID"]}?hardwareID=${data["hardwareID"]}";
+                              url = "${StaticVariables.lanServerIp}:5050/api/v1/room/${data["roomID"]}?hardwareID=${data["hardwareID"]}";
                             else
                               url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/${data["roomID"]}?hardwareID=${data["hardwareID"]}";
 
-                            var response = await delete(url);
+                            var response = await delete(Uri.parse(url));
 
                             if (response.statusCode == 200) {
                               Navigator.pop(context); // Pop loading
@@ -616,7 +615,7 @@ class _CreateRoomState extends State<CreateRoom> {
   exportRoom() async {
     String url;
     if (data["serverInLan"])
-      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/export/${data["roomID"]}";
+      url = "${StaticVariables.lanServerIp}:5050/api/v1/room/export/${data["roomID"]}";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/export/${data["roomID"]}";
 
@@ -628,7 +627,7 @@ class _CreateRoomState extends State<CreateRoom> {
 
     try {
       Response response;
-      response = await get(url).timeout(Duration(seconds: 10));
+      response = await get(Uri.parse(url)).timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         var json = jsonDecode(response.body);
@@ -722,7 +721,7 @@ class _CreateRoomState extends State<CreateRoom> {
 
     String url;
     if (data["serverInLan"])
-      url = "http://${StaticVariables.lanServerIp}:5050/api/v1/room/import/new";
+      url = "${StaticVariables.lanServerIp}:5050/api/v1/room/import/new";
     else
       url = "https://kacpermarcinkiewicz.com:5050/api/v1/room/import/new";
 
