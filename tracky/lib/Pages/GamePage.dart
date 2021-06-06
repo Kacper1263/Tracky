@@ -928,10 +928,10 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     setState(() => chatConnecting = true);
     var url;
     if (data["serverInLan"])
-      url = "${StaticVariables.lanServerIp.replaceAll("http://", "ws://").replaceAll("https://", "ws://")}:5051";
+      url = "${StaticVariables.lanServerIp.replaceAll("http://", "ws://").replaceAll("https://", "wss://")}:5051";
     else
       url = "wss://kacpermarcinkiewicz.com:5051";
-
+    print(url);
     try {
       chatChannel?.sink?.close();
       chatChannel = IOWebSocketChannel.connect(url, pingInterval: Duration(seconds: 10));
