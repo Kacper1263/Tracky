@@ -30,6 +30,7 @@ import 'dart:ui';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:flutter_screen_wake/flutter_screen_wake.dart';
 import 'package:intl/intl.dart';
 import 'package:location/location.dart' as loc;
 import 'package:background_location/background_location.dart';
@@ -38,7 +39,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import "package:latlong2/latlong.dart";
 import 'package:permission_handler/permission_handler.dart';
-import 'package:screen/screen.dart';
 import 'package:tracky/Dialogs.dart';
 import 'package:tracky/GlobalFunctions.dart';
 import 'package:tracky/StaticVariables.dart';
@@ -211,8 +211,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
 
   @override
   void initState() {
-    Screen.keepOn(true);
-
+    FlutterScreenWake.keepOn(true);
     data = widget.arguments;
 
     thisPlayer.color = HexColor(data["teamColor"]);
@@ -255,7 +254,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   void dispose() {
     updateTimer?.cancel();
     BackgroundLocation.stopLocationService();
-    Screen.keepOn(false);
+    FlutterScreenWake.keepOn(false);
     chatFocusNode.dispose();
     compassTimer?.cancel();
     keyboardVisibilityListener?.cancel();
@@ -931,7 +930,6 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       url = "${StaticVariables.lanServerIp.replaceAll("http://", "ws://").replaceAll("https://", "wss://")}:5051";
     else
       url = "wss://kacpermarcinkiewicz.com:5051";
-    print(url);
     try {
       chatChannel?.sink?.close();
       chatChannel = IOWebSocketChannel.connect(url, pingInterval: Duration(seconds: 10));

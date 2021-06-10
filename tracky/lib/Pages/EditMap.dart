@@ -29,6 +29,7 @@ import 'dart:convert';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_map/plugin_api.dart';
+import 'package:flutter_screen_wake/flutter_screen_wake.dart';
 import 'package:location/location.dart' as loc;
 import 'package:background_location/background_location.dart';
 import 'package:geodesy/geodesy.dart';
@@ -36,7 +37,6 @@ import 'package:http/http.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:screen/screen.dart';
 import 'package:tracky/CustomWidgets/ColorPicker.dart';
 import 'package:tracky/Dialogs.dart';
 import 'package:tracky/GlobalFunctions.dart';
@@ -171,7 +171,7 @@ class _EditMapState extends State<EditMap> {
 
   @override
   void initState() {
-    Screen.keepOn(true);
+    FlutterScreenWake.keepOn(true);
 
     data = widget.arguments;
 
@@ -193,7 +193,7 @@ class _EditMapState extends State<EditMap> {
 
   @override
   void dispose() {
-    Screen.keepOn(false);
+    FlutterScreenWake.keepOn(false);
     compassTimer?.cancel();
     super.dispose();
   }
