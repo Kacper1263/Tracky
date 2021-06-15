@@ -27,7 +27,6 @@ SOFTWARE.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:binary_codec/binary_codec.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
@@ -651,8 +650,8 @@ class _CreateRoomState extends State<CreateRoom> {
         dataToSave["room"] = json["room"];
         var encodedJson = encoder.convert(dataToSave);
 
-        var binDataToSave = binaryCodec.encode(encodedJson);
-        if (encodedJson.toString() != binaryCodec.decode(binDataToSave).toString()) {
+        var binDataToSave = utf8.encode(encodedJson);
+        if (encodedJson.toString() != utf8.decode(binDataToSave).toString()) {
           showErrorToast(
             "Error while creating save file. Data mismatch",
           );
@@ -738,7 +737,7 @@ class _CreateRoomState extends State<CreateRoom> {
       var fileContent;
       try {
         fileContent = json.decode(
-          binaryCodec.decode(
+          utf8.decode(
             Uint8List.fromList(
               List<int>.from(
                 json.decode(fileString), //decode string to List<dynamic>
@@ -748,8 +747,9 @@ class _CreateRoomState extends State<CreateRoom> {
         );
       } catch (e) {
         showErrorToast(
-          "Error. This file is not valid room save",
+          "Error. This file is not valid room save or it's not compatible with this app version",
         );
+        print(e);
         Navigator.pop(context); // pop loading
         return;
       }
