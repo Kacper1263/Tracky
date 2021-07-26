@@ -225,7 +225,7 @@ class _EditMapState extends State<EditMap> {
   @override
   Widget build(BuildContext context) {
     data = widget.arguments;
-    List<Marker> markers = List<Marker>();
+    List<Marker> markers = [];
     tempMarkers.forEach((p) => markers.add(p));
     markers.add(thisPlayer.getMarker());
 
@@ -268,6 +268,7 @@ class _EditMapState extends State<EditMap> {
               updateDataOnServerAndQuit();
             },
           );
+          return Future.value(false);
         },
         child: Scaffold(
             appBar: AppBar(
@@ -316,7 +317,7 @@ class _EditMapState extends State<EditMap> {
                     }
                   } else {
                     Geodesy geodesy = Geodesy();
-                    List<ClickableMapObject> itemsInThisPlace = new List<ClickableMapObject>();
+                    List<ClickableMapObject> itemsInThisPlace = [];
                     for (NamedPolygon poly in polygons) {
                       if (geodesy.isGeoPointInPolygon(tapLocation, poly.polygon.points)) {
                         itemsInThisPlace.add(ClickableMapObject(
@@ -393,7 +394,7 @@ class _EditMapState extends State<EditMap> {
                   tileProvider: NonCachingNetworkTileProvider(), // CachedNetworkTileProvider()
                   maxZoom: 24.0,
                 ),
-                PolygonLayerOptions(polygonCulling: true, polygons: polygons.map((element) => element.polygon).toList()),
+                PolygonLayerOptions(polygonCulling: false, polygons: polygons.map((element) => element.polygon).toList()),
                 MarkerLayerOptions(markers: textMarkers.map((tMarker) => tMarker.getMarker()).toList()),
                 MarkerLayerOptions(markers: markers),
               ],
@@ -527,8 +528,17 @@ class _EditMapState extends State<EditMap> {
             )),
       );
     } catch (e) {
-      showErrorToast(
-        "View error: $e",
+      print(e);
+      return Container(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(15),
+            child: Text(
+              "View error: $e",
+              style: TextStyle(color: Colors.red, fontSize: 20, fontFamily: "Lato", decoration: TextDecoration.none),
+            ),
+          ),
+        ),
       );
     }
   }
@@ -611,8 +621,8 @@ class _EditMapState extends State<EditMap> {
 
     try {
       Response response;
-      List<dynamic> textMarkersForServer = List<dynamic>();
-      List<dynamic> polygonsForServer = List<dynamic>();
+      List<dynamic> textMarkersForServer = [];
+      List<dynamic> polygonsForServer = [];
 
       // Data for json.encode
       textMarkers.forEach((element) {
