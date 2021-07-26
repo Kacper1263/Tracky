@@ -533,7 +533,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                     //tileProvider: NonCachingNetworkTileProvider(),
                     maxZoom: 24.0,
                   ),
-                  PolygonLayerOptions(polygonCulling: true, polygons: polygons.map((element) => element.polygon).toList()),
+                  PolygonLayerOptions(polygonCulling: false, polygons: polygons.map((element) => element.polygon).toList()),
                   MarkerLayerOptions(markers: textMarkers.map((tMarker) => tMarker.getMarker()).toList()),
                   MarkerLayerOptions(markers: markers)
                 ],
