@@ -279,6 +279,7 @@ class _EditMapState extends State<EditMap> {
             body: FlutterMap(
               mapController: mapController,
               options: MapOptions(
+                interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                 center: LatLng(0, 0),
                 zoom: 15.0,
                 maxZoom: 19.3,
