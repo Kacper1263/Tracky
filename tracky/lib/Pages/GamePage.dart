@@ -28,6 +28,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_screen_wake/flutter_screen_wake.dart';
@@ -43,6 +44,7 @@ import 'package:tracky/Dialogs.dart';
 import 'package:tracky/GlobalFunctions.dart';
 import 'package:tracky/StaticVariables.dart';
 import 'package:web_socket_channel/io.dart';
+import 'package:vibrate/vibrate.dart';
 
 import '../Classes.dart';
 
@@ -982,11 +984,18 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                 );
               });
             } else if (json["messageType"] == "message") {
+              // New message form player
               setState(() {
+                // Not in chat
                 if (!showChat && !showNewMsgDot) {
                   setState(() {
                     showNewMsgDot = true;
                   });
+
+                  Vibrate.vibrateWithPauses([
+                    new Duration(milliseconds: 100),
+                    new Duration(milliseconds: 100),
+                  ]);
                 }
 
                 var author = json["nickname"];
