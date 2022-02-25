@@ -169,14 +169,14 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     BackgroundLocation.getLocationUpdates((location) {
       _locationData = location;
 
+      updatePlayerLocation();
+
       if ((DateTime.now().millisecondsSinceEpoch - lastUpdate) < 1000 * 5) {
         print("Not yet");
         return;
       }
 
       lastUpdate = DateTime.now().millisecondsSinceEpoch;
-
-      updatePlayerLocation();
 
       if (!firstTimeZoomedBefore && _locationData.latitude != 0) {
         findMe();

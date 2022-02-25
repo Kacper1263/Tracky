@@ -283,7 +283,7 @@ class _EditMapState extends State<EditMap> {
                 center: LatLng(0, 0),
                 zoom: 15.0,
                 maxZoom: 19.3,
-                onTap: (tapLocation) {
+                onTap: (tp, tapLocation) {
                   if (addingNewElement) {
                     if (newElementToAdd == TextMarker) {
                       setState(() {

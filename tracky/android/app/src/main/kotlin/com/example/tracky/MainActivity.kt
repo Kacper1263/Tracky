@@ -12,6 +12,9 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.lang.Exception
 
+import androidx.annotation.NonNull
+import io.flutter.plugins.GeneratedPluginRegistrant
+
 
 class MainActivity: FlutterActivity() {
     lateinit var myResult : MethodChannel.Result
