@@ -27,17 +27,17 @@ SOFTWARE.
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:tracky/Pages/CreateRoom.dart';
-import 'package:tracky/Pages/EditMap.dart';
-import 'package:tracky/Pages/HomePage.dart';
-import 'package:tracky/Pages/RoomsList.dart';
+import 'package:SnowKicker/Pages/CreateRoom.dart';
+import 'package:SnowKicker/Pages/EditMap.dart';
+import 'package:SnowKicker/Pages/HomePage.dart';
+import 'package:SnowKicker/Pages/RoomsList.dart';
 
 import 'Pages/GamePage.dart';
 
 // Fix for badCertificate error
 class MyHttpOverrides extends HttpOverrides {
   @override
-  HttpClient createHttpClient(SecurityContext context) {
+  HttpClient createHttpClient(context) {
     return super.createHttpClient(context)..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
   }
 }
@@ -64,12 +64,12 @@ void main() {
       print('build route for ${settings.name}');
       var routes = <String, WidgetBuilder>{
         '/': (context) => HomePage(),
-        '/roomsList': (context) => RoomsList(arguments: settings.arguments),
-        '/gamePage': (context) => GamePage(title: "Tracky", arguments: settings.arguments),
-        '/editMap': (context) => EditMap(title: "Editor", arguments: settings.arguments),
-        '/createRoom': (context) => CreateRoom(arguments: settings.arguments),
+        '/roomsList': (context) => RoomsList(arguments: settings.arguments!),
+        '/gamePage': (context) => GamePage(title: "Tracky", arguments: settings.arguments!),
+        '/editMap': (context) => EditMap(title: "Editor", arguments: settings.arguments!),
+        '/createRoom': (context) => CreateRoom(arguments: settings.arguments!),
       };
-      WidgetBuilder builder = routes[settings.name];
+      WidgetBuilder builder = routes[settings.name]!;
       return MaterialPageRoute(builder: (ctx) => builder(ctx));
     },
   ));

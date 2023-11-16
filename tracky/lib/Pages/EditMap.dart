@@ -28,7 +28,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_compass/flutter_compass.dart';
-import 'package:flutter_map/plugin_api.dart';
 import 'package:flutter_screen_wake/flutter_screen_wake.dart';
 import 'package:location/location.dart' as loc;
 import 'package:background_location/background_location.dart';
@@ -37,16 +36,16 @@ import 'package:http/http.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:tracky/CustomWidgets/ColorPicker.dart';
-import 'package:tracky/Dialogs.dart';
-import 'package:tracky/GlobalFunctions.dart';
+import 'package:SnowKicker/CustomWidgets/ColorPicker.dart';
+import 'package:SnowKicker/Dialogs.dart';
+import 'package:SnowKicker/GlobalFunctions.dart';
 import "package:latlong2/latlong.dart";
 
 import '../Classes.dart';
 import '../StaticVariables.dart';
 
 class EditMap extends StatefulWidget {
-  EditMap({Key key, this.title, this.arguments}) : super(key: key);
+  EditMap({Key? key, required this.title, required this.arguments}) : super(key: key);
 
   final String title;
   final Object arguments;
@@ -56,30 +55,30 @@ class EditMap extends StatefulWidget {
 }
 
 class _EditMapState extends State<EditMap> {
-  Map data;
-  Timer compassTimer;
+  Map data = {};
+  late Timer compassTimer;
 
   var thisPlayer = new Player(
     name: "You",
-    color: Colors.lightBlue[600],
+    color: Colors.lightBlue[600]!,
     icon: "thisPlayer",
     location: LatLng(0, 0),
   );
 
-  List<Marker> tempMarkers = List<Marker>();
-  List<TextMarker> textMarkers = List<TextMarker>();
-  List<NamedPolygon> polygons = List<NamedPolygon>();
+  List<Marker> tempMarkers = [];
+  List<TextMarker> textMarkers = [];
+  List<NamedPolygon> polygons = [];
 
-  MapController mapController;
+  late MapController mapController;
 
   bool addingNewElement = false;
-  Type newElementToAdd;
+  Type? newElementToAdd;
 
   NamedPolygon newPolygon = NamedPolygon();
   TextMarker newTextMarker = TextMarker();
 
   //Location variables
-  Location _locationData = null;
+  Location? _locationData = null;
   bool firstTimeZoomedBefore = false;
   bool permissionDenied = false;
 
@@ -154,14 +153,14 @@ class _EditMapState extends State<EditMap> {
 
       updatePlayerLocation();
 
-      if (!firstTimeZoomedBefore && _locationData.latitude != 0) {
+      if (!firstTimeZoomedBefore && _locationData?.latitude != 0) {
         findMe();
         firstTimeZoomedBefore = true;
       }
 
       try {
         print(
-          "API call. Location: ${_locationData.latitude}, ${_locationData.longitude}",
+          "API call. Location: ${_locationData?.latitude}, ${_locationData?.longitude}",
         );
       } catch (e) {
         print(e);
@@ -173,16 +172,16 @@ class _EditMapState extends State<EditMap> {
   void initState() {
     FlutterScreenWake.keepOn(true);
 
-    data = widget.arguments;
+    data = widget.arguments as Map;
 
     mapController = MapController();
 
     // Update device rotation
     CompassEvent rotation;
     compassTimer = Timer.periodic(Duration(seconds: 1), (timer) async {
-      rotation = await FlutterCompass.events.first;
+      rotation = await FlutterCompass.events!.first;
       setState(() {
-        thisPlayer?.iconRotation = rotation.heading;
+        thisPlayer.iconRotation = rotation.heading!;
       });
     });
 
@@ -194,7 +193,7 @@ class _EditMapState extends State<EditMap> {
   @override
   void dispose() {
     FlutterScreenWake.keepOn(false);
-    compassTimer?.cancel();
+    compassTimer.cancel();
     super.dispose();
   }
 
@@ -202,8 +201,7 @@ class _EditMapState extends State<EditMap> {
     if (mounted) {
       setState(() {
         try {
-          thisPlayer.getMarker().point.latitude = _locationData.latitude;
-          thisPlayer.getMarker().point.longitude = _locationData.longitude;
+          thisPlayer.location = LatLng(_locationData!.latitude!, _locationData!.longitude!);
         } catch (e) {
           print(e);
         }
@@ -214,7 +212,7 @@ class _EditMapState extends State<EditMap> {
   void findMe() {
     try {
       mapController.move(
-        LatLng(_locationData.latitude, _locationData.longitude),
+        LatLng(_locationData!.latitude!, _locationData!.longitude!),
         mapController.zoom,
       );
     } catch (e) {
@@ -224,7 +222,7 @@ class _EditMapState extends State<EditMap> {
 
   @override
   Widget build(BuildContext context) {
-    data = widget.arguments;
+    data = widget.arguments as Map;
     List<Marker> markers = [];
     tempMarkers.forEach((p) => markers.add(p));
     markers.add(thisPlayer.getMarker());
@@ -305,7 +303,7 @@ class _EditMapState extends State<EditMap> {
                             width: 150.0,
                             height: 80.0,
                             point: tapLocation,
-                            builder: (ctx) => Container(
+                            child: Container(
                               child: Icon(
                                 Icons.location_pin,
                                 color: Colors.red,
@@ -320,9 +318,9 @@ class _EditMapState extends State<EditMap> {
                     Geodesy geodesy = Geodesy();
                     List<ClickableMapObject> itemsInThisPlace = [];
                     for (NamedPolygon poly in polygons) {
-                      if (geodesy.isGeoPointInPolygon(tapLocation, poly.polygon.points)) {
+                      if (geodesy.isGeoPointInPolygon(tapLocation, poly.polygon!.points)) {
                         itemsInThisPlace.add(ClickableMapObject(
-                          name: poly.name,
+                          name: poly.name!,
                           object: poly,
                         ));
                       }

@@ -46,9 +46,9 @@ class Dialogs {
                     style: TextStyle(color: Colors.white),
                     controller: textCtrl,
                     decoration: InputDecoration(
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
-                      border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200]!)),
+                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600]!)),
+                      border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200]!)),
                       hintText: hintText,
                       hintStyle: TextStyle(color: Colors.grey[500]),
                     ),
@@ -57,16 +57,16 @@ class Dialogs {
               ),
             ),
             actions: <Widget>[
-              FlatButton(
+              ElevatedButton(
                 child: Text(cancelText, style: TextStyle(color: Colors.white)),
                 onPressed: onCancel,
               ),
-              FlatButton(
+              ElevatedButton(
                 child: Text(
                   sendText,
                   style: TextStyle(color: Colors.white),
                 ),
-                color: Colors.lightGreen,
+                style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(Colors.lightGreen)),
                 onPressed: onSend,
               )
             ],
@@ -91,19 +91,19 @@ class Dialogs {
             ),
           ),
           actions: <Widget>[
-            FlatButton(
+            ElevatedButton(
               child: Text(
                 "No",
                 style: TextStyle(color: Colors.white),
               ),
               onPressed: onCancel,
             ),
-            FlatButton(
+            ElevatedButton(
               child: Text(
                 "Yes",
                 style: TextStyle(color: Colors.white),
               ),
-              color: Colors.lightGreen,
+              style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(Colors.lightGreen)),
               onPressed: onSend,
             )
           ],
@@ -112,7 +112,7 @@ class Dialogs {
     );
   }
 
-  static infoDialog(context, {titleText, descriptionText, onOkBtn, String okBtnText}) {
+  static infoDialog(context, {titleText, descriptionText, onOkBtn, String okBtnText = "OK"}) {
     return showDialog(
       context: context,
       barrierDismissible: false,
@@ -129,12 +129,12 @@ class Dialogs {
             ),
           ),
           actions: <Widget>[
-            FlatButton(
+            ElevatedButton(
               child: Text(
                 okBtnText,
                 style: TextStyle(color: Colors.white),
               ),
-              color: Colors.lightGreen,
+              style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(Colors.lightGreen)),
               onPressed: onOkBtn,
             )
           ],
@@ -143,7 +143,7 @@ class Dialogs {
     );
   }
 
-  static infoDialogWithWidgetBody(context, {titleText, List<Widget> descriptionWidgets, onOkBtn, String okBtnText}) {
+  static infoDialogWithWidgetBody(context, {titleText, required List<Widget> descriptionWidgets, onOkBtn, String okBtnText = "OK"}) {
     return showDialog(
       context: context,
       barrierDismissible: false,
@@ -163,12 +163,12 @@ class Dialogs {
             ),
           ),
           actions: <Widget>[
-            FlatButton(
+            ElevatedButton(
               child: Text(
                 okBtnText,
                 style: TextStyle(color: Colors.white),
               ),
-              color: Colors.lightGreen,
+              style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(Colors.lightGreen)),
               onPressed: onOkBtn,
             )
           ],
@@ -183,7 +183,9 @@ class Dialogs {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return WillPopScope(
-          onWillPop: () {},
+          onWillPop: () {
+            return Future.value(false);
+          },
           child: AlertDialog(
             backgroundColor: Colors.grey[800],
             title: Center(child: Text(titleText, style: TextStyle(color: Colors.white))),

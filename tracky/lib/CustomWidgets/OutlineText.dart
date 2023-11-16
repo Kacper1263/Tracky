@@ -9,7 +9,6 @@ class OutlineText extends StatefulWidget {
 
   const OutlineText(
     this.text, {
-    Key key,
     this.textColor = Colors.white,
     this.outlineColor = Colors.black,
     this.fontSize = 18,

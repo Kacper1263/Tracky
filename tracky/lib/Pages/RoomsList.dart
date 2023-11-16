@@ -30,21 +30,21 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_udid/flutter_udid.dart';
 import 'package:http/http.dart';
-import 'package:tracky/Dialogs.dart';
-import 'package:tracky/GlobalFunctions.dart';
-import 'package:tracky/StaticVariables.dart';
+import 'package:SnowKicker/Dialogs.dart';
+import 'package:SnowKicker/GlobalFunctions.dart';
+import 'package:SnowKicker/StaticVariables.dart';
 
 class RoomsList extends StatefulWidget {
   final Object arguments;
 
-  RoomsList({Key key, this.arguments});
+  RoomsList({Key? key, required this.arguments});
   @override
   _RoomsListState createState() => _RoomsListState();
 }
 
 class _RoomsListState extends State<RoomsList> {
   Map data = {};
-  List rooms;
+  List rooms = [];
   bool errorWhileLoading = false;
 
   String roomToSearch = "";
@@ -53,10 +53,10 @@ class _RoomsListState extends State<RoomsList> {
   @override
   void initState() {
     super.initState();
-    data = widget.arguments;
+    data = widget.arguments as Map;
 
     // If page is getting text to paste in search bar, use this text
-    if (data["searchBarText"].toString().isNotEmpty) {
+    if (data["searchBarText"]?.toString().isNotEmpty ?? false) {
       setState(() {
         roomToSearch = data["searchBarText"];
         roomToSearchController.text = data["searchBarText"];
@@ -75,7 +75,7 @@ class _RoomsListState extends State<RoomsList> {
 
   @override
   Widget build(BuildContext context) {
-    data = widget.arguments;
+    data = widget.arguments as Map;
 
     return Scaffold(
       appBar: AppBar(
@@ -87,7 +87,7 @@ class _RoomsListState extends State<RoomsList> {
             icon: Icon(Icons.refresh),
             onPressed: () {
               setState(() {
-                rooms = null;
+                rooms = [];
                 errorWhileLoading = false;
               });
               getRooms().then((value) {
@@ -114,13 +114,13 @@ class _RoomsListState extends State<RoomsList> {
       body: Container(
         color: Colors.grey[900],
         padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
-        child: (rooms == null && errorWhileLoading)
+        child: (rooms.length == 0 && errorWhileLoading)
             ? Center(
                 child: Text(
                 "Error",
                 style: TextStyle(color: Colors.red, fontSize: 25),
               ))
-            : (rooms == null && !errorWhileLoading)
+            : (rooms.length == 0 && !errorWhileLoading)
                 ? Center(
                     child: Text(
                     "Loading data...",
@@ -147,12 +147,12 @@ class _RoomsListState extends State<RoomsList> {
                                           borderRadius: const BorderRadius.all(
                                             const Radius.circular(100.0),
                                           ),
-                                          borderSide: BorderSide(color: Colors.grey[200])),
+                                          borderSide: BorderSide(color: Colors.grey[200]!)),
                                       focusedBorder: OutlineInputBorder(
                                           borderRadius: const BorderRadius.all(
                                             const Radius.circular(100.0),
                                           ),
-                                          borderSide: BorderSide(color: Colors.grey[600])),
+                                          borderSide: BorderSide(color: Colors.grey[600]!)),
                                       hintText: 'Search room',
                                       hintStyle: TextStyle(color: Colors.grey[500]),
                                     ),
@@ -165,8 +165,7 @@ class _RoomsListState extends State<RoomsList> {
                                 )
                               : Container(),
                           // If search box is not empty or text on room card includes text from search box show this room
-                          roomToSearch == null ||
-                                  roomToSearch.isEmpty ||
+                          roomToSearch.isEmpty ||
                                   // Join room id with room name (add ID text and ":")
                                   ("ID " + rooms[index]["id"].toString() + ": " + rooms[index]["name"].toString())
                                       .toLowerCase()
@@ -225,13 +224,15 @@ class _RoomsListState extends State<RoomsList> {
                                                   mainAxisAlignment: MainAxisAlignment.center,
                                                   children: [
                                                     Expanded(
-                                                      child: RaisedButton(
-                                                        padding: EdgeInsets.all(12),
+                                                      child: ElevatedButton(
                                                         child: Text("Edit room", style: TextStyle(fontSize: 17)),
-                                                        color: Colors.grey[850],
-                                                        textColor: Colors.white,
-                                                        disabledColor: Colors.grey[800],
-                                                        disabledTextColor: Colors.grey[700],
+                                                        style: ElevatedButton.styleFrom(
+                                                          padding: EdgeInsets.all(12),
+                                                          backgroundColor: Colors.grey[850],
+                                                          foregroundColor: Colors.white,
+                                                          disabledBackgroundColor: Colors.grey[800],
+                                                          disabledForegroundColor: Colors.grey[700],
+                                                        ),
                                                         onPressed: () {
                                                           Navigator.pushNamed(
                                                             context,
@@ -252,13 +253,15 @@ class _RoomsListState extends State<RoomsList> {
                                                     ),
                                                     SizedBox(width: 5),
                                                     Expanded(
-                                                      child: RaisedButton(
-                                                        padding: EdgeInsets.all(12),
+                                                      child: ElevatedButton(
                                                         child: Text("Edit map", style: TextStyle(fontSize: 17)),
-                                                        color: Colors.grey[850],
-                                                        textColor: Colors.white,
-                                                        disabledColor: Colors.grey[800],
-                                                        disabledTextColor: Colors.grey[700],
+                                                        style: ElevatedButton.styleFrom(
+                                                          padding: EdgeInsets.all(12),
+                                                          backgroundColor: Colors.grey[850],
+                                                          foregroundColor: Colors.white,
+                                                          disabledBackgroundColor: Colors.grey[800],
+                                                          disabledForegroundColor: Colors.grey[700],
+                                                        ),
                                                         onPressed: () {
                                                           Navigator.pushNamed(
                                                             context,
@@ -282,75 +285,78 @@ class _RoomsListState extends State<RoomsList> {
                                             itemCount: rooms[index]["teams"].length,
                                             physics: NeverScrollableScrollPhysics(),
                                             itemBuilder: (ct, i) {
-                                              return RaisedButton(
-                                                  onPressed: () async {
-                                                    bool canceled = true;
-                                                    TextEditingController _password = new TextEditingController();
-                                                    if (rooms[index]["teams"][i]["passwordRequired"] == "true") {
-                                                      await Dialogs.oneInputDialog(
-                                                        _password,
-                                                        context,
-                                                        onCancel: () => Navigator.pop(context),
-                                                        onSend: () {
-                                                          canceled = false;
-                                                          Navigator.pop(context);
-                                                        },
-                                                        cancelText: "Cancel",
-                                                        sendText: "Join",
-                                                        titleText: "Team password",
-                                                        descriptionText: "You need to enter team password",
-                                                        hintText: "Password",
-                                                      );
-                                                    } else {
-                                                      canceled = false;
-                                                      _password.text = "";
-                                                    }
-                                                    if (canceled) return;
+                                              return ElevatedButton(
+                                                onPressed: () async {
+                                                  bool canceled = true;
+                                                  TextEditingController _password = new TextEditingController();
+                                                  if (rooms[index]["teams"][i]["passwordRequired"] == "true") {
+                                                    await Dialogs.oneInputDialog(
+                                                      _password,
+                                                      context,
+                                                      onCancel: () => Navigator.pop(context),
+                                                      onSend: () {
+                                                        canceled = false;
+                                                        Navigator.pop(context);
+                                                      },
+                                                      cancelText: "Cancel",
+                                                      sendText: "Join",
+                                                      titleText: "Team password",
+                                                      descriptionText: "You need to enter team password",
+                                                      hintText: "Password",
+                                                    );
+                                                  } else {
+                                                    canceled = false;
+                                                    _password.text = "";
+                                                  }
+                                                  if (canceled) return;
 
-                                                    bool joined;
-                                                    try {
-                                                      joined = await joinRoom(
-                                                          rooms[index]["id"], rooms[index]["teams"][i]["id"], _password.text);
-                                                    } catch (e) {
-                                                      showErrorToast(
-                                                        "Error while joining team: $e",
-                                                      );
-                                                      return;
-                                                    }
+                                                  bool joined;
+                                                  try {
+                                                    joined =
+                                                        await joinRoom(rooms[index]["id"], rooms[index]["teams"][i]["id"], _password.text);
+                                                  } catch (e) {
+                                                    showErrorToast(
+                                                      "Error while joining team: $e",
+                                                    );
+                                                    return;
+                                                  }
 
-                                                    if (joined) {
-                                                      Navigator.pushReplacementNamed(
-                                                        context,
-                                                        '/gamePage',
-                                                        arguments: {
-                                                          "roomId": rooms[index]["id"],
-                                                          "nickname": data["nickname"],
-                                                          "team": rooms[index]["teams"][i]["name"],
-                                                          "teamId": rooms[index]["teams"][i]["id"],
-                                                          "teamColor": rooms[index]["teams"][i]["color"],
-                                                          "serverInLan": data["serverInLan"],
-                                                        },
-                                                      );
-                                                    }
-                                                  },
+                                                  if (joined) {
+                                                    Navigator.pushReplacementNamed(
+                                                      context,
+                                                      '/gamePage',
+                                                      arguments: {
+                                                        "roomId": rooms[index]["id"],
+                                                        "nickname": data["nickname"],
+                                                        "team": rooms[index]["teams"][i]["name"],
+                                                        "teamId": rooms[index]["teams"][i]["id"],
+                                                        "teamColor": rooms[index]["teams"][i]["color"],
+                                                        "serverInLan": data["serverInLan"],
+                                                      },
+                                                    );
+                                                  }
+                                                },
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    rooms[index]["teams"][i]["passwordRequired"] == "true"
+                                                        ? Padding(padding: EdgeInsets.fromLTRB(0, 0, 5, 0), child: Icon(Icons.lock))
+                                                        : Container(),
+                                                    Flexible(
+                                                      child: Text(
+                                                          "Join: ${rooms[index]["teams"][i]["name"]} (${(rooms[index]["teams"][i]["players"].length)})",
+                                                          style: TextStyle(fontSize: 17)),
+                                                    ),
+                                                  ],
+                                                ),
+                                                style: ElevatedButton.styleFrom(
                                                   padding: EdgeInsets.all(12),
-                                                  child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.center,
-                                                    children: [
-                                                      rooms[index]["teams"][i]["passwordRequired"] == "true"
-                                                          ? Padding(padding: EdgeInsets.fromLTRB(0, 0, 5, 0), child: Icon(Icons.lock))
-                                                          : Container(),
-                                                      Flexible(
-                                                        child: Text(
-                                                            "Join: ${rooms[index]["teams"][i]["name"]} (${(rooms[index]["teams"][i]["players"].length)})",
-                                                            style: TextStyle(fontSize: 17)),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  color: Colors.grey[800],
-                                                  textColor: Colors.white,
-                                                  disabledColor: Colors.grey[800],
-                                                  disabledTextColor: Colors.grey[700]);
+                                                  backgroundColor: Colors.grey[800],
+                                                  foregroundColor: Colors.white,
+                                                  disabledBackgroundColor: Colors.grey[800],
+                                                  disabledForegroundColor: Colors.grey[700],
+                                                ),
+                                              );
                                             },
                                           )
                                         ],
@@ -384,7 +390,7 @@ class _RoomsListState extends State<RoomsList> {
         showErrorToast(
           "Error while loading rooms: ${response.body}",
         );
-        return null;
+        return [];
       }
 
       List<dynamic> rooms = json["rooms"];
@@ -396,7 +402,7 @@ class _RoomsListState extends State<RoomsList> {
       showErrorToast(
         "Error while loading rooms: $e",
       );
-      return null;
+      return [];
     }
   }
 

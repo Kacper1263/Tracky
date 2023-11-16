@@ -27,12 +27,12 @@ SOFTWARE.
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_udid/flutter_udid.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tracky/GlobalFunctions.dart';
-import 'package:tracky/StaticVariables.dart';
+import 'package:SnowKicker/GlobalFunctions.dart';
+import 'package:SnowKicker/StaticVariables.dart';
 
 import '../Dialogs.dart';
 
@@ -55,7 +55,7 @@ class _HomePageState extends State<HomePage> {
   String infoMessage = "";
   String serverMinRequiredAppVersion = "0.0.0";
 
-  SharedPreferences sharedPreferences;
+  late SharedPreferences sharedPreferences;
 
   TextEditingController nicknameController = new TextEditingController();
   TextEditingController lanServerIpController = new TextEditingController();
@@ -132,9 +132,9 @@ By clicking agree and using this app you agree to privacy policy available on Go
                         controller: lanServerIpController,
                         decoration: InputDecoration(
                           counterStyle: TextStyle(fontSize: 0),
-                          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
-                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
-                          border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+                          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200]!)),
+                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600]!)),
+                          border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200]!)),
                           hintText: 'Enter lan server ip',
                           hintStyle: TextStyle(color: Colors.grey[500]),
                         ),
@@ -219,19 +219,19 @@ By clicking agree and using this app you agree to privacy policy available on Go
               textCapitalization: TextCapitalization.sentences,
               style: TextStyle(color: Colors.white),
               maxLength: 25,
-              maxLengthEnforced: false,
+              maxLengthEnforcement: MaxLengthEnforcement.none,
               controller: nicknameController,
               decoration: InputDecoration(
                 counterStyle: TextStyle(fontSize: 0),
-                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
-                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
-                border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200]!)),
+                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600]!)),
+                border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200]!)),
                 hintText: 'Enter your nickname',
                 hintStyle: TextStyle(color: Colors.grey[500]),
               ),
             ),
             SizedBox(height: 12),
-            RaisedButton(
+            ElevatedButton(
               onPressed: serverConnectionStatus != 1 || !StaticVariables.version.isCompatible(serverMinRequiredAppVersion)
                   ? null
                   : () {
@@ -263,12 +263,14 @@ By clicking agree and using this app you agree to privacy policy available on Go
                         );
                       }
                     },
-              padding: EdgeInsets.all(12),
               child: Text("Server list", style: TextStyle(fontSize: 17)),
-              color: Colors.grey[800],
-              textColor: Colors.white,
-              disabledColor: Colors.grey[800],
-              disabledTextColor: Colors.grey[700],
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.all(12),
+                backgroundColor: Colors.grey[800],
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.grey[800],
+                disabledForegroundColor: Colors.grey[700],
+              ),
             ),
             SizedBox(height: 15),
             StaticVariables.version.isCompatible(serverMinRequiredAppVersion)
@@ -384,7 +386,7 @@ By clicking agree and using this app you agree to privacy policy available on Go
                   onChanged: (val) {
                     setState(() {
                       StaticVariables.autoChatConnect = val;
-                      sharedPreferences?.setBool("autoChatConnect", val);
+                      sharedPreferences.setBool("autoChatConnect", val);
                     });
                   },
                 );

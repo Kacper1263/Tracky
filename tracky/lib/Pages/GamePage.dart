@@ -27,7 +27,6 @@ SOFTWARE.
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
@@ -40,16 +39,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import "package:latlong2/latlong.dart";
 import 'package:permission_handler/permission_handler.dart';
-import 'package:tracky/Dialogs.dart';
-import 'package:tracky/GlobalFunctions.dart';
-import 'package:tracky/StaticVariables.dart';
+import 'package:SnowKicker/Dialogs.dart';
+import 'package:SnowKicker/GlobalFunctions.dart';
+import 'package:SnowKicker/StaticVariables.dart';
 import 'package:web_socket_channel/io.dart';
-import 'package:vibrate/vibrate.dart';
 
 import '../Classes.dart';
 
 class GamePage extends StatefulWidget {
-  GamePage({Key key, this.title, this.arguments}) : super(key: key);
+  GamePage({Key? key, required this.title, required this.arguments}) : super(key: key);
 
   final String title;
   final Object arguments;
@@ -59,7 +57,7 @@ class GamePage extends StatefulWidget {
 }
 
 class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
-  Map data;
+  Map data = {};
 
   List<TextMarker> textMarkers = [];
   List<NamedPolygon> polygons = [];
@@ -68,26 +66,26 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
 
   var thisPlayer = new Player(
     name: "You",
-    color: Colors.lightBlue[600],
+    color: Colors.lightBlue[600]!,
     icon: "thisPlayer",
     location: LatLng(0, 0),
   );
 
   var otherPlayers = <Player>[];
 
-  StreamSubscription keyboardVisibilityListener;
-  MapController mapController;
-  Timer updateTimer;
+  StreamSubscription? keyboardVisibilityListener;
+  MapController? mapController;
+  Timer? updateTimer;
 
   // Player settings
   bool hidePlayerOnMap = false;
 
   //Location/rotation variables
-  Location _locationData = null;
+  Location? _locationData = null;
   int lastUpdate = 0;
   bool permissionDenied = false;
   bool firstTimeZoomedBefore = false; // change this to true after first time finding GPS location
-  Timer compassTimer;
+  Timer? compassTimer;
   bool lockMapToPlayer = false;
 
   // Chat
@@ -98,7 +96,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   bool isGlobalChat = false;
   bool hideTopMenu = false;
   FocusNode chatFocusNode = new FocusNode();
-  IOWebSocketChannel chatChannel;
+  IOWebSocketChannel? chatChannel;
   List<ChatMessage> chatMessages = [];
   TextEditingController chatController = TextEditingController();
 
@@ -180,7 +178,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
 
       lastUpdate = DateTime.now().millisecondsSinceEpoch;
 
-      if (!firstTimeZoomedBefore && _locationData.latitude != 0) {
+      if (!firstTimeZoomedBefore && _locationData?.latitude != 0) {
         findMe();
         firstTimeZoomedBefore = true;
       }
@@ -189,7 +187,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
 
       try {
         print(
-          "API call. Location: ${_locationData.latitude}, ${_locationData.longitude}",
+          "API call. Location: ${_locationData?.latitude}, ${_locationData?.longitude}",
         );
       } catch (e) {
         print(e);
@@ -214,7 +212,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   @override
   void initState() {
     FlutterScreenWake.keepOn(true);
-    data = widget.arguments;
+    data = widget.arguments as Map;
 
     thisPlayer.color = HexColor(data["teamColor"]);
 
@@ -229,9 +227,9 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     // Update device rotation
     CompassEvent rotation;
     compassTimer = Timer.periodic(Duration(seconds: 1), (timer) async {
-      rotation = await FlutterCompass.events.first;
+      rotation = await FlutterCompass.events!.first;
       setState(() {
-        thisPlayer?.iconRotation = rotation.heading;
+        thisPlayer.iconRotation = rotation.heading!;
       });
     });
 
@@ -242,11 +240,11 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
         try {
           if (!visible) chatFocusNode.unfocus();
         } catch (er) {
-          print("Error while checking keyboard visibility! " + er);
+          print("Error while checking keyboard visibility! " + er.toString());
         }
       });
     } catch (e) {
-      print("Error while subscribing to keyboard visibility listener! " + e);
+      print("Error while subscribing to keyboard visibility listener! " + e.toString());
     }
 
     super.initState();
@@ -274,8 +272,8 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       body: {
         "teamId": data["teamId"],
         "playerName": data["nickname"],
-        "latitude": _locationData != null ? _locationData.latitude.toString() : "0",
-        "longitude": _locationData != null ? _locationData.longitude.toString() : "0",
+        "latitude": _locationData?.latitude != null ? _locationData!.latitude.toString() : "0",
+        "longitude": _locationData?.longitude != null ? _locationData!.longitude.toString() : "0",
         "hideMe": hidePlayerOnMap.toString(),
       },
     ).timeout(Duration(seconds: 20)).then((res) {
@@ -305,7 +303,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       List<dynamic> teams = response["teams"];
       List<Player> playersToAdd = [];
 
-      if (teams == null) return;
+      if (teams.length == 0) return;
 
       polygons.clear();
       textMarkers.clear();
@@ -381,11 +379,10 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     if (mounted) {
       setState(() {
         try {
-          thisPlayer.getMarker().point.latitude = _locationData.latitude;
-          thisPlayer.getMarker().point.longitude = _locationData.longitude;
+          thisPlayer.location = LatLng(_locationData?.latitude ?? 0, _locationData?.longitude ?? 0);
 
           if (lockMapToPlayer) {
-            mapController.move(LatLng(_locationData.latitude, _locationData.longitude), mapController.zoom);
+            mapController?.move(LatLng(_locationData?.latitude ?? 0, _locationData?.longitude ?? 0), mapController?.camera.zoom ?? 0);
           }
         } catch (e) {
           print(e);
@@ -400,9 +397,10 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     });
 
     try {
-      mapController.move(
-        LatLng(_locationData != null ? _locationData.latitude : 0, _locationData != null ? _locationData.longitude : 0),
-        mapController.zoom,
+      mapController?.move(
+        LatLng(_locationData?.latitude != null ? _locationData!.latitude! : 0,
+            _locationData?.longitude != null ? _locationData!.longitude! : 0),
+        mapController?.camera.zoom ?? 0,
       );
     } catch (e) {
       print(e);
@@ -492,7 +490,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    data = widget.arguments;
+    data = widget.arguments as Map;
     List<Marker> markers = [];
     otherPlayers.forEach((p) => markers.add(p.getMarker()));
     thisPlayer.isHidden = hidePlayerOnMap;
@@ -511,7 +509,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
           }
           updateTimer?.cancel();
           leaveGame();
-          chatChannel?.sink?.close();
+          chatChannel?.sink.close();
           BackgroundLocation.stopLocationService();
           return Future.value(true);
         },
@@ -528,22 +526,22 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
             children: [
               FlutterMap(
                 mapController: mapController,
-                layers: [
-                  TileLayerOptions(
+                children: [
+                  TileLayer(
                     urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                     subdomains: ['a', 'b', 'c'],
                     //tileProvider: NonCachingNetworkTileProvider(),
                     maxZoom: 24.0,
                   ),
-                  PolygonLayerOptions(polygonCulling: false, polygons: polygons.map((element) => element.polygon).toList()),
-                  MarkerLayerOptions(markers: textMarkers.map((tMarker) => tMarker.getMarker()).toList()),
-                  MarkerLayerOptions(markers: markers)
+                  PolygonLayer(polygonCulling: false, polygons: polygons.map((element) => element.polygon!).toList()),
+                  MarkerLayer(markers: textMarkers.map((tMarker) => tMarker.getMarker()).toList()),
+                  MarkerLayer(markers: markers)
                 ],
                 key: GlobalObjectKey("map-key"),
                 options: MapOptions(
-                  interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-                  center: LatLng(0, 0),
-                  zoom: 15.0,
+                  interactionOptions: InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
+                  initialCenter: LatLng(0, 0),
+                  initialZoom: 15.0,
                   maxZoom: 19.3,
                   onPositionChanged: (position, hasGesture) {
                     if (hasGesture == true && lockMapToPlayer == true) {
@@ -585,18 +583,20 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                         : Row(
                                             children: [
                                               Expanded(
-                                                child: RaisedButton(
-                                                  padding: EdgeInsets.all(12),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.only(
-                                                      topLeft: Radius.circular(20),
+                                                child: ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                    padding: EdgeInsets.all(12),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.only(
+                                                        topLeft: Radius.circular(20),
+                                                      ),
                                                     ),
+                                                    backgroundColor: Colors.blueGrey,
+                                                    foregroundColor: Colors.white,
+                                                    disabledForegroundColor: Colors.grey[700],
+                                                    disabledBackgroundColor: Colors.grey[800],
                                                   ),
                                                   child: Text("Team chat", style: TextStyle(fontSize: 17)),
-                                                  color: Colors.blueGrey,
-                                                  textColor: Colors.white,
-                                                  disabledColor: Colors.grey[800],
-                                                  disabledTextColor: Colors.grey[700],
                                                   onPressed: isGlobalChat
                                                       ? () {
                                                           setState(() {
@@ -608,13 +608,20 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                               ),
                                               const SizedBox(width: 10),
                                               Expanded(
-                                                child: RaisedButton(
-                                                  padding: EdgeInsets.all(12),
+                                                child: ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                    padding: EdgeInsets.all(12),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.only(
+                                                        topRight: Radius.circular(20),
+                                                      ),
+                                                    ),
+                                                    backgroundColor: Colors.blueGrey,
+                                                    foregroundColor: Colors.white,
+                                                    disabledForegroundColor: Colors.grey[700],
+                                                    disabledBackgroundColor: Colors.grey[800],
+                                                  ),
                                                   child: Text("Global chat", style: TextStyle(fontSize: 17)),
-                                                  color: Colors.blueGrey,
-                                                  textColor: Colors.white,
-                                                  disabledColor: Colors.grey[800],
-                                                  disabledTextColor: Colors.grey[700],
                                                   onPressed: !isGlobalChat
                                                       ? () {
                                                           setState(() {
@@ -622,11 +629,6 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                                           });
                                                         }
                                                       : null,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.only(
-                                                      topRight: Radius.circular(20),
-                                                    ),
-                                                  ),
                                                 ),
                                               ),
                                             ],
@@ -636,42 +638,46 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                         : Row(
                                             children: [
                                               Expanded(
-                                                child: RaisedButton(
-                                                  padding: EdgeInsets.all(12),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.only(
-                                                      bottomLeft: Radius.circular(20),
-                                                    ),
-                                                  ),
+                                                child: ElevatedButton(
                                                   child: Text("Connect", style: TextStyle(fontSize: 17)),
-                                                  color: Colors.green,
-                                                  textColor: Colors.white,
-                                                  disabledColor: Colors.grey[800],
-                                                  disabledTextColor: Colors.grey[700],
                                                   onPressed: chatConnected || chatConnecting ? null : connectToChat,
+                                                  style: ElevatedButton.styleFrom(
+                                                    padding: EdgeInsets.all(12),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.only(
+                                                        bottomLeft: Radius.circular(20),
+                                                      ),
+                                                    ),
+                                                    backgroundColor: Colors.green,
+                                                    foregroundColor: Colors.white,
+                                                    disabledBackgroundColor: Colors.grey[800],
+                                                    disabledForegroundColor: Colors.grey[700],
+                                                  ),
                                                 ),
                                               ),
                                               hideTopMenu ? SizedBox.shrink() : SizedBox(width: 10),
                                               Expanded(
-                                                child: RaisedButton(
-                                                  padding: EdgeInsets.all(12),
+                                                child: ElevatedButton(
                                                   child: Text("Disconnect", style: TextStyle(fontSize: 17)),
-                                                  color: Colors.red,
-                                                  textColor: Colors.white,
-                                                  disabledColor: Colors.grey[800],
-                                                  disabledTextColor: Colors.grey[700],
                                                   onPressed: !chatConnected
                                                       ? null
                                                       : () {
                                                           setState(() {
                                                             chatConnected = false;
-                                                            chatChannel?.sink?.close();
+                                                            chatChannel?.sink.close();
                                                           });
                                                         },
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.only(
-                                                      bottomRight: Radius.circular(20),
+                                                  style: ElevatedButton.styleFrom(
+                                                    padding: EdgeInsets.all(12),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.only(
+                                                        bottomRight: Radius.circular(20),
+                                                      ),
                                                     ),
+                                                    backgroundColor: Colors.red,
+                                                    foregroundColor: Colors.white,
+                                                    disabledBackgroundColor: Colors.grey[800],
+                                                    disabledForegroundColor: Colors.grey[700],
                                                   ),
                                                 ),
                                               ),
@@ -807,7 +813,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                           if (messageToSend.length <= 0) return;
                                           setState(
                                             () {
-                                              chatChannel.sink.add(
+                                              chatChannel?.sink.add(
                                                 json.encode({
                                                   "action": "message",
                                                   "data": {
@@ -921,6 +927,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       showErrorToast(
         "View error: $e",
       );
+      return Container();
     }
   }
 
@@ -933,7 +940,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     else
       url = "wss://kacpermarcinkiewicz.com:5051";
     try {
-      chatChannel?.sink?.close();
+      chatChannel?.sink.close();
       chatChannel = IOWebSocketChannel.connect(url, pingInterval: Duration(seconds: 10));
       setState(() {
         chatMessages.insert(
@@ -941,7 +948,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
           new ChatMessage(ChatMessageType.OTHER, "[CONNECTING]"),
         );
       });
-      chatChannel.sink.add(
+      chatChannel?.sink.add(
         json.encode({
           "action": "join",
           "data": {
@@ -954,7 +961,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
         }),
       );
 
-      chatChannel.stream.listen(
+      chatChannel?.stream.listen(
         (message) {
           setState(() {
             var json = jsonDecode(message);
@@ -992,10 +999,11 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                     showNewMsgDot = true;
                   });
 
-                  Vibrate.vibrateWithPauses([
-                    new Duration(milliseconds: 100),
-                    new Duration(milliseconds: 100),
-                  ]);
+                  // TODO: Vibrate
+                  // Vibrate.vibrateWithPauses([
+                  //   new Duration(milliseconds: 100),
+                  //   new Duration(milliseconds: 100),
+                  // ]);
                 }
 
                 var author = json["nickname"];

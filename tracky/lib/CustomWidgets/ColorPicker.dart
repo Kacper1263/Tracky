@@ -28,7 +28,7 @@ import 'package:flutter/material.dart';
 
 class ColorPicker extends StatefulWidget {
   const ColorPicker({
-    this.onColorChanged,
+    required this.onColorChanged,
     this.oldColor = null,
     this.heroTagOffset = -1,
   });
@@ -36,7 +36,7 @@ class ColorPicker extends StatefulWidget {
   final ColorSelectedCallback onColorChanged;
 
   /// Initial color - default null
-  final Color oldColor;
+  final Color? oldColor;
 
   /// Optional - set this if you are using more than one [ColorPicker]. Just increment the number starting from 0 so if you are adding second [ColorPicker] set this to 0
   final int heroTagOffset;
@@ -46,7 +46,7 @@ class ColorPicker extends StatefulWidget {
 }
 
 class _ColorPickerState extends State<ColorPicker> {
-  Color selectedColor;
+  Color? selectedColor;
 
   @override
   initState() {
@@ -71,7 +71,7 @@ class _ColorPickerState extends State<ColorPicker> {
           },
           backgroundColor: Colors.green,
           shape: CircleBorder(
-            side: selectedColor?.value?.toRadixString(16) == Colors.green.value.toRadixString(16)
+            side: selectedColor?.value.toRadixString(16) == Colors.green.value.toRadixString(16)
                 ? BorderSide(
                     color: Colors.yellow,
                     width: 3,
@@ -88,7 +88,7 @@ class _ColorPickerState extends State<ColorPicker> {
           },
           backgroundColor: Colors.red,
           shape: CircleBorder(
-            side: selectedColor?.value?.toRadixString(16) == Colors.red.value.toRadixString(16)
+            side: selectedColor?.value.toRadixString(16) == Colors.red.value.toRadixString(16)
                 ? BorderSide(
                     color: Colors.yellow,
                     width: 3,
@@ -105,7 +105,7 @@ class _ColorPickerState extends State<ColorPicker> {
           },
           backgroundColor: Colors.blue,
           shape: CircleBorder(
-            side: selectedColor?.value?.toRadixString(16) == Colors.blue.value.toRadixString(16)
+            side: selectedColor?.value.toRadixString(16) == Colors.blue.value.toRadixString(16)
                 ? BorderSide(
                     color: Colors.yellow,
                     width: 3,
@@ -122,7 +122,7 @@ class _ColorPickerState extends State<ColorPicker> {
           },
           backgroundColor: Colors.purple,
           shape: CircleBorder(
-            side: selectedColor?.value?.toRadixString(16) == Colors.purple.value.toRadixString(16)
+            side: selectedColor?.value.toRadixString(16) == Colors.purple.value.toRadixString(16)
                 ? BorderSide(
                     color: Colors.yellow,
                     width: 3,
@@ -139,7 +139,7 @@ class _ColorPickerState extends State<ColorPicker> {
           },
           backgroundColor: Colors.black,
           shape: CircleBorder(
-            side: selectedColor?.value?.toRadixString(16) == Colors.black.value.toRadixString(16)
+            side: selectedColor?.value.toRadixString(16) == Colors.black.value.toRadixString(16)
                 ? BorderSide(
                     color: Colors.yellow,
                     width: 3,
@@ -151,12 +151,12 @@ class _ColorPickerState extends State<ColorPicker> {
         FloatingActionButton(
           heroTag: "6-color-${widget.heroTagOffset}",
           onPressed: () {
-            widget.onColorChanged(Colors.pink[300]);
+            widget.onColorChanged(Colors.pink[300]!);
             setState(() => selectedColor = Colors.pink[300]);
           },
           backgroundColor: Colors.pink[300],
           shape: CircleBorder(
-            side: selectedColor?.value?.toRadixString(16) == Colors.pink[300].value.toRadixString(16)
+            side: selectedColor?.value.toRadixString(16) == Colors.pink[300]!.value.toRadixString(16)
                 ? BorderSide(
                     color: Colors.yellow,
                     width: 3,
@@ -173,7 +173,7 @@ class _ColorPickerState extends State<ColorPicker> {
           },
           backgroundColor: Colors.yellow,
           shape: CircleBorder(
-            side: selectedColor?.value?.toRadixString(16) == Colors.yellow.value.toRadixString(16)
+            side: selectedColor?.value.toRadixString(16) == Colors.yellow.value.toRadixString(16)
                 ? BorderSide(
                     color: Colors.red,
                     width: 3,

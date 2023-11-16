@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import "package:latlong2/latlong.dart";
@@ -15,21 +13,20 @@ class Player {
   bool isHidden;
 
   Player({
-    this.name,
-    this.color,
-    this.icon,
+    required this.name,
+    required this.color,
+    required this.icon,
     this.iconRotation = 0,
-    this.location,
+    required this.location,
     this.isHidden = false,
   });
 
   Marker getMarker() {
-    if (iconRotation == null) iconRotation = 0;
     return Marker(
       width: 350.0,
       height: 80.0,
       point: this.location,
-      builder: (ctx) => Container(
+      child: Container(
         child: Column(
           children: [
             Container(
@@ -54,9 +51,9 @@ class Player {
 }
 
 class NamedPolygon {
-  String name;
-  Polygon polygon;
-  Color color;
+  String? name;
+  Polygon? polygon;
+  Color? color;
 
   NamedPolygon({
     this.name,
@@ -67,18 +64,18 @@ class NamedPolygon {
 
 class TextMarker {
   String text;
-  LatLng location;
-  Function onClick = null;
+  LatLng? location;
+  Function? onClick = null;
 
-  TextMarker({this.text, this.location, this.onClick});
+  TextMarker({this.text = "", this.location, this.onClick});
 
   Marker getMarker() {
     return Marker(
       width: 200.0,
       height: 1000.0,
-      point: this.location,
-      builder: (ctx) => GestureDetector(
-        onTap: onClick,
+      point: this.location ?? LatLng(0, 0),
+      child: GestureDetector(
+        onTap: () => onClick,
         child: Center(
           child: OutlineText(this.text),
         ),
@@ -92,7 +89,7 @@ class ClickableMapObject {
   dynamic object;
 
   ClickableMapObject({
-    this.name,
+    required this.name,
     this.object,
   });
 }
@@ -104,10 +101,10 @@ class ServerRoom {
   List<ServerTeam> teams;
 
   ServerRoom({
-    this.id,
-    this.name,
-    this.expiresAt,
-    this.teams,
+    required this.id,
+    required this.name,
+    required this.expiresAt,
+    required this.teams,
   });
 }
 
@@ -122,7 +119,7 @@ class NamedIcons {
     "hidden": Icons.blur_on,
   };
 
-  static IconData getIconByName(final String iconName) {
+  static IconData? getIconByName(final String iconName) {
     return icons[iconName];
   }
 }
@@ -147,32 +144,32 @@ class ChatMessage {
   final isGlobal;
   final ChatMessageType type;
   final String message;
-  final String author;
-  final String teamName;
-  final Color teamColor;
+  final String? author;
+  final String? teamName;
+  final Color? teamColor;
   final String dateTime;
 
   ChatMessage(this.type, this.message, {this.author, this.teamName, this.teamColor, this.dateTime = "", this.isGlobal = false});
 }
 
 class MessageCard extends StatefulWidget {
-  final String author;
+  final String? author;
   final String message;
   final bool isGlobal;
   final ChatMessageType type;
-  final String teamName;
-  final Color teamColor;
+  final String? teamName;
+  final Color? teamColor;
   final String dateTime;
 
   const MessageCard({
-    Key key,
-    @required this.author,
-    @required this.message,
-    @required this.isGlobal,
-    @required this.type,
-    @required this.teamName,
-    @required this.teamColor,
-    @required this.dateTime,
+    Key? key,
+    this.author,
+    required this.message,
+    required this.isGlobal,
+    required this.type,
+    this.teamName,
+    this.teamColor,
+    required this.dateTime,
   }) : super(key: key);
 
   @override
@@ -214,7 +211,7 @@ class _MessageCardState extends State<MessageCard> {
                     // Author //? Expanded and overflow are for overflow protection on smaller devices
                     Expanded(
                       child: Text(
-                        " - " + widget.author,
+                        " - " + widget.author!,
                         style: TextStyle(color: Colors.blueGrey[300], fontSize: 14),
                         overflow: TextOverflow.ellipsis,
                       ),

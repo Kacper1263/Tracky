@@ -33,10 +33,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:tracky/Classes.dart';
-import 'package:tracky/CustomWidgets/ColorPicker.dart';
-import 'package:tracky/Dialogs.dart';
-import 'package:tracky/GlobalFunctions.dart';
+import 'package:SnowKicker/Classes.dart';
+import 'package:SnowKicker/CustomWidgets/ColorPicker.dart';
+import 'package:SnowKicker/Dialogs.dart';
+import 'package:SnowKicker/GlobalFunctions.dart';
 import 'package:uuid/uuid.dart';
 
 import '../StaticVariables.dart';
@@ -44,24 +44,24 @@ import '../StaticVariables.dart';
 class CreateRoom extends StatefulWidget {
   final Object arguments;
 
-  CreateRoom({Key key, this.arguments});
+  CreateRoom({required this.arguments});
 
   @override
   _CreateRoomState createState() => _CreateRoomState();
 }
 
 class _CreateRoomState extends State<CreateRoom> {
-  Map data;
+  Map data = {};
   TextEditingController roomNameController = new TextEditingController();
-  List<TextEditingController> textControllers = new List<TextEditingController>();
-  List<TextEditingController> teamPasswordControllers = new List<TextEditingController>();
+  List<TextEditingController> textControllers = [];
+  List<TextEditingController> teamPasswordControllers = [];
   bool showEnemyTeam = false;
   bool sending = false;
   List teams = [];
 
   @override
   void initState() {
-    data = widget.arguments;
+    data = widget.arguments as Map;
     if (data["editRoom"] == true) {
       roomNameController.text = data["roomName"].toString();
       showEnemyTeam = data["showEnemyTeam"] == "true";
@@ -109,7 +109,7 @@ class _CreateRoomState extends State<CreateRoom> {
     teams.forEach((team) {
       if (team["color"].toString().isEmpty || team["color"] == null) {
         noProblems = false;
-        return false;
+        return;
       }
     });
 
@@ -122,7 +122,7 @@ class _CreateRoomState extends State<CreateRoom> {
     teams.forEach((team) {
       if (team["name"].toString().isEmpty) {
         noProblems = false;
-        return false;
+        return;
       }
     });
 
@@ -137,7 +137,7 @@ class _CreateRoomState extends State<CreateRoom> {
     teams.forEach((team) {
       if (team["name"].toString().length > 35) {
         noProblems = false;
-        return false;
+        return;
       }
     });
 
@@ -184,13 +184,13 @@ class _CreateRoomState extends State<CreateRoom> {
               textCapitalization: TextCapitalization.sentences,
               style: TextStyle(color: Colors.white),
               maxLength: 40,
-              maxLengthEnforced: false,
+              maxLengthEnforcement: MaxLengthEnforcement.none,
               controller: roomNameController,
               decoration: InputDecoration(
                 counterStyle: TextStyle(fontSize: 0),
-                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
-                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
-                border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200]!)),
+                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600]!)),
+                border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200]!)),
                 hintText: 'Enter room name',
                 hintStyle: TextStyle(color: Colors.grey[500]),
               ),
@@ -255,12 +255,12 @@ class _CreateRoomState extends State<CreateRoom> {
                         controller: textControllers[index],
                         style: TextStyle(color: Colors.white),
                         maxLength: 35,
-                        maxLengthEnforced: false,
+                        maxLengthEnforcement: MaxLengthEnforcement.none,
                         decoration: InputDecoration(
                           counterStyle: TextStyle(fontSize: 0),
-                          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
-                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
-                          border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+                          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200]!)),
+                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600]!)),
+                          border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200]!)),
                           hintText: 'Enter team name',
                           hintStyle: TextStyle(color: Colors.grey[500]),
                         ),
@@ -285,9 +285,9 @@ class _CreateRoomState extends State<CreateRoom> {
                               controller: teamPasswordControllers[index],
                               style: TextStyle(color: Colors.white),
                               decoration: InputDecoration(
-                                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
-                                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600])),
-                                border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200])),
+                                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200]!)),
+                                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[600]!)),
+                                border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[200]!)),
                                 hintText: 'Leave empty if no password',
                                 hintStyle: TextStyle(color: Colors.grey[500]),
                               ),
@@ -668,7 +668,8 @@ class _CreateRoomState extends State<CreateRoom> {
             return;
           }
         } catch (e) {
-          showErrorToast("Error while exporting room! " + e.message);
+          //showErrorToast("Error while exporting room! " + e.message);
+          showErrorToast("Error while exporting room! " + e.toString());
           return;
         }
 
@@ -697,7 +698,8 @@ class _CreateRoomState extends State<CreateRoom> {
     } catch (e) {
       Navigator.pop(context); // Pop loading
       showErrorToast(
-        "Error while exporting room: ${e.message != null ? e.message : e}",
+        //"Error while exporting room: ${e.message != null ? e.message : e}",
+        "Error while exporting room: ${e.toString()}",
       );
       return;
     }
@@ -789,7 +791,8 @@ class _CreateRoomState extends State<CreateRoom> {
     } catch (e) {
       Navigator.pop(context); // Pop loading
       showErrorToast(
-        "Error while importing room: ${e.message != null ? e.message : e}",
+        //"Error while importing room: ${e.message != null ? e.message : e}",
+        "Error while importing room: ${e.toString()}",
       );
       return;
     }
